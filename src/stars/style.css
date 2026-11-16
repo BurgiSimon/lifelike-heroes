@@ -1,0 +1,80 @@
+/* Star chart hero. The sky is the whole stage; the headline, the cue and the plate line sit on it bottom-left. */
+.sch {
+  --gutter: clamp(16px, 4vw, 48px);
+  --ink: #f2f2ee;
+  --ink-2: #bdbdb5;
+  --muted: #8d8d85;
+  display: grid;
+  justify-items: start;
+  align-content: end;
+  gap: 24px;
+  padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(60px, 11vh, 104px);
+  background: #05070b;
+  color: var(--ink);
+}
+
+/* The scene fades in once its textures are on the GPU: first paint is the dark ground and the headline. */
+.sch > canvas { opacity: 0; transition: opacity 1400ms cubic-bezier(0.3, 0, 0.2, 1); }
+.sch.is-ready > canvas { opacity: 1; }
+.sch.is-still > canvas { transition: none; }
+
+/* pan-y: a vertical touch drag scrolls the page, a sideways one turns the sky. */
+.sch__sky { touch-action: pan-y; }
+.sch__labels { pointer-events: none; }
+@media (pointer: fine) {
+  .sch__sky { cursor: grab; }
+  .sch.is-turning .sch__sky { cursor: grabbing; }
+}
+
+/* The headline lets the pointer through, so the sky under it still turns; the sky behind it is dimmed in the shader. */
+.sch__title {
+  position: relative;
+  max-width: 13.5ch;
+  font-size: clamp(2.4rem, 1rem + 4.7vw, 5.5rem);
+  font-weight: 760;
+  font-stretch: 118%;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  pointer-events: none;
+}
+
+.sch__cue {
+  position: relative;
+  min-height: 32px;
+  margin-left: -6px;
+  padding: 3px 6px;
+  border: 0;
+  background: none;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  text-decoration-color: rgb(242 242 238 / 0.3);
+  transition: color 200ms var(--ease-out), text-decoration-color 200ms var(--ease-out);
+}
+.sch__cue:hover { color: var(--ink); text-decoration-color: currentColor; }
+
+/* The plate line rests on the dark of the ridge, which does for it what the original's tape did. */
+.sch__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+/* No WebGL2: the photographed sky as a still, the headline on it. Nothing to pin, so no cue. */
+.sch.is-static { background: #05070b url('/assets/stars/sky.webp') 62% 42% / 260% auto no-repeat; }
+.sch.is-static::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(5 7 11 / 0.92), rgb(5 7 11 / 0.35) 55%, rgb(5 7 11 / 0.55)); }
+.sch.is-static > canvas, .sch.is-static .sch__cue { display: none; }

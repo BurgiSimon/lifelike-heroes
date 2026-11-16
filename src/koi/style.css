@@ -1,0 +1,76 @@
+/* Koi pond hero. The canvas is the photograph; the headline, the Feed button and the plate line are DOM on top. */
+.koi {
+  --koi-ground: #0c1513; /* the quiet ground before the water arrives, and the fallback */
+  --koi-ink: #f6f3ea;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: clamp(20px, 3.4vh, 32px);
+  padding: clamp(48px, 9vh, 88px) var(--gutter);
+  background: radial-gradient(120% 90% at 50% 46%, #101d1a 0%, var(--koi-ground) 60%, #070d0c 100%);
+  color: var(--koi-ink);
+  touch-action: pan-y; /* a scroll that starts on the water stays a scroll */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+.koi__canvas { opacity: 0; transition: opacity 1.4s var(--ease-out); }
+.koi--ready .koi__canvas { opacity: 1; }
+
+/* The headline lies above the surface: koi pass beneath the letters, and the scene shades the water under them. */
+.koi__title {
+  position: relative;
+  max-width: 11ch;
+  font-family: var(--font-sans);
+  font-size: clamp(2.8rem, 0.9rem + 6.4vw, 8rem);
+  font-weight: 760;
+  font-stretch: 118%;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  text-align: center;
+  text-wrap: balance;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgb(4 12 10 / 0.28), 0 0 34px rgb(4 12 10 / 0.22);
+}
+
+/* The invitation and the keyboard path: a small pane of smoked glass, so no koi shows through its label. */
+.koi__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgb(246 243 234 / 0.26);
+  border-radius: 999px;
+  background: rgb(9 20 18 / 0.5);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  color: rgb(246 243 234 / 0.86);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+.koi__cue::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.koi__cue:hover { color: var(--koi-ink); border-color: rgb(246 243 234 / 0.6); background: rgb(9 20 18 / 0.62); }
+
+/* The plate line, pinned to the foot. */
+.koi__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(246 243 234 / 0.82);
+  text-shadow: 0 0 10px rgb(4 12 10 / 0.9), 0 1px 2px rgb(4 12 10 / 0.7);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) { .koi__canvas, .koi__cue { transition: none; } }
+
+.koi--static .koi__canvas { display: none; }

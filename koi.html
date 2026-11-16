@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Koi pond hero — Halden, Stillwater Pavilion</title>
+</head>
+<body>
+  <main id="hero" class="hero"></main>
+  <script type="module">
+    import '/src/shared/base.css';
+    import mount from '/src/koi/index.js';
+    window.hero = mount(document.getElementById('hero'));
+  </script>
+</body>
+</html>

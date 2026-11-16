@@ -1,0 +1,42 @@
+/* Meadow hero — Fieldnote, Issue 14: Weather. The canvas is the photograph; the DOM carries the words. */
+@import '@fontsource/bodoni-moda/latin-600.css';
+
+/* pan-y lets a touch on the field scroll the page; nothing is selectable, so a sowing drag selects nothing. */
+.mdw { background: #0b0d0c; color: #f4f2ec; touch-action: pan-y; user-select: none; -webkit-user-select: none; isolation: isolate; }
+
+.mdw__canvas { opacity: 0; transition: opacity 1.1s var(--ease-out); pointer-events: none; }
+.mdw.is-live .mdw__canvas { opacity: 1; }
+
+/* The headline is real text. Until the field is ready it is the picture; then the steel word takes its place
+   and the text stays for assistive tech only (transparent, not hidden). */
+.mdw__title {
+  position: absolute; left: 0; right: 0; top: var(--title-top, 38%);
+  font-family: 'Bodoni Moda', var(--font-serif); font-weight: 600; font-size: var(--title-size, 20.5vw);
+  line-height: 0.8; letter-spacing: -0.03em; text-align: center; white-space: nowrap;
+  transition: opacity 0.9s var(--ease-out); pointer-events: none;
+}
+.mdw.is-live .mdw__title { opacity: 0; }
+
+/* The keyboard path: sows one flower at a spot of its own. It sits in the sky, clear of the field. */
+.mdw__cue {
+  position: absolute; top: clamp(8px, 2.2vh, 18px); right: var(--gutter); min-height: 32px; padding: 0; border: 0; background: none;
+  font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+  color: rgb(244 242 236 / 0.82); text-decoration: underline; text-decoration-color: rgb(244 242 236 / 0.4); text-underline-offset: 0.35em;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 0.55);
+  transition: color 0.2s var(--ease-out), text-decoration-color 0.2s var(--ease-out);
+}
+.mdw__cue:hover { color: #fff; text-decoration-color: currentColor; }
+
+/* The plate line stands in the grass, so each part sits on a strip of dark tape. */
+.mdw__note {
+  position: absolute; left: var(--gutter); right: var(--gutter); bottom: clamp(12px, 2.4vh, 22px); display: flex; justify-content: space-between; gap: 12px;
+  font-family: var(--font-mono); font-size: 0.6875rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; pointer-events: none;
+}
+.mdw__note span { background: rgb(9 11 10 / 0.72); padding: 4px 7px; color: rgb(244 242 236 / 0.92); }
+
+/* No WebGL2: a still, legible cover. */
+.mdw.is-static { background: linear-gradient(#27323d 0%, #6b6257 46%, #c98a4b 53%, #1a1c12 53.2%, #0c0e09 100%); }
+.mdw.is-static .mdw__canvas, .mdw.is-static .mdw__cue { display: none; }
+.mdw.is-static .mdw__title { color: #f4f2ec; text-shadow: 0 2px 30px rgb(0 0 0 / 0.35); }
+
+@media (prefers-reduced-motion: reduce) { .mdw__canvas, .mdw__title, .mdw__cue { transition: none; } }
