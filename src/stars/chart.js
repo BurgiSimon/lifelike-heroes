@@ -5,7 +5,7 @@ import { clamp } from '../shared/kit.js';
 
 const CAP = 6;                              // pinned constellations kept
 const EASE = 200;                           // ms a pencilled line takes to fade in or out
-const INK = { stagger: 90, grow: 260 };     // ms: a pinned constellation is inked edge by edge
+export const INK = { stagger: 90, grow: 260 };     // ms: a pinned constellation is inked edge by edge
 const LEAVE = 1200;                         // ms the oldest pin takes to fade
 const SHOT = 1000;                          // ms a shooting star lasts
 const GAP = 5;                              // px an inked line stops short of its stars
@@ -108,6 +108,7 @@ export function createChart({ catalog, view, still, status, skyline }) {
     marks, lines, pins, shoot,
     get nLines() { return nLines; },
     get magLimit() { return magLimit; },
+    get lead() { return nWant ? hover.pick[0] : -1; },   // the star the pencilled constellation starts from, -1: no pencil
     // The renderer asks once per frame: how much of `marks` (in stars) to upload, 0 when nothing changed.
     takeMarks() { const n = dirty ? dirtyEnd : 0; dirty = false; dirtyEnd = 0; return n; },
     limit,

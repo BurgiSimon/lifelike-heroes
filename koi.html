@@ -11,7 +11,8 @@
     import '/src/shared/base.css';
     import mount, { controls, actions } from '/src/koi/index.js';
     import { chrome } from '/src/shared/chrome.js';
-    window.hero = mount(document.getElementById('hero'));
+    import { soundPref } from '/src/shared/sound.js';
+    window.hero = mount(document.getElementById('hero'), { sound: soundPref.get() });   // as the visitor left it, here or on the gallery
     chrome(window.hero, { controls, actions });
   </script>
 </body>

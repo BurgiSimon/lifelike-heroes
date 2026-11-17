@@ -10,14 +10,25 @@
     .list a:last-child { border-bottom: 1px solid #ffffff22; }
     .list:hover a:not(:hover) { opacity: 0.35; }
     .list span { font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; }
+    .sound { position: fixed; top: var(--gutter); right: var(--gutter); min-height: 36px; padding: 0 14px; border: 1px solid #ffffff3d; border-radius: 999px; background: none; color: inherit; font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+    .sound:hover { border-color: #ffffff99; }
   </style>
 </head>
 <body>
+  <button type="button" class="sound">Sound: off</button>
   <main class="list">
     <a href="meadow.html">Meadow <span>Fieldnote · Weather</span></a>
     <a href="koi.html">Koi pond <span>Halden · Stillwater Pavilion</span></a>
     <a href="stars.html">Star chart <span>Meridian · 69° north</span></a>
   </main>
-  <script type="module">import '/src/shared/base.css';</script>
+  <script type="module">
+    import '/src/shared/base.css';
+    import { soundPref } from '/src/shared/sound.js';
+    // One switch for all three scenes: each opens with its sound as this was left (a scene's own Sound tab moves it too).
+    const b = document.querySelector('.sound');
+    const show = () => { b.textContent = `Sound: ${soundPref.get() ? 'on' : 'off'}`; };
+    b.addEventListener('click', () => { soundPref.set(!soundPref.get()); show(); });
+    show(); addEventListener('pageshow', show);   // and again on the way back from a scene
+  </script>
 </body>
 </html>

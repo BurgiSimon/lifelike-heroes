@@ -1,4 +1,4 @@
-/* Page chrome of the demo pages: two tabs on the right edge and the options panel they pull out. It sits outside
+/* Page chrome of the demo pages: three tabs on the right edge and the options panel the last one pulls out. It sits outside
    the hero, so a scene stays a clean module. Closed, the panel waits just past the edge (and is inert). */
 .chrome {
   --panel: min(280px, 100vw - 56px);
@@ -39,7 +39,7 @@
 .chrome__actions button:hover { border-color: rgb(244 242 236 / 0.6); }
 
 /* A phone has no room for edge tabs: one menu button in the top left corner, the panel comes in under it from the
-   left, and Hide text moves into the panel. */
+   left, and the Hide text and Sound switches move into the panel. */
 .chrome__tab svg, .chrome__small { display: none; }
 .chrome__tab svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .chrome__tab[aria-expanded='false'] .chrome__cross, .chrome__tab[aria-expanded='true'] .chrome__burger { display: none; }
@@ -47,7 +47,7 @@
 @media (max-width: 640px) {
   .chrome { --panel: min(280px, 100vw - 24px); right: auto; left: 0; display: block; transform: none; }
   .chrome__tabs { position: absolute; top: 12px; left: 12px; }
-  .chrome__tab[data-text] { display: none; }
+  .chrome__tab:not([data-open]) { display: none; }
   .chrome__tab[data-open] { writing-mode: horizontal-tb; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; }
   .chrome__tab[data-open] svg { display: block; }
   .chrome__tab[data-open] span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } /* still its name */

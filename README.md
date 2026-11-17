@@ -174,11 +174,13 @@ hero.destroy();                // remove it and release its GPU resources
 
 | Scene | Options | Actions |
 | --- | --- | --- |
-| Meadow | `wind`, `reach`, `density`, `cap`, `petals`, `text` | `sow`, `gust` |
-| Koi pond | `count`, `pads`, `speed`, `reach`, `ripple`, `text` | `feed` |
-| Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text` | `pin`, `clear` |
+| Meadow | `wind`, `reach`, `density`, `cap`, `petals`, `text`, `sound` | `sow`, `gust` |
+| Koi pond | `count`, `pads`, `speed`, `reach`, `ripple`, `text`, `sound` | `feed` |
+| Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text`, `sound` | `pin`, `clear` |
 
 `text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same, and the **Options** tab beside it slides out a panel with a control for every other option and a button for every action.
+
+`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all three; the choice is remembered from page to page.
 
 ### Project layout
 
@@ -186,10 +188,10 @@ hero.destroy();                // remove it and release its GPU resources
 index.html                    gallery
 meadow.html, koi.html, stars.html
 src/
-  shared/                     base styles, frame loop, quality governor
+  shared/                     base styles, frame loop, quality governor, sound kit
   meadow/  koi/  stars/       one folder per scene
 public/assets/<scene>/        textures and data, each with a CREDITS.md
-scripts/                      screenshot and frame-rate tools used during development
+scripts/                      screenshot and frame-rate tools and self-checks used during development
 .github/workflows/pages.yml   build and deploy to GitHub Pages
 ```
 
@@ -200,6 +202,7 @@ scripts/                      screenshot and frame-rate tools used during develo
 - Hover effects are for mouse and pen only. Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
+- Sound is off until a visitor switches it on, and it pauses with the tab.
 - The scenes are built for integrated laptop graphics and were developed on one (Intel Iris Xe). In automatic mode a governor lowers the render resolution when frames run late and raises it again when there is room.
 
 ### Credits

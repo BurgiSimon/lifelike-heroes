@@ -6,14 +6,16 @@ import './style.css';
 import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
 import { loadCatalog } from './catalog.js';
 import { createRenderer } from './render.js';
-import { createChart } from './chart.js';
+import { createChart, INK } from './chart.js';
 import { createLabels } from './labels.js';
 import { buildGround } from './ground.js';
+import { createSound } from '../shared/sound.js';
+import { voices } from './sound.js';
 
 const TAU = Math.PI * 2;
 const FLING = { decay: 2.2, max: 2.5 };     // after a drag: speed × e^(−2.2 t), at most 2.5 rad/s
 const SPIN = -1;                            // the northern sky turns anticlockwise for someone looking up at the pole
-const DEFAULTS = { drift: 0.4, cell: 38, reach: 150, join: 7, tone: 'accent', text: true };
+const DEFAULTS = { drift: 0.4, cell: 38, reach: 150, join: 7, tone: 'accent', text: true, sound: false };
 // What a page may offer for tweaking (the ranges tidy() holds the options to), and the actions it may trigger.
 export const controls = [
   { id: 'drift', label: 'Sky drift', min: 0, max: 2, step: 0.1, value: 0.4, unit: '°/s' },
@@ -38,7 +40,7 @@ function emit(css, out) {
 
 // Options as the chart takes them: inside the ranges its buffers and its layout were built for, and a pin colour
 // that is one (anything else would ink in black, which on this sky is no ink at all).
-const tidy = (o) => ({ ...o, drift: clamp(+o.drift || 0, 0, 2), cell: clamp(+o.cell || DEFAULTS.cell, 28, 56), reach: clamp(+o.reach || DEFAULTS.reach, 80, 240), join: Math.round(clamp(+o.join || DEFAULTS.join, 3, 9)), tone: Object.hasOwn(TONES, o.tone) || CSS.supports('color', `${o.tone}`) ? o.tone : DEFAULTS.tone, text: o.text !== false });
+const tidy = (o) => ({ ...o, drift: clamp(+o.drift || 0, 0, 2), cell: clamp(+o.cell || DEFAULTS.cell, 28, 56), reach: clamp(+o.reach || DEFAULTS.reach, 80, 240), join: Math.round(clamp(+o.join || DEFAULTS.join, 3, 9)), tone: Object.hasOwn(TONES, o.tone) || CSS.supports('color', `${o.tone}`) ? o.tone : DEFAULTS.tone, text: o.text !== false, sound: o.sound === true });
 
 export default function mount(root, options = {}) {
   let cfg = tidy({ ...DEFAULTS, ...options });
@@ -66,6 +68,10 @@ export default function mount(root, options = {}) {
   const pencilCol = emit('#bdbdb5', [0, 0, 0]);
   let gl = null; let chart = null; let land = null; let ratio = 1; let fling = 0; let drag = null; let ptr = null; let skipClick = false; let stop = null; let queued = 0;
   let stir = 0; // a pin sets it to 1: the aurora answers, up in a second and gone in ten
+  const snd = createSound(voices, { room: 3.2 }); snd.set(cfg.sound);
+  let lead = -1; // the star the pencil last started from
+  // A fresh pin: the aurora stirs, and each of its stars rings as the ink reaches it.
+  const pinned = () => { stir = 1; const p = chart.pins[chart.pins.length - 1]; snd.play('pin', p.pick.length, p.n, p.x / view.W * 2 - 1, still ? 0.06 : INK.stagger / 1000); };
   const labels = createLabels(root.querySelector('.sch__labels'));
   const skyline = (x) => (land ? land.skyline(x) : view.H);
   const setTone = () => emit(TONES[cfg.tone] || cfg.tone, view.tone);
@@ -75,6 +81,7 @@ export default function mount(root, options = {}) {
     queued = 0;
     if (!gl || gl.lost || !view.W) return;
     chart.update(now, ptr && !drag?.moved ? ptr : null, cfg, view.tone, pencilCol);
+    if (lead !== chart.lead) { lead = chart.lead; if (lead >= 0) snd.play('tick', lead, ptr.x / view.W * 2 - 1); }
     gl.frame(view);
     labels.draw(view, chart.pins, skyline);
   };
@@ -130,6 +137,7 @@ export default function mount(root, options = {}) {
     gov.tick(dt);
     view.time += dt;
     view.surge += (stir - view.surge) * (1 - Math.exp(-dt / 0.8)); stir *= Math.exp(-dt / 5);
+    if (Math.random() < dt * 0.13) snd.play('twinkle');
     if (!drag?.moved) {
       view.rot = (view.rot + (SPIN * (cfg.drift * Math.PI) / 180 + fling) * dt) % TAU;
       fling = Math.abs(fling) < 0.002 ? 0 : fling * Math.exp(-FLING.decay * dt);
@@ -180,14 +188,14 @@ export default function mount(root, options = {}) {
   cv.addEventListener('click', (e) => {
     if (skipClick) { skipClick = false; return; }
     if (!chart) return;
-    if (chart.pin(at(e), cfg)) stir = 1;
+    if (chart.pin(at(e), cfg)) pinned();
     ptr = null; // the pencil lifts off the fresh ink until the pointer moves again
     once();
   }, { signal });
   const pinSpot = () => {
     if (!chart || !gl || gl.lost) return;
     const p = chart.spot(cfg);
-    if (p && chart.pin(p, cfg)) stir = 1; else if (!p) status.textContent = 'No room left on the chart.';
+    if (p && chart.pin(p, cfg)) pinned(); else if (!p) status.textContent = 'No room left on the chart.';
     once();
   };
   cue.addEventListener('click', pinSpot, { signal });
@@ -222,6 +230,7 @@ export default function mount(root, options = {}) {
   return {
     update(next = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
+      snd.set(cfg.sound);
       if (cfg.tone !== before.tone) setTone();
       if (cfg.text !== before.text) { root.classList.toggle('is-bare', !cfg.text); measure(); }
       view.reach = cfg.reach * clamp(view.W / 900, 0.6, 1);
@@ -230,10 +239,10 @@ export default function mount(root, options = {}) {
     },
     action(id) {
       if (id === 'pin') pinSpot();
-      if (id === 'clear' && chart) { chart.clear(); once(); }
+      if (id === 'clear' && chart) { chart.clear(); snd.play('clear'); once(); }
     },
     destroy() {
-      ac.abort(); stop?.(); ro.disconnect(); cancelAnimationFrame(queued);
+      ac.abort(); stop?.(); ro.disconnect(); cancelAnimationFrame(queued); snd.destroy();
       gl?.dispose(); gl = null;
       root.classList.remove('sch', 'is-ready', 'is-still', 'is-static', 'is-turning', 'is-bare'); root.removeAttribute('aria-labelledby'); root.innerHTML = '';
     },

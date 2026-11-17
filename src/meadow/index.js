@@ -16,8 +16,10 @@ import { createFlowers } from './flowers.js';
 import { createSeeds } from './seeds.js';
 import { createField } from './field.js';
 import { createPost } from './post.js';
+import { createSound } from '../shared/sound.js';
+import { voices } from './sound.js';
 
-const DEFAULTS = { wind: 1, reach: 150, density: 1, cap: 60, petals: 'mixed', text: true };
+const DEFAULTS = { wind: 1, reach: 150, density: 1, cap: 60, petals: 'mixed', text: true, sound: false };
 // What a page may offer for tweaking (the ranges tidy() holds the options to), and the actions it may trigger.
 export const controls = [
   { id: 'wind', label: 'Wind', min: 0, max: 3, step: 0.1, value: 1, unit: '×' },
@@ -34,6 +36,7 @@ const tidy = (c) => ({
   wind: clamp(num(c.wind, 1), 0, 3), reach: clamp(num(c.reach, 150), 60, 280), density: clamp(num(c.density, 1), 0.5, 1.5),
   cap: clamp(Math.round(num(c.cap, 60)), 12, 120), petals: c.petals === 'accent' ? 'accent' : 'mixed',
   text: c.text !== false,   // false: the meadow alone, without the word, the button or the plate line
+  sound: c.sound === true,  // wind, and a flower can be heard coming up; off until a page asks
 });
 
 export default function mount(root, options = {}) {
@@ -90,6 +93,7 @@ export default function mount(root, options = {}) {
   const world = new THREE.Scene(); const fore = new THREE.Scene();
   const shared = createShared();
   const post = createPost(renderer, { low });
+  const snd = createSound((kit) => voices(kit, cfg.wind), { room: 1.6 }); snd.set(cfg.sound);
   let parts = null; let dead = false; let lost = false; let stop = null; let regrow = 0;
   let frameNo = 0; let wt = 0; let now = 0;           // frames drawn, the wind's clock, the hero's clock (s)
   let drift = CLOUDS.start;                           // how far the clouds have gone downwind, m
@@ -141,7 +145,7 @@ export default function mount(root, options = {}) {
     const n = planted++;
     const f = { n, u, p, ph: rnd(n * 7 + 1), species: species(n), size: 0.95 + 0.3 * rnd(n * 7 + 2), seed: rnd(n * 7 + 3), born, gone: 0 };
     stand(f); flowers.push(f);
-    trim(); if (!quiet) say(); sync();
+    trim(); if (!quiet) { say(); snd.play('sow', u); } sync();
     if (still) redraw();
   };
   const plantAt = (px, py) => { if (parts) plant(px / view.W, depthOf(py), still ? -1e3 : now); };
@@ -215,6 +219,7 @@ export default function mount(root, options = {}) {
     const flying = parts.seeds.step(dt, wt, cfg.wind, burst, view);
     ptr.v *= 0.9 ** f;
     const sprung = parts.field.step(f, ptr, cfg.reach);
+    snd.play('air', cfg.wind, burst ? 1 : 0, ptr.x === null ? 0 : Math.abs(ptr.v));
     let growing = false;
     for (let i = flowers.length; i--;) {
       const fl = flowers[i];
@@ -320,6 +325,7 @@ export default function mount(root, options = {}) {
     update(next = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.petals !== before.petals) for (const f of flowers) f.species = species(f.n);
+      snd.set(cfg.sound); if (still) snd.play('air', cfg.wind, 0, 0);
       trim(); say(); sync();
       if (cfg.text !== before.text) { word(); settled = false; if (!stop) redraw(); }
       if (cfg.density !== before.density) layout(); else if (still) redraw();
@@ -329,7 +335,7 @@ export default function mount(root, options = {}) {
       if (id === 'gust') gust();
     },
     destroy() {
-      dead = true; halt(); cancelAnimationFrame(queued); clearTimeout(regrow); off.forEach((f) => f());
+      dead = true; halt(); cancelAnimationFrame(queued); clearTimeout(regrow); off.forEach((f) => f()); snd.destroy();
       if (parts) { for (const k of ['letters', 'sky', 'ground', 'grass', 'flowers', 'seeds', 'field']) parts[k].dispose(); parts.textures.forEach((t) => t.dispose()); }
       post.dispose(); renderer.dispose();
       if (!gl.isContextLost()) renderer.forceContextLoss();   // or mounts pile up contexts until the browser drops the oldest

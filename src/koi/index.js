@@ -9,6 +9,8 @@ import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../s
 import { createPond } from './pond.js';
 import { createRenderer } from './renderer.js';
 import { drawTextMask } from './textmask.js';
+import { createSound } from '../shared/sound.js';
+import { voices } from './sound.js';
 
 const DEFAULTS = { count: 6, pads: 6, speed: 1, reach: 220, ripple: 260 };
 const LIMITS = { count: [3, 8], pads: [0, 7], speed: [0.5, 2], reach: [0, 420], ripple: [120, 480] };
@@ -23,6 +25,7 @@ const read = (o) => {
   for (const k of Object.keys(LIMITS)) { const v = Number(o?.[k]); if (Number.isFinite(v)) c[k] = clamp(v, ...LIMITS[k]); }
   c.count = Math.round(c.count); c.pads = Math.round(c.pads);
   c.text = o?.text !== false; // false: the pond alone, no headline, button or plate line
+  c.sound = o?.sound === true; // water, drips, the plop of a pellet; off until a page asks
   return c;
 };
 
@@ -39,6 +42,8 @@ export default function mount(root, options = {}) {
   const canvas = root.querySelector('canvas'); const title = root.querySelector('h1');
   const status = root.querySelector('[role="status"]');
   const pond = createPond(cfg); const st = pond.st;
+  const snd = createSound(voices, { room: 1.2 }); snd.set(cfg.sound);
+  const pan = (x) => x / st.W * 2 - 1;
   const ac = new AbortController(); const on = (el, type, fn) => el.addEventListener(type, fn, { signal: ac.signal });
   let R = null; let gov = null; let stop = null; let dead = false; let lost = false; let clock = 0; let fedCount = 0;
 
@@ -65,7 +70,7 @@ export default function mount(root, options = {}) {
     status.textContent = `Pellet ${++fedCount} dropped; the koi swim to it.`;
     if (live) return;
     // no loop: one change of state. The koi take the pellet; its rings are left a second old.
-    pond.settle(p); still([{ x: p.x, y: p.y, kind: 'pellet' }], 1);
+    pond.settle(p); still([{ x: p.x, y: p.y, kind: 'pellet' }], 1); snd.play('pellet', pan(p.x));
   };
 
   fit();
@@ -76,7 +81,8 @@ export default function mount(root, options = {}) {
     gov.tick(dt);
     const d = Math.min(dt, 0.05); // clamped: no jump after a stalled frame
     pond.step(d); clock += d;
-    for (const s of st.splash) R.splash(s.x, s.y, s.kind);
+    for (const s of st.splash) { R.splash(s.x, s.y, s.kind); snd.play(s.kind, pan(s.x)); }   // a splash is seen and heard
+    if (Math.random() < d * 0.7) snd.play('drip', Math.random() * 2 - 1);
     st.splash.length = 0;
     R.frame(st, d, clock);
   };
@@ -136,14 +142,14 @@ export default function mount(root, options = {}) {
   return {
     update(next = {}) {
       const was = cfg; cfg = read({ ...cfg, ...next });
-      pond.setOptions(cfg); R?.setRipple(cfg.ripple);
+      pond.setOptions(cfg); R?.setRipple(cfg.ripple); snd.set(cfg.sound);
       if (was.text !== cfg.text) { root.classList.toggle('koi--bare', !cfg.text); fit(); } // the stone letters go with it
       if (was.count !== cfg.count || was.pads !== cfg.pads) { pond.stock(); R?.stock(st.fish); if (live) pond.place(); else pond.pose(); }
       if (!live) still();
     },
     action(id) { if (id === 'feed') feedSeeded(); },
     destroy() {
-      dead = true; stop?.(); ro.disconnect(); ac.abort(); R?.destroy(); R = null;
+      dead = true; stop?.(); ro.disconnect(); ac.abort(); R?.destroy(); R = null; snd.destroy();
       root.classList.remove('koi', 'koi--ready', 'koi--static', 'koi--bare'); root.innerHTML = '';
     },
   };
