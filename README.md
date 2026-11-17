@@ -26,6 +26,21 @@
 
 <br>
 
+## Watch them move
+
+<p align="center">
+  <a href="https://burgisimon.github.io/lifelike-heroes/video/lifelike-heroes.mp4">
+    <img src="docs/readme/video-preview.webp" width="100%" alt="A loop from the video: flowers planted in the meadow, koi racing for food in the pond, and constellations inked across the night sky">
+  </a>
+</p>
+
+<p align="center">
+  A 22-second recording of all three scenes being played with.
+  <b><a href="https://burgisimon.github.io/lifelike-heroes/video/lifelike-heroes.mp4">Watch the video →</a></b>
+</p>
+
+<br>
+
 ## Three scenes to play with
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
@@ -192,6 +207,7 @@ src/
   meadow/  koi/  stars/       one folder per scene
   gallery/                    the gallery page
 public/assets/<scene>/        textures and data, each with a CREDITS.md
+public/video/                 the 22-second showcase video, served by the live site (its README loop is in docs/readme/)
 scripts/                      screenshot and frame-rate tools and self-checks used during development;
                               stills.mjs renders the gallery's pictures (public/assets/gallery)
 .github/workflows/pages.yml   build and deploy to GitHub Pages
