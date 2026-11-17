@@ -10,6 +10,11 @@
 .chrome.is-open { transform: none; }
 .chrome > * { pointer-events: auto; }
 
+/* The page's opening picture (each page names its own still). It lies over the scene and fades once that is drawn:
+   a moment later, so the scene has come up under it and the dark ground never shows between the two. */
+.poster { position: fixed; z-index: 5; inset: 0; pointer-events: none; background-position: center; background-size: cover; transition: opacity 0.9s ease 0.6s; }
+.poster.is-gone { opacity: 0; }
+
 .chrome__tabs { display: grid; gap: 6px; }
 .chrome__tab {
   writing-mode: vertical-rl; min-height: 44px; padding: 14px 10px; border: 0; border-radius: 8px 0 0 8px;
@@ -60,4 +65,4 @@
   .chrome.is-open .chrome__panel { transform: none; }
 }
 
-@media (prefers-reduced-motion: reduce) { .chrome, .chrome__tab, .chrome__panel, .chrome__actions button { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .chrome, .chrome__tab, .chrome__panel, .chrome__actions button, .poster { transition: none; } }

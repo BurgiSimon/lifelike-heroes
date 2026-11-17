@@ -185,13 +185,15 @@ hero.destroy();                // remove it and release its GPU resources
 ### Project layout
 
 ```
-index.html                    gallery
+index.html                    gallery: hover or arrow keys preview a scene, a click opens into it
 meadow.html, koi.html, stars.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
   meadow/  koi/  stars/       one folder per scene
+  gallery/                    the gallery page
 public/assets/<scene>/        textures and data, each with a CREDITS.md
-scripts/                      screenshot and frame-rate tools and self-checks used during development
+scripts/                      screenshot and frame-rate tools and self-checks used during development;
+                              stills.mjs renders the gallery's pictures (public/assets/gallery)
 .github/workflows/pages.yml   build and deploy to GitHub Pages
 ```
 

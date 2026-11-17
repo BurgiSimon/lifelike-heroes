@@ -4,31 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Lifelike Heroes — three scenes you can touch</title>
-  <style>
-    .list { min-height: 100svh; display: grid; align-content: center; gap: 4px; padding: var(--gutter); }
-    .list a { display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding: 22px 0; border-top: 1px solid #ffffff22; color: inherit; text-decoration: none; font-size: clamp(2rem, 6vw, 5.5rem); font-weight: 700; font-stretch: 125%; letter-spacing: -0.04em; line-height: 1; transition: opacity .3s var(--ease-out); }
-    .list a:last-child { border-bottom: 1px solid #ffffff22; }
-    .list:hover a:not(:hover) { opacity: 0.35; }
-    .list span { font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; }
-    .sound { position: fixed; top: var(--gutter); right: var(--gutter); min-height: 36px; padding: 0 14px; border: 1px solid #ffffff3d; border-radius: 999px; background: none; color: inherit; font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
-    .sound:hover { border-color: #ffffff99; }
-  </style>
 </head>
-<body>
+<body class="gallery">
+  <div class="views" aria-hidden="true"><i data-id="meadow"></i><i data-id="koi"></i><i data-id="stars"></i></div>
+  <canvas class="trace" aria-hidden="true"></canvas>
   <button type="button" class="sound">Sound: off</button>
   <main class="list">
-    <a href="meadow.html">Meadow <span>Fieldnote · Weather</span></a>
-    <a href="koi.html">Koi pond <span>Halden · Stillwater Pavilion</span></a>
-    <a href="stars.html">Star chart <span>Meridian · 69° north</span></a>
+    <a href="meadow.html" data-id="meadow">Meadow <span>Fieldnote · Weather</span></a>
+    <a href="koi.html" data-id="koi">Koi pond <span>Halden · Stillwater Pavilion</span></a>
+    <a href="stars.html" data-id="stars">Star chart <span>Meridian · 69° north</span></a>
   </main>
-  <script type="module">
-    import '/src/shared/base.css';
-    import { soundPref } from '/src/shared/sound.js';
-    // One switch for all three scenes: each opens with its sound as this was left (a scene's own Sound tab moves it too).
-    const b = document.querySelector('.sound');
-    const show = () => { b.textContent = `Sound: ${soundPref.get() ? 'on' : 'off'}`; };
-    b.addEventListener('click', () => { soundPref.set(!soundPref.get()); show(); });
-    show(); addEventListener('pageshow', show);   // and again on the way back from a scene
-  </script>
+  <footer class="foot">
+    <span>Lifelike Heroes · three scenes you can touch</span>
+    <nav aria-label="Elsewhere"><a href="https://github.com/BurgiSimon">GitHub</a><a href="https://x.com/SimpleDev101">X</a></nav>
+  </footer>
+  <script type="module" src="/src/gallery/index.js"></script>
 </body>
 </html>

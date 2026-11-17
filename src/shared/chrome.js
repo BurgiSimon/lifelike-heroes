@@ -61,4 +61,18 @@ export function chrome(hero, { controls = [], actions = [] } = {}) {
   form.addEventListener('click', (e) => { const id = e.target.dataset.action; if (id) hero.action(id); });
 
   document.body.append(bar);
+
+  // The page opened on a still of the scene (.poster). It goes once the scene's root says the scene is drawn, or
+  // that it never will be and its own fallback stands.
+  // ponytail: read off the class names the three scenes happen to use (is-live, is-ready, koi--ready, *static); a
+  // `ready` promise in the scene contract if a fourth scene names its states differently.
+  const poster = document.querySelector('.poster'); const root = document.querySelector('.hero');
+  if (poster && root) {
+    const drawn = () => {
+      if (!/\b(is-live|is-ready|koi--ready|is-static|koi--static)\b/.test(root.className)) return;
+      watch.disconnect(); poster.classList.add('is-gone'); setTimeout(() => poster.remove(), 1600);
+    };
+    const watch = new MutationObserver(drawn); watch.observe(root, { attributes: true, attributeFilter: ['class'] });
+    drawn();
+  }
 }
