@@ -1,6 +1,7 @@
-/* The gallery: three rows. A row that is lit is a window onto its scene's still; on a phone the rows are cards to
-   swipe through. A chosen row opens into its scene: its window grows to fill the screen, and the scene's page
-   begins on that same picture. */
+/* The gallery: a line of cards, one per scene, each with its scene's still. Where there is room the script makes the
+   line endless and moves the cards itself (.is-loop); on a phone it is a strip that a swipe moves from card to card.
+   A chosen card opens into its scene: a copy of it grows to fill the screen, and the scene's page begins on that
+   same picture. */
 :root { --meadow: url('/assets/gallery/meadow-wide.jpg'); --koi: url('/assets/gallery/koi-wide.jpg'); --stars: url('/assets/gallery/stars-wide.jpg'); }
 @media (orientation: portrait) {
   :root { --meadow: url('/assets/gallery/meadow-tall.jpg'); --koi: url('/assets/gallery/koi-tall.jpg'); --stars: url('/assets/gallery/stars-tall.jpg'); }
@@ -12,30 +13,35 @@
 .gallery { display: flex; flex-direction: column; min-height: 100svh; height: auto; overflow-x: hidden; }
 .gallery > * { transition: opacity 0.35s var(--ease-out); }
 
-/* The stills, each the size of the screen and cut down to its row's bar (the script keeps the cut on the row): only
-   the lit row's shows. Its left is shaded, so the title stays in front of it. */
-.views i { position: fixed; inset: 0; background: var(--still) center / cover no-repeat; opacity: 0; transition: opacity 0.5s var(--ease-out); }
-.views i::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, rgb(7 8 10 / 0.66), rgb(7 8 10 / 0.12) 58%, rgb(7 8 10 / 0.34)); transition: opacity 0.3s var(--ease-out); }
-.views i.is-shown { opacity: 1; }
-.views.is-drifting i { transition-duration: 1.2s; }   /* left alone, the page turns its own pages slowly */
-/* Opening: the window grows to the whole screen, and the picture settles into its place and its full light. */
-.views i.is-opening { z-index: 20; opacity: 1; transition: clip-path 0.6s var(--ease-out), transform 0.6s var(--ease-out); }
-.views i.is-opening::after { opacity: 0; }
-
-/* What the pointer leaves on a row: bent grass, ripples, a pencilled line between stars. Drawn under the type. */
-.trace { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-
-.list { position: relative; flex: 1; display: grid; align-content: center; gap: 4px; padding: var(--gutter); }
+/* Without the script: the three cards side by side, in a strip that scrolls if they do not fit. */
+.list {
+  --card: clamp(280px, 30vw, 540px);
+  position: relative; flex: 1; display: flex; align-items: center; gap: 20px; padding: 76px var(--gutter) 36px;
+  overflow-x: auto; scrollbar-width: none; user-select: none;
+}
+.list::-webkit-scrollbar { display: none; }
 .list a {
-  display: flex; justify-content: space-between; align-items: baseline; gap: 24px; padding: 22px 0; border-top: 1px solid #ffffff22;
-  color: inherit; text-decoration: none; font-size: clamp(2rem, 6vw, 5.5rem); font-weight: 700; font-stretch: 125%; letter-spacing: -0.04em; line-height: 1;
+  position: relative; flex: 0 0 var(--card); height: min(70svh, calc(var(--card) * 1.36));
+  display: flex; flex-direction: column-reverse; justify-content: space-between; align-items: flex-start;
+  padding: 22px; border-radius: 14px; overflow: hidden; isolation: isolate; background: var(--still) center / cover no-repeat;
+  color: inherit; text-decoration: none; font-size: calc(var(--card) * 0.125); font-weight: 700; font-stretch: 125%; letter-spacing: -0.04em; line-height: 1;
   transition: opacity 0.3s var(--ease-out);
 }
-.list a:last-child { border-bottom: 1px solid #ffffff22; }
-.list.has-on a:not(.is-on) { opacity: 0.35; }   /* hovered, focused, or the one the idle page has turned to */
-.list a:focus-visible { outline: 0; }            /* the row that stays lit is the focus ring */
+.list a:first-child { margin-left: auto; }
+.list a:last-child { margin-right: auto; }
+.list a::before { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, rgb(7 8 10 / 0.72), rgb(7 8 10 / 0) 45%, rgb(7 8 10 / 0.35)); }   /* over the still, under the type */
+.list a:focus-visible { outline: 1px solid rgb(244 242 236 / 0.85); outline-offset: 4px; }
+.list.has-on a:not(.is-on) { opacity: 0.5; }   /* under the pointer, or with the keyboard's focus */
 .list span, .sound, .foot { font: 500 11px var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
-.list span { opacity: 0.6; }
+.list span { opacity: 0.9; }
+
+/* The endless line: the cards run from one edge of the screen to the other, and the script moves them. */
+.list.is-loop { padding-inline: 0; overflow-x: hidden; overflow-x: clip; touch-action: pan-y; cursor: grab; }
+.list.is-loop a { margin: 0; will-change: transform; -webkit-user-drag: none; }
+.list.is-dragging, .list.is-dragging a { cursor: grabbing; }
+
+/* What the pointer leaves on the lit card: bent grass, ripples, a pencilled line between stars. */
+.trace { position: fixed; z-index: 1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 .sound { position: fixed; z-index: 2; top: var(--gutter); right: var(--gutter); min-height: 36px; padding: 0 14px; border: 1px solid #ffffff3d; border-radius: 999px; background: none; color: inherit; }
 .sound:hover { border-color: #ffffff99; }
@@ -46,25 +52,17 @@
 .foot a { color: inherit; text-decoration: none; opacity: 0.6; transition: opacity 0.2s var(--ease-out); }
 .foot a:hover, .foot a:focus-visible { opacity: 1; }
 
-/* On a phone it is the card that grows: a copy of it, from where the card is to the whole screen. */
+/* Opening a scene: a copy of the card, from where the card is to the whole screen. */
 .opener { position: fixed; z-index: 20; inset: 0; background: var(--still) center / cover no-repeat; transition: inset 0.6s var(--ease-out), border-radius 0.6s var(--ease-out); }
-.is-opening > :not(.opener):not(.views) { opacity: 0; }
+.is-opening > :not(.opener) { opacity: 0; }
 
-/* A phone: the rows are tall cards side by side, each with its still, and a swipe goes from one to the next. */
+/* A phone: tall cards, one at a time in the middle, and a swipe goes from one to the next. */
 @media (max-width: 640px) {
-  .views { display: none; }   /* the cards carry their own pictures */
-  .list { display: flex; align-items: center; gap: 12px; padding: 76px 11vw 20px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
-  .list::-webkit-scrollbar { display: none; }
-  .list a {
-    position: relative; flex: 0 0 78vw; height: min(64svh, 540px); flex-direction: column-reverse; justify-content: space-between; align-items: flex-start;
-    padding: 18px; border: 0; border-radius: 14px; overflow: hidden; scroll-snap-align: center; isolation: isolate;
-    background: var(--still) center / cover no-repeat; font-size: 2.4rem;
-  }
-  .list a:last-child { border: 0; }
-  .list a::before { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(to top, rgb(7 8 10 / 0.72), rgb(7 8 10 / 0) 45%, rgb(7 8 10 / 0.35)); }   /* over the still, under the type */
-  .list span { opacity: 0.9; }
+  .list { gap: 12px; padding: 76px 11vw 20px; scroll-snap-type: x mandatory; }
+  .list a { flex-basis: 78vw; height: min(64svh, 540px); padding: 18px; font-size: 2.4rem; scroll-snap-align: center; }
+  .list a.is-copy { display: none; }
   .list.has-on a:not(.is-on) { opacity: 0.55; }
   .foot { justify-content: center; text-align: center; }
 }
 
-@media (prefers-reduced-motion: reduce) { .gallery > *, .views i, .views i::after, .list a, .foot a, .opener { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .gallery > *, .list a, .foot a, .opener { transition: none; } }

@@ -185,7 +185,7 @@ hero.destroy();                // remove it and release its GPU resources
 ### Project layout
 
 ```
-index.html                    gallery: hover or arrow keys preview a scene, a click opens into it
+index.html                    gallery: an endless line of cards (wheel, drag or arrow keys), a click opens a card into its scene
 meadow.html, koi.html, stars.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
