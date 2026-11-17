@@ -77,6 +77,10 @@
 }
 .sch__note span { margin: -3px -7px; padding: 3px 7px; border-radius: 2px; background: rgb(5 7 11 / 0.8); }
 
+/* The text can be switched off (the text option): the sky alone, without the chart's lettering either. Hidden,
+   not removed, so the layout holds. */
+.sch.is-bare .sch__title, .sch.is-bare .sch__cue, .sch.is-bare .sch__note, .sch.is-bare .sch__labels { visibility: hidden; }
+
 /* No WebGL2: the photographed sky as a still, the headline on it. Nothing to pin, so no cue. */
 .sch.is-static { background: #05070b url('/assets/stars/sky.webp') 62% 42% / 260% auto no-repeat; }
 .sch.is-static::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(5 7 11 / 0.9), rgb(5 7 11 / 0.1) 55%, rgb(5 7 11 / 0.3)); }

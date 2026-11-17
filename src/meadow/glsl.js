@@ -20,6 +20,7 @@ export function createShared() {
     uMask: { value: null },                                // the word's silhouette, mipped: its shadow
     uMaskRect: { value: new THREE.Vector4(0, 0, 1, 1) },   // x0, y0, 1/w, 1/h in world metres
     uWordZ: { value: -D },
+    uWord: { value: 1 },                                   // 0 when the word is switched off: it casts no shadow
     uPx: { value: 0.001 },                                 // world size of one pixel at unit distance
     uFrame: { value: 0.8 },                                // world width of the frame at unit distance
     uHaze: { value: new THREE.Vector3(1.5, 1.0, 0.62) },
@@ -35,7 +36,7 @@ export const PACK = /* glsl */`vec3 pack(vec3 c) { return sqrt(c / (1.0 + max(c.
 
 export const LIGHT = /* glsl */`
 uniform vec3 uSun; uniform vec3 uSunCol; uniform vec3 uSH[9]; uniform vec2 uLens; uniform vec3 uHaze;
-uniform sampler2D uMask; uniform vec4 uMaskRect; uniform float uWordZ; uniform vec3 uCloud;
+uniform sampler2D uMask; uniform vec4 uMaskRect; uniform float uWordZ; uniform float uWord; uniform vec3 uCloud;
 
 // Sky light on a surface facing n: irradiance / pi, from the HDRI.
 vec3 skyLight(vec3 n) {
@@ -54,7 +55,7 @@ float wordShadow(vec3 p) {
   vec3 q = p + uSun * s;
   vec2 uv = (q.xy - uMaskRect.xy) * uMaskRect.zw;
   float lod = log2(max(1.0, s * 0.021 * 2048.0 * uMaskRect.z));   // blur in texels: the sun through thin cloud, about 1.2 degrees across
-  return 1.0 - textureLod(uMask, uv, lod).r;
+  return 1.0 - textureLod(uMask, uv, lod).r * uWord;
 }
 // The sun through the drifting clouds, 0.3..1: broad soft shadows that cross the field with the wind.
 float cloudSun(vec2 xz) {

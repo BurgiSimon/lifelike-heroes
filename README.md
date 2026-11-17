@@ -174,9 +174,11 @@ hero.destroy();                // remove it and release its GPU resources
 
 | Scene | Options | Actions |
 | --- | --- | --- |
-| Meadow | `wind`, `reach`, `density`, `cap`, `petals` | `sow`, `gust` |
-| Koi pond | `count`, `pads`, `speed`, `reach`, `ripple` | `feed` |
-| Star chart | `drift`, `cell`, `reach`, `join`, `tone` | `pin`, `clear` |
+| Meadow | `wind`, `reach`, `density`, `cap`, `petals`, `text` | `sow`, `gust` |
+| Koi pond | `count`, `pads`, `speed`, `reach`, `ripple`, `text` | `feed` |
+| Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text` | `pin`, `clear` |
+
+`text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same.
 
 ### Project layout
 

@@ -13,7 +13,7 @@ import { buildGround } from './ground.js';
 const TAU = Math.PI * 2;
 const FLING = { decay: 2.2, max: 2.5 };     // after a drag: speed × e^(−2.2 t), at most 2.5 rad/s
 const SPIN = -1;                            // the northern sky turns anticlockwise for someone looking up at the pole
-const DEFAULTS = { drift: 0.4, cell: 38, reach: 150, join: 7, tone: 'accent' };
+const DEFAULTS = { drift: 0.4, cell: 38, reach: 150, join: 7, tone: 'accent', text: true };
 const TONES = { accent: '#ff6a3d', ink: '#f2f2ee', sky: '#8fb6e0', clay: '#d4855d', plum: '#9a7096' };
 
 // A CSS colour → what the scene has to emit for the film (post's curve) to print exactly that colour.
@@ -29,7 +29,7 @@ function emit(css, out) {
 
 // Options as the chart takes them: inside the ranges its buffers and its layout were built for, and a pin colour
 // that is one (anything else would ink in black, which on this sky is no ink at all).
-const tidy = (o) => ({ ...o, drift: clamp(+o.drift || 0, 0, 2), cell: clamp(+o.cell || DEFAULTS.cell, 28, 56), reach: clamp(+o.reach || DEFAULTS.reach, 80, 240), join: Math.round(clamp(+o.join || DEFAULTS.join, 3, 9)), tone: Object.hasOwn(TONES, o.tone) || CSS.supports('color', `${o.tone}`) ? o.tone : DEFAULTS.tone });
+const tidy = (o) => ({ ...o, drift: clamp(+o.drift || 0, 0, 2), cell: clamp(+o.cell || DEFAULTS.cell, 28, 56), reach: clamp(+o.reach || DEFAULTS.reach, 80, 240), join: Math.round(clamp(+o.join || DEFAULTS.join, 3, 9)), tone: Object.hasOwn(TONES, o.tone) || CSS.supports('color', `${o.tone}`) ? o.tone : DEFAULTS.tone, text: o.text !== false });
 
 export default function mount(root, options = {}) {
   let cfg = tidy({ ...DEFAULTS, ...options });
@@ -38,7 +38,7 @@ export default function mount(root, options = {}) {
   const low = quality() === 'low';
   const ac = new AbortController(); const { signal } = ac;
 
-  root.classList.add('sch'); root.classList.toggle('is-still', still);
+  root.classList.add('sch'); root.classList.toggle('is-still', still); root.classList.toggle('is-bare', !cfg.text);
   root.setAttribute('aria-labelledby', 'sch-title');
   root.innerHTML = `
     <canvas class="sch__sky" aria-hidden="true"></canvas>
@@ -75,10 +75,11 @@ export default function mount(root, options = {}) {
   const measure = () => {
     const h = root.getBoundingClientRect(); const c = cue.getBoundingClientRect();
     const range = document.createRange(); range.selectNodeContents(title);
-    view.rects = [...range.getClientRects()].map((r) => ({ l: r.left - h.left, t: r.top - h.top, r: r.right - h.left, b: r.bottom - h.top }));
+    // With the text switched off nothing lies on the sky: no lines to quiet it under, and the cue is nowhere.
+    view.rects = cfg.text ? [...range.getClientRects()].map((r) => ({ l: r.left - h.left, t: r.top - h.top, r: r.right - h.left, b: r.bottom - h.top })) : [];
     const b = view.box; b.l = b.t = 1e9; b.r = b.b = -1e9;
     for (const r of view.rects) { b.l = Math.min(b.l, r.l - 6); b.t = Math.min(b.t, r.t - 2); b.r = Math.max(b.r, r.r + 6); b.b = Math.max(b.b, r.b + 2); }
-    Object.assign(view.cue, { l: c.left - h.left, t: c.top - h.top, r: c.right - h.left, b: c.bottom - h.top });
+    Object.assign(view.cue, cfg.text ? { l: c.left - h.left, t: c.top - h.top, r: c.right - h.left, b: c.bottom - h.top } : { l: -1e5, t: -1e5, r: -1e5, b: -1e5 });
     gl?.mask(view.rects, view.cue);
     labels.touch();
   };
@@ -213,6 +214,7 @@ export default function mount(root, options = {}) {
     update(next = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.tone !== before.tone) setTone();
+      if (cfg.text !== before.text) { root.classList.toggle('is-bare', !cfg.text); measure(); }
       view.reach = cfg.reach * clamp(view.W / 900, 0.6, 1);
       if (cfg.cell !== before.cell) { chart?.limit(cfg.cell); gl?.depth(cfg.cell); }
       once();
@@ -224,7 +226,7 @@ export default function mount(root, options = {}) {
     destroy() {
       ac.abort(); stop?.(); ro.disconnect(); cancelAnimationFrame(queued);
       gl?.dispose(); gl = null;
-      root.classList.remove('sch', 'is-ready', 'is-still', 'is-static', 'is-turning'); root.removeAttribute('aria-labelledby'); root.innerHTML = '';
+      root.classList.remove('sch', 'is-ready', 'is-still', 'is-static', 'is-turning', 'is-bare'); root.removeAttribute('aria-labelledby'); root.innerHTML = '';
     },
   };
 }

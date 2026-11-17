@@ -46,4 +46,7 @@
 .mdw.is-static .mdw__canvas, .mdw.is-static .mdw__cue { display: none; }
 .mdw.is-static .mdw__title { color: #f4f2ec; text-shadow: 0 2px 30px rgb(0 0 0 / 0.35); }
 
+/* The text can be switched off (the text option): the meadow alone. Hidden, not removed, so the layout holds. */
+.mdw.is-bare .mdw__title, .mdw.is-bare .mdw__cue, .mdw.is-bare .mdw__note { visibility: hidden; }
+
 @media (prefers-reduced-motion: reduce) { .mdw__canvas, .mdw__title, .mdw__cue { transition: none; } }

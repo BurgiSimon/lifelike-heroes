@@ -1,0 +1,11 @@
+/* Page chrome of the demo pages: tabs on the right edge, outside the hero, so a scene stays a clean module. */
+.chrome { position: fixed; z-index: 10; top: 50%; right: 0; transform: translateY(-50%); display: grid; gap: 6px; }
+.chrome__tab {
+  writing-mode: vertical-rl; min-height: 44px; padding: 14px 10px; border: 0; border-radius: 8px 0 0 8px;
+  background: rgb(9 11 10 / 0.6); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  font: 500 0.6875rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; color: rgb(244 242 236 / 0.86);
+  transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+.chrome__tab:hover { background: rgb(9 11 10 / 0.86); color: #f4f2ec; }
+.chrome__tab:focus-visible { outline-offset: -4px; } /* the tab touches the edge of the screen */
+@media (prefers-reduced-motion: reduce) { .chrome__tab { transition: none; } }

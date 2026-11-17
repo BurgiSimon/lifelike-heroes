@@ -10,7 +10,9 @@
   <script type="module">
     import '/src/shared/base.css';
     import mount from '/src/stars/index.js';
+    import { chrome } from '/src/shared/chrome.js';
     window.hero = mount(document.getElementById('hero'));
+    chrome(window.hero);
   </script>
 </body>
 </html>

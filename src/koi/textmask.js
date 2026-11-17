@@ -11,6 +11,7 @@ export function drawTextMask(cv, root) {
   const g = cv.getContext('2d');
   g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = 'source-over'; g.shadowColor = 'transparent';
   g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
+  if (root.classList.contains('koi--bare')) return; // the text is hidden: nothing lies over the water to shade it
   g.globalCompositeOperation = 'lighter';
   const FAR = w + 4000; // shapes are drawn off-canvas and only their blurred shadow lands on it: blur without ctx.filter
   const soft = (colour, blur, paint) => { g.shadowColor = colour; g.shadowBlur = blur; g.shadowOffsetX = FAR; g.shadowOffsetY = 0; g.fillStyle = '#000'; paint(); };

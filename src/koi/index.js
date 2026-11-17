@@ -17,13 +17,14 @@ const read = (o) => {
   const c = { ...DEFAULTS };
   for (const k of Object.keys(LIMITS)) { const v = Number(o?.[k]); if (Number.isFinite(v)) c[k] = clamp(v, ...LIMITS[k]); }
   c.count = Math.round(c.count); c.pads = Math.round(c.pads);
+  c.text = o?.text !== false; // false: the pond alone, no headline, button or plate line
   return c;
 };
 
 export default function mount(root, options = {}) {
   let cfg = read(options);
   const live = !reducedMotion();
-  root.classList.add('koi');
+  root.classList.add('koi'); root.classList.toggle('koi--bare', !cfg.text);
   root.innerHTML = `
     <canvas class="koi__canvas" aria-hidden="true"></canvas>
     <h1 class="koi__title">Stillwater Pavilion</h1>
@@ -129,13 +130,14 @@ export default function mount(root, options = {}) {
     update(next = {}) {
       const was = cfg; cfg = read({ ...cfg, ...next });
       pond.setOptions(cfg); R?.setRipple(cfg.ripple);
+      if (was.text !== cfg.text) { root.classList.toggle('koi--bare', !cfg.text); if (R && !lost) R.text(root, drawTextMask); } // the letters' shadow goes with them
       if (was.count !== cfg.count || was.pads !== cfg.pads) { pond.stock(); R?.stock(st.fish); if (live) pond.place(); else pond.pose(); }
       if (!live) still();
     },
     action(id) { if (id === 'feed') feedSeeded(); },
     destroy() {
       dead = true; stop?.(); ro.disconnect(); ac.abort(); R?.destroy(); R = null;
-      root.classList.remove('koi', 'koi--ready', 'koi--static'); root.innerHTML = '';
+      root.classList.remove('koi', 'koi--ready', 'koi--static', 'koi--bare'); root.innerHTML = '';
     },
   };
 }

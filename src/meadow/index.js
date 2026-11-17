@@ -17,13 +17,14 @@ import { createSeeds } from './seeds.js';
 import { createField } from './field.js';
 import { createPost } from './post.js';
 
-const DEFAULTS = { wind: 1, reach: 150, density: 1, cap: 60, petals: 'mixed' };
+const DEFAULTS = { wind: 1, reach: 150, density: 1, cap: 60, petals: 'mixed', text: true };
 const ASSETS = `${import.meta.env.BASE_URL}assets/meadow/`;
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const num = (v, d) => (Number.isFinite(+v) ? +v : d);
 const tidy = (c) => ({
   wind: clamp(num(c.wind, 1), 0, 3), reach: clamp(num(c.reach, 150), 60, 280), density: clamp(num(c.density, 1), 0.5, 1.5),
   cap: clamp(Math.round(num(c.cap, 60)), 12, 120), petals: c.petals === 'accent' ? 'accent' : 'mixed',
+  text: c.text !== false,   // false: the meadow alone, without the word, the button or the plate line
 });
 
 export default function mount(root, options = {}) {
@@ -31,7 +32,7 @@ export default function mount(root, options = {}) {
   let still = reducedMotion();             // one settled frame, redrawn on input
   let fine = finePointer();
   const low = quality() === 'low' || (quality() === 'auto' && !fine);
-  root.classList.add('mdw');
+  root.classList.add('mdw'); root.classList.toggle('is-bare', !cfg.text);
   root.innerHTML = `
     <canvas class="mdw__canvas" aria-hidden="true"></canvas>
     <h1 class="mdw__title">Weather</h1>
@@ -42,7 +43,7 @@ export default function mount(root, options = {}) {
   const status = root.querySelector('[data-status]');
   const off = [];
   const on = (el, type, fn, opt) => { el.addEventListener(type, fn, opt); off.push(() => el.removeEventListener(type, fn, opt)); };
-  const destroyDom = () => { root.classList.remove('mdw', 'is-live', 'is-static'); for (const k of ['--title-size', '--title-top', '--ground']) root.style.removeProperty(k); root.innerHTML = ''; };
+  const destroyDom = () => { root.classList.remove('mdw', 'is-live', 'is-static', 'is-bare'); for (const k of ['--title-size', '--title-top', '--ground']) root.style.removeProperty(k); root.innerHTML = ''; };
 
   const box = wordBox(); const eyeY = ground(0, 0) + EYE;
   const view = { W: 0, H: 0, tanH: 0.4, tanV: 0.25, tanTop: 0.2, tanBot: 0.2, hz: 0.53, foot: 1.03, ratio: 1, planted: '', density: 0, eyeY };
@@ -69,7 +70,7 @@ export default function mount(root, options = {}) {
   if (!gl) {
     place(); const ro = new ResizeObserver(place); ro.observe(root);
     root.classList.add('is-static');
-    return { update() {}, action() {}, destroy() { ro.disconnect(); destroyDom(); } };
+    return { update(next = {}) { if ('text' in next) root.classList.toggle('is-bare', next.text === false); }, action() {}, destroy() { ro.disconnect(); destroyDom(); } };
   }
   const renderer = new THREE.WebGLRenderer({ canvas, context: gl });
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // every shader here writes its own output
@@ -86,6 +87,8 @@ export default function mount(root, options = {}) {
   let burst = null; let settled = false;
   const ptr = { x: null, y: 0, t: 0, v: 0 };          // v: horizontal speed in px per ms, eased
   const flowers = []; let planted = 0;
+  // The text option: with it off the steel word leaves the field, and its shadow with it.
+  const word = () => { root.classList.toggle('is-bare', !cfg.text); shared.uWord.value = cfg.text ? 1 : 0; if (parts) parts.letters.mesh.visible = cfg.text; };
 
   // Where a point of the frame meets the field: the ray is cast to the height the flower will stand at (lift), so
   // its head opens under the pointer and its root is the ground below. Above the horizon it is the field's far edge.
@@ -237,6 +240,7 @@ export default function mount(root, options = {}) {
     const room = { count: Math.round((low ? 30000 : 80000) * 1.5), fore: Math.round((low ? 110 : 200) * 1.5) };
     parts = { letters, sky: createSky(shared, sky), ground: createGround(shared, thatch), grass: createGrass(shared, room), flowers: createFlowers(shared), seeds: createSeeds(shared), field: createField(shared), textures: [sky, env, plate, rough, thatch] };
     world.add(letters.mesh, parts.sky.mesh, parts.ground.mesh, ...parts.grass.meshes, ...parts.flowers.meshes, parts.seeds.mesh); fore.add(parts.grass.fore);
+    word();
     layout();
     // Seven flowers stand in the field on load, at the original's spots; nothing is announced until the visitor sows.
     for (const [u, p] of START) plant(u, p, -1e3, true);
@@ -308,6 +312,7 @@ export default function mount(root, options = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.petals !== before.petals) for (const f of flowers) f.species = species(f.n);
       trim(); say(); sync();
+      if (cfg.text !== before.text) { word(); settled = false; if (!stop) redraw(); }
       if (cfg.density !== before.density) layout(); else if (still) redraw();
     },
     action(id) {

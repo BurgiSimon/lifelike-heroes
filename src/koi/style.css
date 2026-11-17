@@ -79,6 +79,9 @@
   backdrop-filter: blur(9px);
 }
 
+/* The text can be switched off (the text option): the pond alone. Hidden, not removed, so the layout holds. */
+.koi--bare .koi__title, .koi--bare .koi__cue, .koi--bare .koi__note { visibility: hidden; }
+
 @media (prefers-reduced-motion: reduce) { .koi__canvas, .koi__cue { transition: none; } }
 
 .koi--static .koi__canvas { visibility: hidden; }
