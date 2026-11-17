@@ -26,7 +26,7 @@ export const BLOOMS = [[0, 0.62, -0.5, 0.5], [3, -0.7, 0.35, 0.46], [2, 0.3, 0.7
 
 export function createPond(options) {
   let cfg = options;
-  const st = { W: 0, H: 0, S: 1, K: BIG, t: 0, fish: [], pads: [], pellets: [], rips: [], ptr: null, splash: [] };
+  const st = { W: 0, H: 0, S: 1, K: BIG, t: 0, fish: [], pads: [], pellets: [], rips: [], ptr: null, splash: [], keep: null };   // keep: the headline's box, see setKeep
   let fed = 0; let wake = 0; let skim = 0;
 
   // A phone gets fewer, so the water stays open.
@@ -75,6 +75,7 @@ export function createPond(options) {
     st.t += dt;
     const { W, H, S, K, t, fish, pellets, ptr } = st;
     const life = cfg.ripple / WAVE; // a click's rings fade as they reach cfg.ripple px
+    const g = 22 * S * K; const kb = st.keep && { l: st.keep.l - g, t: st.keep.t - g, r: st.keep.r + g, b: st.keep.b + g };   // room for half a koi's width round the letters
     // Pellets on their way: falling (h, 1 to 0, as things fall: slowly at first), or rolling off a pad with it.
     for (const p of pellets) {
       if (p.wet) continue;
@@ -110,6 +111,7 @@ export function createPond(options) {
       const out = Math.max(m - px, px - (W - m), m - py, py - (H - m), 0);
       if (out && !food) {
         if (W >= H) { mid.x = clamp(f.x, H / 2, W - H / 2); mid.y = H / 2; } else { mid.x = W / 2; mid.y = clamp(f.y, W / 2, H - W / 2); }
+        if (kb && mid.x > kb.l && mid.x < kb.r && mid.y > kb.t && mid.y < kb.b) mid.y = f.y < (kb.t + kb.b) / 2 ? kb.t : kb.b;   // that line runs through the headline: take the near side of it
         const d = dist(f, mid); const k = 3 * Math.min(1, out / (16 * s));
         sx += ((mid.x - f.x) / d) * k; sy += ((mid.y - f.y) / d) * k; arc = 50;
       }
@@ -122,6 +124,17 @@ export function createPond(options) {
         else if (d < cfg.reach * K) { tx = ptr.x; ty = ptr.y; pk = d > 48 * f.z ? 2 : d < 34 * f.z ? -1.2 : 0; speed *= d < 70 * f.z ? 0.6 : 1.2; arc = Math.min(arc, 34); level = 0.15; } // curious: come over and up, then loiter
       }
       if (pk) { const d = Math.hypot(tx - f.x, ty - f.y) || 1; sx += ((tx - f.x) / d) * pk; sy += ((ty - f.y) / d) * pk; }
+      // The headline lies on the bed in stone letters. A koi with nothing better to do swims round it, so it stays
+      // readable; food or a curious pointer takes a koi straight over it.
+      else if (kb && !tx && !ty) {   // (tx, ty: the pointer has its attention)
+        const in0 = Math.min(f.x - kb.l, kb.r - f.x, f.y - kb.t, kb.b - f.y); const in1 = Math.min(px - kb.l, kb.r - px, py - kb.t, kb.b - py);
+        const deep = Math.max(in0, in1);   // how far the head, or the point it is making for, is inside
+        if (deep > 0) {
+          const cx = (kb.l + kb.r) / 2; const cy = (kb.t + kb.b) / 2; const d = Math.hypot(f.x - cx, (f.y - cy) * 2.5) || 1;   // out by the short way: over the long side
+          const k = 2.6 * Math.min(1, deep / (20 * s));
+          sx += ((f.x - cx) / d) * k; sy += ((f.y - cy) * 2.5 / d) * k; arc = Math.min(arc, 46);
+        }
+      }
       f.scare = Math.max(0, f.scare - dt);
       f.dive += (level - f.dive) * Math.min(1, dt * (f.scare > 0 ? 3 : 0.8));
       let da = Math.atan2(sy, sx) - f.a; da = Math.atan2(Math.sin(da), Math.cos(da));
@@ -183,6 +196,8 @@ export function createPond(options) {
   return {
     st,
     setOptions(next) { cfg = next; },
+    // The box of the headline on the bed ({ l, t, r, b } in px), or null when there is none: idle koi keep clear of it.
+    setKeep(box) { st.keep = box; },
     stock, place, step, drop,
     // The Feed button and the action: seeded spots in the open water around the headline.
     seeded() { const p = [(0.16 + 0.68 * rnd(fed * 2 + 20)) * st.W, (0.2 + 0.6 * rnd(fed * 2 + 21)) * st.H]; fed++; return p; },

@@ -1,6 +1,7 @@
 // Koi pond hero — the first screen of Halden's Stillwater Pavilion page is the pavilion's water, photographed
-// from straight above: a clear, shallow pond in morning sun that falls through the slatted roof in bands. Koi
-// swim beneath the headline and under the lily pads; a slow pointer draws them over, a fast one scatters them
+// from straight above: a clear, shallow pond in morning sun that falls through the slatted roof in bands. The
+// headline lies on its bed in stone letters; koi swim over it and under the lily pads; a slow pointer draws them
+// over, a fast one scatters them
 // and skims the surface, and a click (or the Feed button) drops a pellet whose rings are real ripples in the
 // water. This file is the DOM, the input and the loop; pond.js holds the rules, renderer.js the image.
 import './style.css';
@@ -46,6 +47,8 @@ export default function mount(root, options = {}) {
     const w = root.clientWidth; const h = root.clientHeight;
     if (!w || !h) return;
     const moved = w !== st.W || h !== st.H;
+    const a = root.getBoundingClientRect(); const b = title.getBoundingClientRect();
+    pond.setKeep(cfg.text ? { l: b.left - a.left, t: b.top - a.top, r: b.right - a.left, b: b.bottom - a.top } : null);   // where the stone letters lie
     if (moved) {
       const restock = pond.fit(w, h);
       if (restock) R?.stock(st.fish);
@@ -99,7 +102,7 @@ export default function mount(root, options = {}) {
       const top = Math.min(window.devicePixelRatio || 1, 2);
       // on a 2x screen the governor may fall to 1x: soft, but it holds its frame rate
       if (gov) R.setRatio(gov.ratio); else gov = governor({ min: clamp(top * 0.5, 0.7, 1), max: top, onChange: (ratio) => R?.setRatio(ratio) });
-      document.fonts?.ready.then(() => { if (!dead && !lost && R === r) fit(); }); // the letters' shadow needs the real face
+      document.fonts?.ready.then(() => { if (!dead && !lost && R === r) fit(); }); // the stone letters need the real face
       run();
     }).catch((err) => {
       if (dead) return; // destroyed while it was still starting: the root has been handed back clean
@@ -134,7 +137,7 @@ export default function mount(root, options = {}) {
     update(next = {}) {
       const was = cfg; cfg = read({ ...cfg, ...next });
       pond.setOptions(cfg); R?.setRipple(cfg.ripple);
-      if (was.text !== cfg.text) { root.classList.toggle('koi--bare', !cfg.text); if (R && !lost) R.text(root, drawTextMask); } // the letters' shadow goes with them
+      if (was.text !== cfg.text) { root.classList.toggle('koi--bare', !cfg.text); fit(); } // the stone letters go with it
       if (was.count !== cfg.count || was.pads !== cfg.pads) { pond.stock(); R?.stock(st.fish); if (live) pond.place(); else pond.pose(); }
       if (!live) still();
     },

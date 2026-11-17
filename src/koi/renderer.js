@@ -103,7 +103,7 @@ export async function createRenderer(canvas, { low = false } = {}) {
 
   // ---- koi
   const fish = createFish();
-  const koiU = { uCaust: { value: rt.caustTmp.texture }, uShadow: { value: rt.shadow.texture }, uText: { value: textTex }, uSkin: { value: skinTex } };
+  const koiU = { uCaust: { value: rt.caustTmp.texture }, uShadow: { value: rt.shadow.texture }, uSkin: { value: skinTex } };
   const koi = sceneOf(fish.geo, mat(koiVert, koiFrag, koiU, OVER));
   const koiMask = sceneOf(fish.geo, mat(koiMaskVert, koiMaskFrag, {}, MAX));
 

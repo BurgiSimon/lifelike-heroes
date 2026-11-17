@@ -1,5 +1,5 @@
 // The photograph's main pass: for every pixel look down through the rippled surface, shade the floor it lands
-// on (pebbles, sun through the pavilion's roof and the caustics, the shadows of koi, pads and letters), lay the koi over it,
+// on (pebbles and the headline's stone letters, sun through the pavilion's roof and the caustics, the shadows of koi and pads), lay the koi over it,
 // take the water's toll, then add what the surface itself reflects.
 import { common, gobo } from './common.js';
 
@@ -64,6 +64,20 @@ void main() {
   float film = clamp(0.75 - aux.g * 1.5 + 1.1 * (vnoise(pf / (uS * 170.0) + 5.0) - 0.45), 0.0, 1.0);
   alb = mix(alb, alb * vec3(0.5, 0.5, 0.26) + vec3(0.004, 0.009, 0.003), film * 0.32);
   alb *= 0.9;
+  // ---- the headline lies on the bed: letters cut from pale stone, a finger thick. Being floor, they bend with the
+  // ripples, the roof's shade and the caustics fall across them, and the koi swim over them.
+  vec4 tx = textureLod(uText, uvOf(pf), 0.0);   // b: the letters, r: the same but soft
+  float stone = tx.b;
+  if (tx.r > 0.003) {
+    float te = 1.5 * uS;
+    vec2 tg = vec2(textureLod(uText, uvOf(pf + vec2(te, 0.0)), 0.0).r - textureLod(uText, uvOf(pf - vec2(te, 0.0)), 0.0).r,
+                   textureLod(uText, uvOf(pf + vec2(0.0, te)), 0.0).r - textureLod(uText, uvOf(pf - vec2(0.0, te)), 0.0).r);
+    vec3 sa = vec3(0.8, 0.78, 0.71) * (0.9 + 0.14 * vnoise(pf / (uS * 22.0) + 9.0) + 0.08 * (vnoise(pf / (uS * 1.6)) - 0.5));
+    sa = mix(sa, sa * vec3(0.62, 0.68, 0.42), 0.3 * smoothstep(0.45, 0.8, vnoise(pf / (uS * 46.0) + 31.0)));   // a little of the pond's film has begun on them, in patches of its own
+    alb = mix(alb, sa, stone);
+    n = normalize(mix(n, vec3(-tg * 3.4, 1.0), stone));       // a worn bevel round every edge
+    aux.r = mix(aux.r, 1.0, stone);
+  }
   vec2 wob = g * 30.0 * uS;                                  // the same ripples that focus the light bend the shadows
   vec2 sdir = SHDIR * TANW;
   float gate = goboAt(pf - sdir * 30.0 * uS + wob * 0.15, 0.03 * d);   // the floor's unevenness would bend the beams' shadows out of recognition: they are laid as on a level bed
@@ -74,14 +88,14 @@ void main() {
   vec2 sh = vec2(0.0, textureLod(uShadow, su, 1.6 * deep).g);
   float rim = smoothstep(0.1, 0.4, textureLod(uShadow, su, 2.6).g - sh.g) * (1.0 - deep);
   float shKoi = texture(uShadow, uvOf(pf + wob)).r;   // koi shadows are drawn where they land; a pad's (green) lies at the surface
-  // the letters hang just above the water: on the deep floor their shadow is only a soft pool, down-sun of the type
-  float shText = texture(uText, uvOf(pf - SHDIR * 26.0 * uS + wob)).g;
-  float lit = (1.0 - 0.9 * shKoi) * (1.0 - 0.94 * sh.g) * (1.0 - 0.6 * shText);
+  // the letters' own shadow on the pebbles down-sun of them, and the dim seam where stone meets pebble
+  float shText = textureLod(uText, uvOf(pf - sdir * 9.0 * uS), 0.0).r * (1.0 - stone);
+  float lit = (1.0 - 0.9 * shKoi) * (1.0 - 0.94 * sh.g) * (1.0 - 0.75 * shText);
   vec3 sun = SUNCOL * gate * mix(1.0, ca, 0.86 - 0.2 * deep) * lit * (1.0 + 1.3 * rim);
   float ndl = max(dot(n, SUN_W), 0.0);
-  vec3 amb = SKYCOL * (0.5 + 0.5 * gate) * mix(0.3, 1.0, aux.r) * (1.0 - 0.35 * sh.g) * (1.0 - 0.3 * shKoi);   // the roof hides some of the sky too
+  vec3 amb = SKYCOL * (0.5 + 0.5 * gate) * mix(0.3, 1.0, aux.r) * (1.0 - 0.35 * sh.g) * (1.0 - 0.3 * shKoi) * (1.0 - 0.5 * tx.r * (1.0 - stone));   // the roof hides some of the sky too
   vec3 col = alb * (sun * ndl + amb);
-  col = throughWater(col, d, (0.3 + 0.7 * gate) * (1.0 - 0.45 * shText) * (1.0 - 0.3 * sh.g));
+  col = throughWater(col, d * (1.0 - 0.72 * stone), (0.3 + 0.7 * gate) * (1.0 - 0.3 * sh.g));   // the letters stand well clear of the bed: less water lies over them
 
   // ---- koi, a little less displaced than the floor because they are nearer the surface
   vec4 k = texture(uKoi, uvOf(p + off * (dk / d)));
@@ -96,7 +110,7 @@ void main() {
   // ---- sun glitter: a facet of the surface that leans far enough toward the sun mirrors it into the lens as one
   // burnt-out point. Wind ripples manage it on a crest here and there, more toward the sun's side of the frame
   // where less lean is needed; a ring or a wake carries a whole line of points. None in the roof's shade.
-  float tm = smoothstep(0.0, 0.6, texture(uText, vUv).g);   // full under the letters, fading out round them
+  float tm = smoothstep(0.0, 0.6, texture(uText, vUv).g);   // full under the button, fading out round it
   float open = goboAt(p, 0.0);
   vec2 lean = (sf.xy + 0.6 * (sf.xy - gs)) - (GLINT + 0.5 * (p - 0.5 * uRes) / max(uRes.x, uRes.y));
   float glint = exp(-dot(lean, lean) * 120.0) * open * (1.0 - tm);
@@ -110,8 +124,8 @@ void main() {
     col = mix(col, vec3(0.56, 0.52, 0.3) * (SUNCOL * open * 0.3 + SKYCOL * 0.7), 0.36 * veil);
   }
 
-  // ---- the copy's quiet: a soft dip in exposure under the letters, which takes most from the brightest lines
-  // of light, so the type never has to compete with a caustic
+  // ---- the button's quiet: a soft dip in exposure under it, which takes most from the brightest lines of light,
+  // so its label never has to compete with a caustic
   col *= (1.0 - 0.5 * tm) / (1.0 + 3.4 * tm * dot(col, vec3(0.3, 0.6, 0.1)));
   o = vec4(col, 1.0);
 }

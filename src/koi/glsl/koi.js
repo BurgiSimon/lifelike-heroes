@@ -51,7 +51,7 @@ ${common}
 ${gobo}
 in vec4 vA; in vec3 vT; flat in vec4 vC; in vec2 vP; in float vD;
 out vec4 o;
-uniform sampler2D uCaust; uniform sampler2D uShadow; uniform sampler2D uText;
+uniform sampler2D uCaust; uniform sampler2D uShadow;
 uniform sampler2D uSkin;   // one painted strip per koi (skins.js)
 
 const vec3 WHITE = vec3(0.62, 0.6, 0.55);
@@ -80,14 +80,13 @@ void main() {
   // seen through more water an outline is softer
   float edge = smoothstep(0.0, 1.0 + 3.5 * sunk, (w - abs(l)) * uPx + 0.5);
 
-  // light arriving at this koi: sun through the roof and the ripples, less under a pad or a letter. The ripples
+  // light arriving at this koi: sun through the roof and the ripples, less under a pad. The ripples
   // have not finished focusing it this far above the floor: broad bands that slide over the back.
   vec2 ps = vP - SHDIR * TANW * dk;      // where that light came through the surface
   float sunGate = goboAt(ps, dk * 0.08);
   float ca = textureLod(uCaust, uvOf(vP + lat * l * 0.35), 1.0 + 1.6 * (1.0 - dk / d)).r;
   float shPad = texture(uShadow, uvOf(ps)).g;
-  float shText = texture(uText, uvOf(ps - SHDIR * 10.0 * uS)).r;
-  vec3 sun = SUNCOL * sunGate * mix(1.0, min(ca, 2.6), 0.85) * (1.0 - 0.92 * shPad) * (1.0 - 0.7 * shText);   // capped: a pale koi under a bright line must not burn out
+  vec3 sun = SUNCOL * sunGate * mix(1.0, min(ca, 2.6), 0.85) * (1.0 - 0.92 * shPad);   // capped: a pale koi under a bright line must not burn out
   vec3 amb = SKYCOL * (0.5 + 0.35 * sunGate) * (1.0 - 0.5 * shPad);
 
   vec3 col; float alpha;

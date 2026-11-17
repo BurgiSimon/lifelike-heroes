@@ -1,4 +1,5 @@
-/* Koi pond hero. The canvas is the photograph; the headline, the Feed button and the plate line are DOM on top. */
+/* Koi pond hero. The canvas is the photograph, the headline included (stone letters on the pond's bed); the Feed
+   button and the plate line are DOM on top. */
 .koi {
   --koi-ground: #0c1513; /* the quiet ground before the water arrives, and the fallback */
   --koi-ink: #f6f3ea;
@@ -16,7 +17,9 @@
 .koi__canvas { opacity: 0; transition: opacity 1.4s var(--ease-out); }
 .koi--ready .koi__canvas { opacity: 1; }
 
-/* The headline lies above the surface: koi pass beneath the letters, and the scene shades the water under them. */
+/* The headline is real text, set where the scene lays its stone letters (the scene reads the layout from it). Until
+   the pond is ready, and when there is no WebGL, it is the headline; then the stone letters take its place and the
+   text stays for assistive tech only (transparent, not hidden). */
 .koi__title {
   position: relative;
   max-width: 11ch;
@@ -30,7 +33,9 @@
   text-wrap: balance;
   pointer-events: none;
   text-shadow: 0 1px 2px rgb(4 12 10 / 0.28), 0 0 34px rgb(4 12 10 / 0.22);
+  transition: opacity 1.4s var(--ease-out);
 }
+.koi--ready .koi__title { opacity: 0; }
 
 /* The invitation and the keyboard path: a small pane of smoked glass, so no koi shows through its label. */
 .koi__cue {
@@ -82,7 +87,7 @@
 /* The text can be switched off (the text option): the pond alone. Hidden, not removed, so the layout holds. */
 .koi--bare .koi__title, .koi--bare .koi__cue, .koi--bare .koi__note { visibility: hidden; }
 
-@media (prefers-reduced-motion: reduce) { .koi__canvas, .koi__cue { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .koi__canvas, .koi__title, .koi__cue { transition: none; } }
 
 .koi--static .koi__canvas { visibility: hidden; }
 .koi--static .koi__cue { display: none; } /* no pond to feed */

@@ -48,7 +48,7 @@ This is the picture at the top of this page: a magazine cover for a "Weather" is
 
 <p>
   <a href="https://burgisimon.github.io/lifelike-heroes/koi.html">
-    <img src="docs/readme/koi.jpg" width="100%" alt="Looking straight down into a clear, sunlit pond: koi swim over a pebble floor between lily pads, under the headline Stillwater Pavilion">
+    <img src="docs/readme/koi.jpg" width="100%" alt="Looking straight down into a clear, sunlit pond: koi swim between lily pads over a pebble floor on which the headline Stillwater Pavilion lies in pale stone letters">
   </a>
 </p>
 
