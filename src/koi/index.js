@@ -12,6 +12,10 @@ import { drawTextMask } from './textmask.js';
 const DEFAULTS = { count: 6, pads: 6, speed: 1, reach: 220, ripple: 260 };
 const LIMITS = { count: [3, 8], pads: [0, 7], speed: [0.5, 2], reach: [0, 420], ripple: [120, 480] };
 const STILL_T = 14.2; // the moment of wind a still shows
+// What a page may offer for tweaking, within the same limits, and the actions it may trigger.
+export const controls = [['count', 'Koi', 1], ['pads', 'Lily pads', 1], ['speed', 'Cruise speed', 0.1, '×'], ['reach', 'Curiosity reach', 10, 'px'], ['ripple', 'Ripple reach', 20, 'px']]
+  .map(([id, label, step, unit]) => ({ id, label, min: LIMITS[id][0], max: LIMITS[id][1], step, value: DEFAULTS[id], unit }));
+export const actions = [{ id: 'feed', label: 'Feed the koi' }];
 
 const read = (o) => {
   const c = { ...DEFAULTS };

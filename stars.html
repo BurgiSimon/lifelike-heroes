@@ -9,10 +9,10 @@
   <main id="hero" class="hero"></main>
   <script type="module">
     import '/src/shared/base.css';
-    import mount from '/src/stars/index.js';
+    import mount, { controls, actions } from '/src/stars/index.js';
     import { chrome } from '/src/shared/chrome.js';
     window.hero = mount(document.getElementById('hero'));
-    chrome(window.hero);
+    chrome(window.hero, { controls, actions });
   </script>
 </body>
 </html>

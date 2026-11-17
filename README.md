@@ -178,7 +178,7 @@ hero.destroy();                // remove it and release its GPU resources
 | Koi pond | `count`, `pads`, `speed`, `reach`, `ripple`, `text` | `feed` |
 | Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text` | `pin`, `clear` |
 
-`text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same.
+`text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same, and the **Options** tab beside it slides out a panel with a control for every other option and a button for every action.
 
 ### Project layout
 

@@ -14,6 +14,15 @@ const TAU = Math.PI * 2;
 const FLING = { decay: 2.2, max: 2.5 };     // after a drag: speed × e^(−2.2 t), at most 2.5 rad/s
 const SPIN = -1;                            // the northern sky turns anticlockwise for someone looking up at the pole
 const DEFAULTS = { drift: 0.4, cell: 38, reach: 150, join: 7, tone: 'accent', text: true };
+// What a page may offer for tweaking (the ranges tidy() holds the options to), and the actions it may trigger.
+export const controls = [
+  { id: 'drift', label: 'Sky drift', min: 0, max: 2, step: 0.1, value: 0.4, unit: '°/s' },
+  { id: 'cell', label: 'Star spacing', min: 28, max: 56, step: 2, value: 38, unit: 'px' },
+  { id: 'reach', label: 'Pointer reach', min: 80, max: 240, step: 10, value: 150, unit: 'px' },
+  { id: 'join', label: 'Stars joined', min: 3, max: 9, step: 1, value: 7 },
+  { id: 'tone', label: 'Pin colour', options: ['accent', 'ink', 'sky', 'clay', 'plum'], value: 'accent' },
+];
+export const actions = [{ id: 'pin', label: 'Pin a constellation' }, { id: 'clear', label: 'Clear the chart' }];
 const TONES = { accent: '#ff6a3d', ink: '#f2f2ee', sky: '#8fb6e0', clay: '#d4855d', plum: '#9a7096' };
 
 // A CSS colour → what the scene has to emit for the film (post's curve) to print exactly that colour.

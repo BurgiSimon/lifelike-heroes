@@ -18,6 +18,15 @@ import { createField } from './field.js';
 import { createPost } from './post.js';
 
 const DEFAULTS = { wind: 1, reach: 150, density: 1, cap: 60, petals: 'mixed', text: true };
+// What a page may offer for tweaking (the ranges tidy() holds the options to), and the actions it may trigger.
+export const controls = [
+  { id: 'wind', label: 'Wind', min: 0, max: 3, step: 0.1, value: 1, unit: '×' },
+  { id: 'reach', label: 'Pointer reach', min: 60, max: 280, step: 10, value: 150, unit: 'px' },
+  { id: 'density', label: 'Grass density', min: 0.5, max: 1.5, step: 0.1, value: 1, unit: '×' },
+  { id: 'cap', label: 'Most flowers', min: 12, max: 120, step: 4, value: 60 },
+  { id: 'petals', label: 'Petals', options: ['mixed', 'accent'], value: 'mixed' },
+];
+export const actions = [{ id: 'sow', label: 'Sow a flower' }, { id: 'gust', label: 'Send a gust' }];
 const ASSETS = `${import.meta.env.BASE_URL}assets/meadow/`;
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 const num = (v, d) => (Number.isFinite(+v) ? +v : d);
