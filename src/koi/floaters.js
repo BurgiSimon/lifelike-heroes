@@ -80,7 +80,10 @@ export function createFloaters({ pollen = 70, petals = 8 } = {}) {
         }
         put(x, y, rb * 0.3, turn, 1, rnd(pi + 60), 0, white);
       }
-      for (const p of st.pellets) put(p.x, p.y, 3.1 * S * Math.min(1, 0.4 + (st.t - p.t) * 4), p.seed * 6.283, 2, p.seed, 0, 0);
+      for (const p of st.pellets) {
+        const age = st.t - p.t;   // meeting the water it ducks under and bobs up again; its height is the shader's to draw
+        put(p.x, p.y, 3.1 * S * (p.wet ? 1 - 0.22 * Math.exp(-8 * age) * Math.sin(18 * age) : 1), p.seed * 6.283, 2, p.seed, p.h, 0);
+      }
       geo.instanceCount = n;
       iA.needsUpdate = iB.needsUpdate = true;
     },

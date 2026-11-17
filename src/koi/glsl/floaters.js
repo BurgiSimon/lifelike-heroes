@@ -1,6 +1,7 @@
 // Everything that floats: lily pads, their blooms, pellets, pollen, fallen leaves and petals. One instanced quad
 // each. iA = (x, y, radius px, angle), iB = (kind: 0 pad, 1 a bloom's stamens, 2 pellet, 3 pollen, 4 fallen leaf
-// or petal, 5 one petal of a bloom; seed; two free values).
+// or petal, 5 one petal of a bloom; seed; two free values). A pellet's first free value is its height on the way
+// down, 1 to 0.
 import { common, gobo } from './common.js';
 
 export const floatVert = /* glsl */ `
@@ -10,13 +11,16 @@ in vec4 iA; in vec4 iB;
 uniform sampler2D uSurf;
 out vec2 vQ; flat out vec4 vA; flat out vec4 vB; flat out vec3 vG; out vec2 vP;
 void main() {
-  float r = iA.z; float m = 1.0 + 4.0 / r;      // room for the edge and the meniscus round it
+  float r = iA.z;
+  float up = iB.x > 1.5 && iB.x < 2.5 ? iB.z : 0.0;   // a pellet still in the air
   vec3 sf = textureLod(uSurf, uvOf(iA.xy), 0.0).xyz;
-  vec2 c = iA.xy + sf.xy * (iB.x < 1.5 || iB.x > 4.5 ? 10.0 : 22.0) * uS;   // light things slide down the face of a ripple
+  vec2 c = iA.xy + sf.xy * (iB.x < 1.5 || iB.x > 4.5 ? 10.0 : 22.0) * uS * (1.0 - min(1.0, up * 20.0));   // light things slide down the face of a ripple
+  r /= 1.0 - 0.66 * up;                               // up there it is nearer the lens
+  float m = 1.0 + 4.0 / r;      // room for the edge and the meniscus round it
   float cs = cos(iA.w); float sn = sin(iA.w);
   vec2 q = position.xy * m;
   vec2 p = c + vec2(cs * q.x - sn * q.y, sn * q.x + cs * q.y) * r;
-  vQ = q; vA = iA; vB = iB; vG = sf; vP = p;
+  vQ = q; vA = vec4(iA.xy, r, iA.w); vB = iB; vG = sf; vP = p;
   gl_Position = vec4(p.x / uRes.x * 2.0 - 1.0, 1.0 - p.y / uRes.y * 2.0, 0.0, 1.0);
 }
 `;
@@ -67,7 +71,7 @@ void main() {
   float r = vA.z; float kind = vB.x; float a;
   if (kind < 0.5) a = clamp(padShape(vQ, r, vB.y) * uPx * 0.34 + 0.5, 0.0, 1.0);
   else if (kind < 1.5) a = (1.0 - smoothstep(0.7, 1.0, length(vQ))) * 0.9;
-  else if (kind < 2.5) a = 1.0 - smoothstep(0.7, 1.3, length(vQ));
+  else if (kind < 2.5) a = (1.0 - smoothstep(0.7, 1.3, length(vQ))) * (1.0 - vB.z);   // a shadow that small is lost on the way down from any height
   else if (kind > 4.5) { float al; a = clamp(petal(vQ, r, cos(vB.z), al) * uPx * 0.34 + 0.5, 0.0, 1.0) * 0.85; }
   else if (kind > 3.5) { float al; float c; a = clamp(leaf(vQ, r, vB.y, al, c) * uPx * 0.34 + 0.5, 0.0, 1.0) * 0.85; }
   else a = (1.0 - smoothstep(0.5, 1.0, length(vQ))) * 0.25;
@@ -209,13 +213,14 @@ void main() {
     col = mix(vec3(0.0), col, alpha); alpha = max(alpha, shd * (1.0 - alpha));
     o = vec4(col, alpha); return;
   } else if (kind < 2.5) {
-    // ---- pellet: a small brown ball sitting in the surface
-    float rho = length(q);
+    // ---- pellet: a small brown ball sitting in the surface. On its way down (up, 1 to 0) it is nearer the lens:
+    // out of focus, and it comes into the frame rather than appearing in it.
+    float rho = length(q); float up = vB.z;
     vec3 n = vec3(q, sqrt(max(1.0 - rho * rho, 0.0)));
-    alpha = clamp((1.0 - rho) * r * uPx + 0.5, 0.0, 1.0);
+    alpha = clamp((1.0 - rho) * r * uPx / (1.0 + 5.0 * up) + 0.5, 0.0, 1.0) * (1.0 - smoothstep(0.9, 1.0, up));
     vec3 alb = vec3(0.3, 0.17, 0.07) * (0.8 + 0.4 * vnoise(q * 5.0 + seed * 9.0));
     col = alb * (sun * max(dot(n, sunL), 0.0) + amb) + sun * pow(max(dot(n, hv), 0.0), 30.0) * 0.25;
-    float men = (1.0 - smoothstep(1.0, 1.5, rho)) * (1.0 - alpha);
+    float men = (1.0 - smoothstep(1.0, 1.5, rho)) * (1.0 - alpha) * (1.0 - min(1.0, up * 20.0));
     col = mix(vec3(0.0), col, alpha); alpha = max(alpha, men * 0.4);
   } else if (kind < 3.5) {
     // ---- pollen: a pale speck riding in the surface film

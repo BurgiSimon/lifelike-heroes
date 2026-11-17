@@ -9,6 +9,7 @@ export const TSEG = 4.1;   // their spacing
 export const WID = [0.86, 0.97, 1, 0.98, 0.9, 0.77, 0.6, 0.44, 0.31, 0.22]; // half-width profile, gill cover to peduncle
 const CRUISE = 24;         // px/s at scale 1
 const PELLETS = 8;         // most pellets in the water; the oldest goes first
+const FALL = 0.32;         // s a pellet is in the air before it comes down
 export const WAVE = 80;    // px/s a click's rings travel
 const STARTLE = 130;       // px around a fast pointer, for a koi as the original drew it
 // The original's koi were the size of its lily pads. Real ones are two or three pads long, so these are drawn
@@ -53,10 +54,41 @@ export function createPond(options) {
   // (a head may even leave the frame for a moment), and they turn back from it on a wider circle.
   const dist = (f, p) => Math.hypot(p.x - f.x, p.y - f.y) || 1;
   const mid = { x: 0, y: 0 };
+  // A pellet has come down, or has rolled to a rim. In open water it splashes, and from then the koi may have it.
+  // On a lily pad it lies dry: the pad gives a little and the pellet rolls off the nearest rim (toward the middle of
+  // the pond where that rim is out of the frame), and comes down again there.
+  const land = (p) => {
+    const { W, H, S, t } = st;
+    const pad = st.pads.find((q) => Math.hypot(p.x - q.u * W - q.ox, p.y - q.v * H - q.oy) < q.r * S);
+    if (!pad) { p.wet = true; p.t = t; st.rips.push({ x: p.x, y: p.y, t }); st.splash.push({ x: p.x, y: p.y, kind: 'pellet' }); return; }
+    const cx = pad.u * W + pad.ox; const cy = pad.v * H + pad.oy; const out = (pad.r + 7) * S;
+    const x0 = p.x - cx; const y0 = p.y - cy;
+    let dx = x0; let dy = y0;
+    if (Math.hypot(dx, dy) < 1) { dx = Math.cos(p.seed * 6.283); dy = Math.sin(p.seed * 6.283); }   // dead centre: any way is down
+    const off = () => { const d = Math.hypot(dx, dy) || 1; dx /= d; dy /= d; return Math.min(cx + dx * out, cy + dy * out, W - cx - dx * out, H - cy - dy * out) < 14; };
+    if (off()) { dx = W / 2 - cx; dy = H / 2 - cy; off(); }
+    const x1 = dx * out; const y1 = dy * out;
+    p.roll = { pad, x0, y0, x1, y1, t0: t, T: 0.3 + 0.5 * Math.hypot(x1 - x0, y1 - y0) / out };
+    pad.vx -= dx * 9; pad.vy -= dy * 9; pad.va += pad.spin * 0.12;
+  };
   const step = (dt) => {
     st.t += dt;
     const { W, H, S, K, t, fish, pellets, ptr } = st;
     const life = cfg.ripple / WAVE; // a click's rings fade as they reach cfg.ripple px
+    // Pellets on their way: falling (h, 1 to 0, as things fall: slowly at first), or rolling off a pad with it.
+    for (const p of pellets) {
+      if (p.wet) continue;
+      if (p.roll) {
+        const { pad, x0, y0, x1, y1, t0, T } = p.roll; const k = Math.min(1, (t - t0) / T) ** 2;
+        p.x = pad.u * W + pad.ox + x0 + (x1 - x0) * k; p.y = pad.v * H + pad.oy + y0 + (y1 - y0) * k;
+        if (k < 1) continue;
+        p.roll = null;
+      } else {
+        p.h = 1 - Math.min(1, (t - p.born) / FALL) ** 2;
+        if (p.h > 0) continue;
+      }
+      land(p);
+    }
     for (const f of fish) {
       const s = S * f.z; const m = 16 * s + 6;
       let sx = Math.cos(f.a); let sy = Math.sin(f.a); let arc = 96;
@@ -69,7 +101,7 @@ export function createPond(options) {
         if (o !== f && d < room) { sx -= Math.sin(f.a) * k; sy += Math.cos(f.a) * k; arc = Math.min(arc, 60); }
       }
       let food = null; let fd = Infinity;
-      for (const p of pellets) { const d = dist(f, p); if (d < fd) { fd = d; food = p; } }
+      for (const p of pellets) { const d = dist(f, p); if (p.wet && d < fd) { fd = d; food = p; } }   // only what is in the water
       let tx = 0; let ty = 0; let pk = 0; // one pull toward (or away from) a point
       let level = 0.5 + 0.4 * Math.sin(t * 0.13 + f.ph * 1.3); // how deep it would like to swim: a slow rise and fall of its own
       // Banks: probe ahead, and once the probe leaves the safe box head for the water's middle line (along its
@@ -142,9 +174,8 @@ export function createPond(options) {
   };
 
   const drop = (x, y) => {
-    const p = { x: clamp(x, 14, st.W - 14), y: clamp(y, 14, st.H - 14), t: st.t, seed: rnd(fed * 7 + st.pellets.length + Math.floor(st.t * 60)) };
-    st.rips.push({ x: p.x, y: p.y, t: st.t });
-    st.splash.push({ x: p.x, y: p.y, kind: 'pellet' });
+    // It starts in the air (h: its height, 1 to 0); t is when it met the water, once it has (wet).
+    const p = { x: clamp(x, 14, st.W - 14), y: clamp(y, 14, st.H - 14), born: st.t, t: st.t, h: 1, wet: false, roll: null, seed: rnd(fed * 7 + st.pellets.length + Math.floor(st.t * 60)) };
     st.pellets.push(p); if (st.pellets.length > PELLETS) st.pellets.shift();
     return p;
   };
