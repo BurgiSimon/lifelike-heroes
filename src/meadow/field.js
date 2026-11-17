@@ -2,12 +2,11 @@
 // blades — across the frame, and by depth down it. Each cell leans away from the pointer (and with its speed) on
 // the original's spring; every blade and flower reads its lean from the grid in the vertex shader.
 import * as THREE from 'three';
-import { SPRING, CURVE } from './config.js';
-import { shared } from './glsl.js';
+import { SPRING } from './config.js';
 
 const GW = 96; const GH = 28;
 
-export function createField() {
+export function createField(shared) {
   const o = new Float32Array(GW * GH); const v = new Float32Array(GW * GH);
   const half = new Uint16Array(GW * GH);
   const tex = new THREE.DataTexture(half, GW, GH, THREE.RedFormat, THREE.HalfFloatType);
@@ -44,8 +43,8 @@ export function createField() {
       tex.needsUpdate = true;
       return true;
     },
+    // everything upright again, at once (for the still picture)
+    reset() { o.fill(0); v.fill(0); half.fill(0); sprung = false; tex.needsUpdate = true; },
     dispose() { tex.dispose(); },
   };
 }
-
-export const depthOfY = (yShare, hz, foot) => Math.min(1, Math.max(0, (yShare - hz) / (foot - hz))) ** (1 / CURVE);

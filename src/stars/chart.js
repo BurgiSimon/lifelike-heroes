@@ -10,13 +10,24 @@ const LEAVE = 1200;                         // ms the oldest pin takes to fade
 const SHOT = 1000;                          // ms a shooting star lasts
 const GAP = 5;                              // px an inked line stops short of its stars
 const MAX_JOIN = 9;
+const EDGE = 108;                           // degrees from the pole where the chart's sky has thinned out (see skyFrag)
 const MAX_LINES = 160;
 export const LINE_STRIDE = 9;               // ax ay bx by | r g b | width | glow
 // Invented catalogue names, in the order they are given out (the cast's world, not the real sky).
 const NAMES = ['The Tern', 'The Kiln', 'The Oar', 'The Ladder', 'The Salt Pan', 'The Crane', 'The Lantern', 'The Loom', 'The Anvil', 'The Net', 'The Kettle', 'The Sledge'];
 // Where the chart's first constellations sit, as shares of the hero (landscape, portrait).
-const FIRST = { wide: [[0.2, 0.25], [0.87, 0.76]], tall: [[0.27, 0.13], [0.26, 0.47]] };
+const FIRST = { wide: [[0.2, 0.25], [0.88, 0.2]], tall: [[0.27, 0.13], [0.26, 0.47]] };
 
+// Liang–Barsky: does the segment touch the box?
+const crosses = (x0, y0, x1, y1, b) => {
+  let t0 = 0; let t1 = 1; const dx = x1 - x0; const dy = y1 - y0;
+  for (const [p, q] of [[-dx, x0 - b.l], [dx, b.r - x0], [-dy, y0 - b.t], [dy, b.b - y0]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const r = q / p;
+    if (p < 0) { if (r > t1) return false; t0 = Math.max(t0, r); } else { if (r < t0) return false; t1 = Math.min(t1, r); }
+  }
+  return true;
+};
 const rng = (a) => () => { a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
 const cubicOut = (t) => 1 - (1 - t) ** 3;
 
@@ -36,6 +47,7 @@ export function createChart({ catalog, view, still, status, skyline }) {
   const done = new Uint8Array(MAX_JOIN);
   const shoot = { on: false, x: 0, y: 0, dx: 0, dy: 0, t0: 0, p: 0 };
   let count = 0; let last = 0; let opened = false;
+  let sum = 0; let end = 0; let dirty = true; let dirtyEnd = 0; // what of `marks` changed since the renderer last took it
 
   // cell is the original's star spacing; here it sets how deep the selectable set goes, so a reach holds about as
   // many stars to choose from as it did (the count of stars triples with each magnitude).
@@ -50,6 +62,7 @@ export function createChart({ catalog, view, still, status, skyline }) {
       const x = view.poleX + sky[i * 2] * c - sky[i * 2 + 1] * s; const y = view.poleY + sky[i * 2] * s + sky[i * 2 + 1] * c;
       px[i] = x; py[i] = y;
       if (i >= nSel || x < -8 || y < -8 || x > view.W + 8 || y > view.H + 8) continue;
+      if (sky[i * 2] * sky[i * 2] + sky[i * 2 + 1] * sky[i * 2 + 1] > EDGE * EDGE) continue; // past the chart's edge
       clear[i] = clamp(Math.max(b.l - x, x - b.r, b.t - y, y - b.b) / 26, 0, 1) * (y < skyline(x) - 6 ? 1 : 0);
       vis[nVis++] = i;
     }
@@ -58,7 +71,7 @@ export function createChart({ catalog, view, still, status, skyline }) {
   // The brightest stars within reach of a point (distance counts a little), joined as a minimum spanning tree in
   // the order it grows from the first, so an inked constellation can be drawn edge by edge.
   const near = (x, y, join, out) => {
-    const reach = view.reach; let n = 0;
+    const reach = view.reach; let n = 0; join = Math.min(join, MAX_JOIN);
     for (let v = 0; v < nVis; v++) {
       const i = vis[v];
       if (clear[i] < 0.6) continue;
@@ -95,12 +108,15 @@ export function createChart({ catalog, view, still, status, skyline }) {
     marks, lines, pins, shoot,
     get nLines() { return nLines; },
     get magLimit() { return magLimit; },
+    // The renderer asks once per frame: how much of `marks` (in stars) to upload, 0 when nothing changed.
+    takeMarks() { const n = dirty ? dirtyEnd : 0; dirty = false; dirtyEnd = 0; return n; },
     limit,
 
     // One frame of the chart at time `now` (ms): where everything is, what is lit, which lines to draw.
     update(now, ptr, cfg, tone, pencilCol) {
       const k = still ? 1 : clamp((now - last) / EASE, 0, 1); last = now;
       project();
+      const sum0 = sum; const end0 = end;
       for (let t = 0; t < nTouched; t++) { marks[touched[t] * 2] = 0; marks[touched[t] * 2 + 1] = 0; }
       nTouched = 0; nLines = 0;
 
@@ -133,12 +149,17 @@ export function createChart({ catalog, view, still, status, skyline }) {
           mark(pin.tree[e + 1], 0, alpha * share ** 3);
         }
         pin.label = alpha * clamp((age - (pin.tree.length / 2) * INK.stagger - INK.grow) / 300, 0, 1);
-        let cx = 0; let cy = 0; let lowest = -1e9;
-        for (const i of pin.pick) { cx += px[i]; cy += py[i]; lowest = Math.max(lowest, py[i]); }
-        pin.x = cx / pin.pick.length; pin.cy = cy / pin.pick.length; pin.y = lowest + 18;
+        let cx = 0; let cy = 0; let lowest = -1e9; let highest = 1e9;
+        for (const i of pin.pick) { cx += px[i]; cy += py[i]; lowest = Math.max(lowest, py[i]); highest = Math.min(highest, py[i]); }
+        pin.x = cx / pin.pick.length; pin.cy = cy / pin.pick.length; pin.y = lowest + 18; pin.top = highest - 16;
       }
 
       if (shoot.on) { shoot.p = (now - shoot.t0) / SHOT; if (shoot.p >= 1) shoot.on = false; }
+
+      // The marks reach the GPU only when they changed (a settled chart uploads nothing), and only as far as they go.
+      sum = 0; end = 0;
+      for (let t = 0; t < nTouched; t++) { const i = touched[t]; sum += (marks[i * 2] + 2 * marks[i * 2 + 1]) * (i + 1); if (i >= end) end = i + 1; }
+      if (sum !== sum0 || end !== end0) { dirty = true; dirtyEnd = Math.max(dirtyEnd, end, end0); }
     },
 
     // Ink the constellation at a point. `delay` staggers the chart's first ones on load; `quiet` skips the shooting
@@ -157,28 +178,39 @@ export function createChart({ catalog, view, still, status, skyline }) {
           count += 1;
         }
         const n = twin ? twin.n : count; const name = twin ? twin.name : NAMES[(count - 1) % NAMES.length];
-        pins.push({ pick, tree, t0: still ? -1e9 : now + delay, n, name, text: `${String(n).padStart(2, '0')}  ${name.toUpperCase()}`, alpha: 1, label: 0, x: p.x, y: p.y, cy: p.y, out: undefined });
+        pins.push({ pick, tree, t0: still ? -1e9 : now + delay, n, name, text: `${String(n).padStart(2, '0')}  ${name.toUpperCase()}`, alpha: 1, label: 0, x: p.x, y: p.y, cy: p.y, top: p.y, out: undefined });
         if (!quiet) status.textContent = `Pinned ${name}, ${pick.length} stars.`;
       }
-      if (still || quiet) return;
+      if (still || quiet || pick.length < 2) return pick.length >= 2;
       // A meteor crosses the chart, away from the nearer edge.
       const dir = p.x < view.W / 2 ? 1 : -1; const len = Math.min(520, view.W * 0.45);
       Object.assign(shoot, { on: true, x: p.x + dir * 18, y: Math.max(8, p.y - 40), dx: dir * len, dy: len * 0.2, t0: now, p: 0 });
+      return true;
     },
 
-    // A seeded spot with stars to join: clear of the headline, the pole, the edges, the ridge and the pins already there.
+    // A seeded spot with stars to join: clear of the headline, the pole, the edges, the land and the pins already
+    // there, and none of its lines may run behind the headline. A full chart lets its oldest constellation go to
+    // make the room; null when even that finds none.
     spot(cfg) {
-      const b = view.box; const probe = { pick: new Int32Array(MAX_JOIN), n: 0, tree: new Int32Array(MAX_JOIN * 2) }; let p;
+      const b = view.box; const probe = { pick: new Int32Array(MAX_JOIN), n: 0, tree: new Int32Array(MAX_JOIN * 2) };
       project();
-      // ponytail: 24 seeded tries, then the last one stands (a crowded chart re-inks a neighbour). Poisson sampling if it matters.
-      for (let n = 0; n < 24; n++) {
-        p = { x: (0.08 + spots() * 0.84) * view.W, y: (0.12 + spots() * 0.72) * view.H };
-        const inBox = p.x > b.l - 50 && p.x < b.r + 50 && p.y > b.t - 50 && p.y < b.b + 50;
+      // ponytail: seeded rejection sampling, 120 tries. Poisson-disc candidates if a chart ever needs to be packed tight.
+      const find = (skip) => { for (let n = 0; n < 120; n++) {
+        const p = { x: (0.08 + spots() * 0.84) * view.W, y: (0.12 + spots() * 0.72) * view.H };
+        if (p.x > b.l - 50 && p.x < b.r + 50 && p.y > b.t - 50 && p.y < b.b + 50) continue;
+        if (Math.hypot(p.x - view.poleX, p.y - view.poleY) < view.ring * 0.7 || p.y > skyline(p.x) - 40) continue;
         near(p.x, p.y, cfg.join, probe);
+        if (probe.n < 3) continue;
         const pick = Array.from(probe.pick.subarray(0, probe.n));
-        const taken = pins.some((q) => q.out === undefined && (Math.hypot(q.x - p.x, q.cy - p.y) < view.reach * 1.3 || q.pick.some((i) => pick.includes(i))));
-        if (!inBox && !taken && Math.hypot(p.x - view.poleX, p.y - view.poleY) > view.ring * 0.7 && p.y < skyline(p.x) - 40 && pick.length >= 3) break;
-      }
+        const apart = view.reach * (n < 60 ? 1.3 : 0.75); // room to itself first; on a small chart, a neighbour's elbow
+        if (pins.some((q) => q !== skip && q.out === undefined && (Math.hypot(q.x - p.x, q.cy - p.y) < apart || q.pick.some((i) => pick.includes(i))))) continue;
+        let behind = false;
+        for (let e = 0; e < (probe.n - 1) * 2 && !behind; e += 2) behind = crosses(px[probe.tree[e]], py[probe.tree[e]], px[probe.tree[e + 1]], py[probe.tree[e + 1]], b);
+        if (!behind) return p;
+      } return null; };
+      const oldest = pins.find((q) => q.out === undefined);
+      let p = find();
+      if (!p && oldest && (p = find(oldest))) { if (still) pins.splice(pins.indexOf(oldest), 1); else oldest.out = performance.now(); }
       return p;
     },
 

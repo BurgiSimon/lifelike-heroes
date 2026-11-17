@@ -2,12 +2,13 @@
 
 | File | What it is | Source | Licence |
 | --- | --- | --- | --- |
-| `sky.webp` | The deep star field and Milky Way behind the catalogue stars. Reprojected from the 8k plate carrée map (`starmap_2020_8k.exr`, celestial coordinates) to an azimuthal equidistant map about the north celestial pole, gamma 2.2, 4096². | NASA/Goddard Space Flight Center Scientific Visualization Studio, *Deep Star Maps 2020* — https://svs.gsfc.nasa.gov/4851 (built from Gaia DR2, Hipparcos-2 and Tycho-2) | Public domain (NASA media usage guidelines); credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. |
+| `sky.webp` | The deep star field and Milky Way behind the catalogue stars. Reprojected from the 8k plate carrée map (`starmap_2020_8k.exr`, celestial coordinates) to an azimuthal equidistant map about the north celestial pole, gamma 2.2, 4096², WebP quality 90. | NASA/Goddard Space Flight Center Scientific Visualization Studio, *Deep Star Maps 2020* — https://svs.gsfc.nasa.gov/4851 (built from Gaia DR2, Hipparcos-2 and Tycho-2) | Public domain (NASA media usage guidelines); credit: NASA/Goddard Space Flight Center Scientific Visualization Studio. Gaia DR2: ESA/Gaia/DPAC. |
 | `stars.bin` | 41 411 stars to magnitude 8: right ascension, declination, V magnitude and B–V colour index, sorted brightest first, 4 × Uint16 per star. Converted from `data/stars.8.json`. | d3-celestial by Olaf Frohn — https://github.com/ofrohn/d3-celestial (star data from the XHIP extended Hipparcos compilation) | BSD 3-Clause, © 2015 Olaf Frohn |
+| `land.webp` | The horizon under the sky: a snow field, a spruce forest and a bare rise with lone spruces. A 168° × 14° band at the horizon of the 8k HDRI (`stierberg_sunrise_8k.hdr`), mirrored, reduced to luminance (gamma 2.2), its clear sky keyed out into the alpha channel, 2560 × 214. The hero relights it for the night; the observatory on it (a dome and a hut with a lit window) is drawn by the shader. | Poly Haven, *Stierberg Sunrise* by Grzegorz Wronkowski — https://polyhaven.com/a/stierberg_sunrise | CC0 1.0 (public domain) |
 
-Both files are produced by `src/stars/tools/build-assets.mjs` from the sources above.
+All three files are produced by `src/stars/tools/build-assets.mjs` from the sources above.
 
-The aurora, the land, the meteor and the chart are procedural (written for this hero); no other external assets are used.
+The aurora, the airglow, the observatory (dome, hut and its window light), the meteor and the chart are procedural (written for this hero); no other external assets are used.
 
 ## BSD 3-Clause notice for d3-celestial data
 

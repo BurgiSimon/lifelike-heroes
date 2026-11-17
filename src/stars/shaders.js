@@ -7,6 +7,8 @@ export const SKY_SPAN = 150; // degrees from the pole at the edge of sky.webp (t
 
 const head = /* glsl */`precision highp float;
 #define TAU 6.28318530718
+// The chart ends where the sky stops rising at 69° north: its stars thin out from 100° to 118° from the pole.
+float chartEdge(float deg) { return smoothstep(118.0, 100.0, deg); }
 `;
 
 const noise = /* glsl */`
@@ -23,7 +25,7 @@ float altOf(float y) { return (uHorizonY - y) / uAltScale; }
 vec3 extinction(float alt) {
   float s = sin(radians(clamp(alt, 0.0, 90.0)));
   float mass = 1.0 / (s + 0.025 * exp(-11.0 * s));
-  return exp(-vec3(0.085, 0.11, 0.16) * (mass - 1.0));
+  return exp(-vec3(0.14, 0.18, 0.27) * (mass - 1.0));
 }
 `;
 
@@ -57,14 +59,21 @@ void main() {
   // Far from the pole the map is stretched along its circles; a coarser mip keeps its stars from turning to dashes.
   float far = smoothstep(100.0, 140.0, r / uScale);
   vec3 deep = pow(texture(uSky, 0.5 + q / (uScale * ${(2 * SKY_SPAN).toFixed(1)}), far * 2.5).rgb, vec3(2.2)) * uSkyGain;
+  // A long exposure's contrast: the sky between the stars stays dark, the Milky Way lifts out of it.
+  deep = max(deep - 0.0035, 0.0) * 1.7;
+  deep = max(mix(vec3(dot(deep, vec3(0.2126, 0.7152, 0.0722))), deep, 1.15), 0.0) * chartEdge(r / uScale);
 
-  // The sky's own light: blue-black overhead, a little brighter and greener toward the horizon (airglow).
-  float up = clamp(alt / 75.0, 0.0, 1.0);
+  // The sky's own light: blue-black overhead. Low down there is more air to look through, and it glows: a band of
+  // green airglow that warms into the haze on the horizon.
+  float up = clamp(alt / 75.0, 0.0, 1.0); float low = max(alt, 0.0);
   vec3 glow = mix(vec3(0.0068, 0.0118, 0.0165), vec3(0.0021, 0.0038, 0.0090), pow(up, 0.6));
-  glow += vec3(0.0012, 0.0042, 0.0020) * exp(-pow((alt - 9.0) / 9.0, 2.0));
+  vec3 haze = vec3(0.022, 0.040, 0.027) * exp(-low / 8.0) + vec3(0.040, 0.024, 0.008) * exp(-low / 3.0);
 
-  vec3 aurora = texture(uAurora, vUv).rgb * uAuroraGain * pow(ext, vec3(0.6));
-  vec3 col = (deep * vec3(0.90, 0.97, 1.12) * ext + glow) * mix(0.5, 1.0, quiet) + aurora * mix(0.45, 1.0, quiet);
+  // The curtains, and the veil of their light that the air and the lens spread around them (the target's coarse mips).
+  vec3 aurora = textureLod(uAurora, vUv, 0.0).rgb + 0.35 * textureLod(uAurora, vUv, 3.0).rgb + 0.3 * textureLod(uAurora, vUv, 5.0).rgb;
+  aurora *= uAuroraGain * pow(ext, vec3(0.6));
+  aurora = mix(aurora, vec3(aurora.g), 0.3 * smoothstep(0.4, 3.0, aurora.g)); // a sensor's green clips first: the brightest border pales
+  vec3 col = (deep * vec3(0.90, 0.97, 1.12) * ext + glow) * mix(0.5, 1.0, quiet) + haze * mix(0.8, 1.0, quiet) + aurora * mix(0.45, 1.0, quiet);
 
   // The chart: rings every 15°, 24 hour lines turning with the sky, the meridian and its ticks standing still.
   float rings = hair(abs(mod(r + 0.5 * uRing, uRing) - 0.5 * uRing), 1.0) * step(0.5 * uRing, r);
@@ -95,47 +104,55 @@ uniform vec4 uMaskMap;
 uniform vec3 uTone;
 uniform float uScale, uRatio, uTime, uGain, uTwinkle, uAlpha, uMagLimit, uPad;
 out vec3 vCol;
-out float vAmp, vHalf, vHalo;
+out float vAmp, vHalf, vHalo, vWide;
 void main() {
   float aMag = position.z;
   vec2 p = uPole + vec2(position.x * uRot.x - position.y * uRot.y, position.x * uRot.y + position.y * uRot.x) * uScale;
   vec2 uv = p / uRes;
   float alt = altOf(p.y);
   vec3 ext = extinction(alt);
+  float quiet = mix(0.1, 1.0, textureLod(uMask, p * uMaskMap.xy + uMaskMap.zw, 0.0).r); // behind the headline
   float amp = uGain * pow(10.0, -0.4 * (aMag - 3.5));
   amp *= smoothstep(uMagLimit, uMagLimit - 0.8, aMag); // the faintest fade into the photographed field under them
-  amp *= ext.g * mix(0.1, 1.0, textureLod(uMask, p * uMaskMap.xy + uMaskMap.zw, 0.0).r);
+  amp *= ext.g * quiet * chartEdge(length(position.xy));
   // Scintillation: two slow beats per star, deeper toward the horizon where there is more air to look through.
   float tw = sin(uTime * (1.3 + aSeed * 2.9) + aSeed * 40.0) * 0.6 + sin(uTime * (3.1 + aSeed * 4.7) + aSeed * 91.0) * 0.4;
-  amp *= 1.0 + uTwinkle * tw * mix(0.36, 0.09, smoothstep(4.0, 45.0, alt));
+  amp *= 1.0 + uTwinkle * tw * mix(0.55, 0.08, smoothstep(3.0, 40.0, alt));
   amp = max(amp * (1.0 + 0.45 * aMark.y), 0.22 * aMark.y);
   vec3 col = aCol * ext / max(ext.g, 1e-4);
+  col = mix(vec3(dot(col, vec3(0.2126, 0.7152, 0.0722))), col, 0.55 + 0.45 * smoothstep(0.03, 0.8, amp)); // a faint star has little colour left over the noise
   // An inked star burns in the pin colour, bright enough to hold it and no brighter (4 is the film's white).
-  amp = mix(amp, clamp(amp * 1.4, 2.2, 4.0), aMark.x);
+  amp = mix(amp, clamp(amp * 1.4, 2.2, 4.0) * mix(0.3, 1.0, quiet), aMark.x);
   col = mix(col, uTone * 0.25, aMark.x);
-  float halo = 0.065 * smoothstep(0.25, 2.5, amp) + 0.07 * aMark.x; // only the bright ones wear a skirt worth drawing
-  // Radius where both terms of the profile sink under 0.002: the sprite never shows its square.
-  float rad = uAlpha * max(sqrt(max(pow(amp / 0.002, 0.4) - 1.0, 0.0)), 3.46 * sqrt(max(pow(amp * halo / 0.002, 0.6667) - 1.0, 0.0))) + 1.0;
-  rad = min(rad, 56.0);
-  vCol = col; vAmp = amp; vHalf = rad; vHalo = halo;
+  // What a lens scatters grows with what it is given: the bright stars wear a skirt, the field stays points.
+  float halo = mix(0.012 + 0.168 * smoothstep(0.25, 4.0, amp), 0.11, aMark.x);
+  // The few brightest wear it wide and soft, as through a diffusion filter; that is where a star shows its colour.
+  // (never wider than the sprite can hold: the very brightest keep a tighter skirt)
+  float wide = mix(12.0, clamp(1800.0 / max(pow(amp * halo / 0.003, 0.6667) - 1.0, 1.0), 12.0, 40.0), smoothstep(1.5, 8.0, amp) * (1.0 - aMark.x));
+  // Radius where both terms of the profile sink under 0.003: the sprite never shows its square.
+  float rad = uAlpha * max(sqrt(max(pow(amp / 0.003, 0.4) - 1.0, 0.0)), sqrt(wide * max(pow(amp * halo / 0.003, 0.6667) - 1.0, 0.0))) + 1.0;
+  rad = min(rad, 72.0);
+  vCol = col; vAmp = amp; vHalf = rad; vHalo = halo; vWide = wide;
   gl_PointSize = 2.0 * rad * uRatio;
   // Drawn into a viewport uPad px larger all round, so a bright star's skirt slides in over the edge instead of popping.
   vec2 ndc = (p + uPad) / (uRes + 2.0 * uPad) * 2.0 - 1.0;
-  gl_Position = vec4(ndc.x, -ndc.y, 0.0, 1.0);
+  gl_Position = amp > 2e-4 ? vec4(ndc.x, -ndc.y, 0.0, 1.0) : vec4(2.0, 2.0, 2.0, 1.0); // nothing to draw: off the clip volume
 }
 `;
 
 export const starFrag = head + /* glsl */`
 uniform float uAlpha;
 in vec3 vCol;
-in float vAmp, vHalf, vHalo;
+in float vAmp, vHalf, vHalo, vWide;
 out vec4 o;
 void main() {
   vec2 d = (gl_PointCoord - 0.5) * 2.0;
   float r = length(d) * vHalf / uAlpha; float r2 = r * r;
-  // Core, and the wide skirt a lens scatters around anything bright.
-  float i = vAmp * (pow(1.0 + r2, -2.5) + vHalo * pow(1.0 + r2 / 12.0, -1.5)) * smoothstep(1.0, 0.8, length(d));
-  o = vec4(vCol * i, 0.0);
+  // Core (Moffat, β 2.5) and the wide skirt a lens scatters around anything bright (β 1.5). The core burns to white
+  // on the film; the skirt is where the star's own colour is left to see.
+  float a = inversesqrt(1.0 + r2); float b = inversesqrt(1.0 + r2 / vWide);
+  vec3 hue = max(mix(vec3(dot(vCol, vec3(0.2126, 0.7152, 0.0722))), vCol, 1.6), 0.0);
+  o = vec4(vAmp * (vCol * (a * a * a * a * a) + hue * (vHalo * b * b * b)) * smoothstep(1.0, 0.5, length(d)), 0.0); // a long fade: no rim where the sprite ends
 }
 `;
 
@@ -159,6 +176,8 @@ void main() {
 `;
 
 export const lineFrag = head + /* glsl */`
+uniform sampler2D uMask;
+uniform vec4 uMaskMap;
 uniform float uRatio;
 in vec2 vP;
 in vec4 vSeg, vInk;
@@ -169,7 +188,8 @@ void main() {
   float d = length(pa - ba * clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0));
   float core = clamp((0.5 * vInk.w - d) * uRatio + 0.5, 0.0, 1.0);
   float glow = vGlow * (0.04 * exp(-d * d / 4.0) + 0.012 * exp(-d * d / 52.0)); // gone well inside the quad's edge
-  o = vec4(vInk.rgb * (core + glow), 0.0);
+  float quiet = mix(0.3, 1.0, texture(uMask, vP * uMaskMap.xy + uMaskMap.zw).r); // the headline keeps the stage
+  o = vec4(vInk.rgb * (core + glow) * quiet, 0.0);
 }
 `;
 
@@ -190,7 +210,7 @@ void main() {
 }
 `;
 
-export const meteorFrag = head + /* glsl */`
+export const meteorFrag = head + noise + /* glsl */`
 uniform float uShootP;
 in vec2 vQ;
 in float vLen;
@@ -203,119 +223,195 @@ void main() {
   float uh = clamp(uShootP / RUN, 0.0, 1.0);                 // the head moves at a steady rate, as meteors do
   vec2 dh = vec2(vQ.x - uh * vLen, vQ.y);
   float headOn = step(uShootP, RUN);
-  float head = burn(uh) * headOn * (exp(-dot(dh, dh) / 3.2) * 9.0 + exp(-dot(dh, dh) / 60.0) * 0.5);
+  // It covers a dozen pixels a frame: the head is a streak, not a ball.
+  float head = burn(uh) * headOn * (exp(-dh.x * dh.x / 90.0 - dh.y * dh.y / 2.0) * 9.0 + exp(-dot(dh, dh) / 60.0) * 0.15);
   float age = uShootP - u * RUN;                             // seconds since the head passed this point
-  float behind = step(0.0, age) * step(vQ.x, vLen) * step(0.0, vQ.x) * burn(u);
-  float across = exp(-vQ.y * vQ.y / 1.1);
+  float knots = 0.65 + 0.7 * n1(u * 46.0 + 3.0).x;           // a train is lumpy: the body sheds unevenly
+  float behind = step(0.0, age) * step(vQ.x, vLen) * step(0.0, vQ.x) * burn(u) * knots;
+  float across = exp(-vQ.y * vQ.y / mix(1.3, 0.3, clamp(age / 0.25, 0.0, 1.0)));
   float wake = behind * across * exp(-age / 0.07) * 1.6;      // the incandescent train
   float after = behind * exp(-vQ.y * vQ.y / 2.4) * exp(-age / 0.22) * 0.12; // the afterglow
-  vec3 col = vec3(1.0, 0.96, 0.88) * head + vec3(0.85, 0.92, 1.0) * wake + vec3(0.45, 1.0, 0.6) * after;
+  vec2 de = vec2(vQ.x - 0.86 * vLen, vQ.y);                  // where it flared: an ember for a moment after
+  float ember = exp(-dot(de, de) / 5.0) * exp(-max(uShootP - RUN, 0.0) / 0.06) * step(RUN, uShootP) * 2.2;
+  // Green while it is high and fast (oxygen), warm where it flares.
+  vec3 col = mix(vec3(0.55, 1.0, 0.7), vec3(1.0, 0.85, 0.6), smoothstep(0.5, 0.9, uh)) * (head + ember) + vec3(0.85, 0.92, 1.0) * wake + vec3(0.45, 1.0, 0.6) * after;
   o = vec4(col, 0.0);
 }
 `;
 
-// The aurora, into a small target. Curtains are thin vertical sheets standing on east–west arcs north of the
-// observatory; each pixel's line of sight is met with each sheet analytically (no marching), and the height at
-// which it meets it picks the colour: the sharp green lower border near 100 km, red and violet toward the top.
+// The aurora, into a small target. Curtains are thin sheets of rays standing on arcs north of the observatory, their
+// feet meandering and here and there folding back on themselves. Each pixel's line of sight is walked along each arc
+// and lit wherever it passes through the sheet (so folds overlap and add, as drapery does); the height at which it
+// passes picks the light: a crisp green lower border near 100 km fading upward through the rays, a pink fringe under
+// the stretches that are driven hard, red and violet toward the tops.
 export const auroraFrag = head + noise + air + /* glsl */`
 uniform vec2 uRes;
-uniform float uTime, uNorthX, uTexel;
+uniform float uTime, uNorthX, uTexel, uSurge;
 in vec2 vUv;
 out vec4 o;
 
-// North distance (km) of sheet k at east distance x, and its slope.
-vec2 sheet(float x, float k, float base) {
-  vec2 a = n1(x / 260.0 + k * 13.7 + uTime * 0.006);
-  vec2 b = n1(x / 61.0 - k * 7.3 - uTime * 0.017);
-  vec2 c = n1(x / 19.0 + k * 3.1 + uTime * 0.041);
-  return vec2(base + (a.x - 0.5) * 190.0 + (b.x - 0.5) * 54.0 + (c.x - 0.5) * 11.0, a.y * (190.0 / 260.0) + b.y * (54.0 / 61.0) + c.y * (11.0 / 19.0));
+const int STEPS = 14;
+const float FOLD = 1.25;   // where the meander runs steeper than 1 / FOLD the curtain doubles back: a fold
+const float LIMB = 2.4;    // how much brighter than face-on a fold is where it turns away from the eye
+const vec3 SWAY = vec3(70.0, 30.0, 10.0);   // km: three meanders, the long one slow and the short one quick
+const vec3 WAVE = vec3(190.0, 71.0, 26.0);  // km per radian of each
+
+// How far north (km) a curtain's foot has strayed from its arc l km along it, and how fast it is straying.
+vec3 phase(float l, float k) { return l / WAVE + k * vec3(2.4, -4.1, 7.7) + uTime * vec3(0.012, -0.03, 0.07); }
+float stray(float l, float k) { return dot(SWAY, sin(phase(l, k))); }
+float slope(float l, float k) { return dot(SWAY / WAVE, cos(phase(l, k))); }
+
+// What a curtain gives off where the line of sight passes through it: l km along it, s km away, z km up.
+vec3 emission(float l, float s, float z, float k) {
+  float foot = s * uTexel;                                         // km across one texel at that distance
+  // How hard this stretch is driven: bright stretches travel along the arc, and each breathes.
+  float drive = smoothstep(0.2, 0.8, mix(n1(l / 210.0 - uTime * 0.04 + k * 3.3).x, n1(l / 62.0 - uTime * 0.11 + k * 8.1).x, 0.3));
+  drive = min(drive * (0.8 + 0.3 * sin(uTime * 0.21 + k * 2.1 + l / 420.0)) + uSurge * 0.35, 1.2);
+  // Rays: each brightens and dies on its own while the lot drifts along the curtain; none finer than this target holds.
+  float rays = n2(vec2(l / 28.0 + uTime * 0.05, uTime * 0.09 + k * 5.0));
+  rays = mix(rays, n2(vec2(l / 8.5 - uTime * 0.11, uTime * 0.19 + k * 9.0)), 0.5 * smoothstep(1.2, 3.0, 8.5 / foot));
+  rays = mix(rays, n2(vec2(l / 3.1 + uTime * 0.17, uTime * 0.37 + k * 2.0)), 0.35 * smoothstep(1.2, 3.0, 3.1 / foot));
+  float tall = n1(l / 120.0 - uTime * 0.03 + k * 17.0).x;
+  float reach = (0.1 + 0.9 * tall * tall) * (0.3 + 0.7 * rays) * (1.0 + 0.25 * uSurge);  // how high this ray stands
+  float h = z - mix(105.0, 96.0, drive) + 5.0 * (0.5 - rays);      // the harder it is driven, the deeper its lower border: ray by ray
+  float up = max(h, 0.0);
+  float soft = 2.0 + s / 90.0;                                     // a far border is seen through more air: less crisp
+  float green = smoothstep(-soft, 0.5, h) * exp(-up / mix(16.0, 110.0, min(reach, 1.0))) * (1.0 + 1.5 * exp(-up / 8.0));
+  // The border is one band; above it the rays part into filaments.
+  float streak = mix(0.35 + 0.65 * rays, 0.05 + 0.95 * smoothstep(0.32, 0.8, rays), smoothstep(0.0, 60.0, h));
+  float tops = smoothstep(140.0, 240.0, z) * exp(-max(z - 240.0, 0.0) / 80.0) * reach * (0.3 + 0.7 * rays);    // only the tall rays wear them
+  // Nitrogen's pink, just under the green: only where the arc is driven hard, and too fine to see on a far one.
+  float fringe = exp(-pow((h + 0.6 * soft + 1.0) / 3.5, 2.0)) * smoothstep(0.55, 1.0, drive) * (0.15 + 0.85 * rays) * smoothstep(750.0, 350.0, s);
+  vec3 c = vec3(0.24, 1.0, 0.38) * green * streak + vec3(0.80, 0.12, 0.60) * 0.45 * tops + vec3(1.0, 0.22, 0.70) * 0.9 * fringe;
+  return c * (0.05 + 0.95 * drive);
 }
 
-vec3 curtain(float sa, float ca, float tanAlt, float k, float base, float gain) {
-  float s = base / ca;
-  for (int i = 0; i < 3; i++) s = sheet(s * sa, k, base).x / ca;   // where the line of sight meets the sheet
-  if (s < 30.0) return vec3(0.0);
-  float x = s * sa;
-  vec2 y = sheet(x, k, base);
-  // Seen edge-on a sheet is deep: that is what lights the folds.
-  float depth = min(sqrt(1.0 + y.y * y.y) / max(abs(ca - y.y * sa), 0.22), 4.0);
-  float z = s * tanAlt + s * s / 12742.0;                         // km up, on a round Earth
-  // Rays: striations along the sheet, drifting; none finer than this target can hold.
-  float foot = s * uTexel;                                        // km across one texel at that distance
-  float l = x + y.x * 0.35;
-  float rays = n1(l / 34.0 + uTime * 0.05 + k * 5.0).x;
-  rays = mix(rays, n1(l / 11.0 - uTime * 0.09 + k * 9.0).x, 0.45 * smoothstep(1.2, 3.5, 11.0 / foot));
-  float tall = n1(l / 90.0 - uTime * 0.02 + k * 17.0).x;
-  float along = smoothstep(0.25, 0.75, n1(x / 420.0 + k * 3.3 + uTime * 0.004).x);  // an arc is never evenly bright
-  float green = smoothstep(94.0, 103.0, z) * exp(-max(z - 103.0, 0.0) / mix(15.0, 56.0, tall * tall * (0.4 + 0.6 * rays)));
-  green *= 1.0 + 1.1 * exp(-max(z - 103.0, 0.0) / 7.0);              // emission peaks just above the border: its bright hem
-  float red = smoothstep(140.0, 250.0, z) * exp(-max(z - 250.0, 0.0) / 120.0) * tall / depth;   // the tops are diffuse: folds do not sharpen them
-  float fringe = exp(-pow((z - 97.0) / 5.0, 2.0));
-  vec3 c = vec3(0.26, 1.0, 0.36) * green + vec3(0.95, 0.10, 0.16) * red * 0.10 + vec3(0.55, 0.22, 0.95) * (fringe * 0.16 + red * 0.07);
-  float high = smoothstep(103.0, 170.0, z);                       // the border is one band; the rays show above it
-  return c * depth * gain * (0.25 + 0.75 * along) * mix(0.55 + 0.45 * rays, 0.1 + 0.9 * smoothstep(0.2, 0.85, rays), high);
+// One curtain: its arc lies base km north on the meridian and runs east–west, tilt km further north per km east.
+// The foot at l lies at east = l − FOLD m, north = base + tilt east + m, with m = stray(l).
+vec3 curtain(float sa, float ca, float tanAlt, float k, float base, float tilt) {
+  float den = ca - tilt * sa;
+  if (den < 0.05) return vec3(0.0);                                // looking along the arc or away from it
+  // The line of sight meets the arc itself at l0, so every place it passes through the curtain lies within span of that.
+  float l0 = base / den * sa; float span = min((SWAY.x + SWAY.y + SWAY.z) * (FOLD + abs(sa) / den) + 4.0, 700.0); float dl = 2.0 * span / float(STEPS);
+  vec3 col = vec3(0.0);
+  // g: how far (km) the foot at l lies to the side of the line of sight.
+  float la = l0 - span; float m = stray(la, k); float ga = (la - FOLD * m) * den - (base + m) * sa; float gp = ga;
+  for (int i = 1; i <= STEPS; i++) {
+    float lb = la + dl; m = stray(lb, k); float gb = (lb - FOLD * m) * den - (base + m) * sa;
+    float l = la; float miss = -1.0; float bend = gb - 2.0 * ga + gp;
+    bool cross = ga * gb < 0.0;                                    // the foot crosses the line of sight
+    if (cross) l = mix(la, lb, ga / (ga - gb));
+    else if (ga * gp > 0.0 && ga * bend > 0.0 && (ga - gp) * (gb - ga) < 0.0) {
+      // A fold turns back just short of the line of sight, by this many km.
+      miss = ga - 0.125 * (gb - gp) * (gb - gp) / bend; miss = miss * ga > 0.0 ? abs(miss) : 0.0;
+      l = la - 0.5 * dl * (gb - gp) / bend;
+    }
+    if (cross || miss >= 0.0) {
+      m = stray(l, k);
+      float x = l - FOLD * m; float s = x * sa + (base + tilt * x + m) * ca;
+      float z = s * tanAlt + s * s / 12742.0;                      // km up, on a round Earth
+      if (s > 40.0 && z > 88.0 && z < 640.0) {
+        // Seen obliquely a sheet is deep, which is what lights the folds. And it has thickness, so its light does
+        // not end on the knife edge where the crossings do: it tails off over a few km (more, seen from far away).
+        vec2 t = vec2(1.0 - FOLD * slope(l, k), 0.0); t.y = tilt * t.x + slope(l, k);
+        float thick = 4.0 + s / 60.0;
+        float w = miss < 0.0 ? min(length(t) / max(abs(t.x * ca - t.y * sa), 0.01), 0.5 * LIMB) : LIMB * exp(-miss * miss / (thick * thick));
+        col += emission(l, s, z, k) * w;
+      }
+    }
+    gp = ga; la = lb; ga = gb;
+  }
+  return col;
 }
 
 void main() {
   vec2 p = vec2(vUv.x, 1.0 - vUv.y) * uRes;
   float alt = altOf(p.y);
-  if (alt < -1.5) { o = vec4(0.0); return; }
-  float az = radians((p.x - uNorthX) / uAltScale);
-  float sa = sin(az); float ca = max(cos(az), 0.12); float tanAlt = tan(radians(clamp(alt, 0.05, 80.0)));
-  // The active stretch of the arc is to the north-east (right of the meridian); toward the west it thins out.
-  float east = mix(0.16, 1.0, smoothstep(-1.15, 0.05, az));
-  vec3 col = curtain(sa, ca, tanAlt, 0.0, 520.0, 1.0) + curtain(sa, ca, tanAlt, 1.0, 820.0, 0.6) + curtain(sa, ca, tanAlt, 2.0, 330.0, 0.33);
-  // The diffuse glow the curtains sit in.
-  float s = 600.0 / ca; float z = s * tanAlt + s * s / 12742.0;
-  col += vec3(0.20, 0.85, 0.36) * 0.11 * smoothstep(80.0, 115.0, z) * exp(-max(z - 115.0, 0.0) / 85.0);
-  o = vec4(col * east * smoothstep(-1.5, 1.0, alt), 1.0);
+  if (alt < -1.5 || alt > 76.0) { o = vec4(0.0); return; }
+  // Rays stand along the field lines, which meet far overhead: through a wide lens they lean together.
+  float az = radians((p.x - uNorthX) / uAltScale) / (1.0 - alt / 240.0);
+  float sa = sin(az); float ca = cos(az); float tanAlt = tan(radians(clamp(alt, 0.05, 80.0)));
+  // The active stretch of the arcs is to the north-east (right of the meridian); toward the west they thin out.
+  float east = mix(0.06, 1.0, smoothstep(-1.05, 0.0, az));
+  // Three arcs at three distances and on three bearings, so their borders cross in perspective instead of stacking.
+  vec3 col = curtain(sa, ca, tanAlt, 0.0, 300.0, -0.22) + 0.6 * curtain(sa, ca, tanAlt, 1.0, 450.0, 0.10) + 0.5 * curtain(sa, ca, tanAlt, 2.0, 800.0, -0.04);
+  o = vec4(col * 2.5 * east * (1.0 + 0.45 * uSurge) * smoothstep(-1.5, 1.0, alt) * smoothstep(76.0, 48.0, alt), 1.0);
 }
 `;
 
-// The land: far ridge, near hill, what stands on the hill. Its only light is the sky's: the aurora to the
-// north-east greens the snow that faces it. Edges are a touch soft, as a foreground is to a lens focused at infinity.
-export const groundFrag = head + noise + /* glsl */`
-uniform sampler2D uGround;
+// The land: a photographed horizon (luminance and a matte), relit. Its only light is the sky's — starlight, airglow
+// and whatever aurora stands over it — so the snow breathes green with the curtains and the spruce stay near black.
+export const groundFrag = head + /* glsl */`
+uniform sampler2D uLand, uAurora;
 uniform vec2 uRes;
-uniform vec3 uLamp, uDome;
-uniform float uRatio, uGroundN;
+uniform vec4 uLandMap;        // the band on screen: left edge, width, height (px)
+uniform vec3 uDome;           // the observatory: x of the dome's axis, y of its foot, the dome's radius (px)
+uniform float uRatio, uAuroraGain;
 in vec2 vUv;
 out vec4 o;
+
+const vec3 LAMP = vec3(1.0, 0.50, 0.15);   // a tungsten bulb behind a window
+
+float box(vec2 d, vec2 b) { vec2 q = abs(d) - b; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0); }
+
 void main() {
   vec2 p = vec2(vUv.x, 1.0 - vUv.y) * uRes;
   float yb = uRes.y - p.y;
-  vec3 g = texture(uGround, vec2((p.x / uRes.x * (uGroundN - 1.0) + 0.5) / uGroundN, 0.5)).rgb;
-  vec3 slope = dFdx(g) * uRatio;
-  vec3 sd = (g - yb) / sqrt(1.0 + slope * slope);              // px inside each skyline
-  vec3 cov = smoothstep(vec3(-0.75, -0.9, -0.9), vec3(0.75, 0.9, 0.9), sd);
-  if (max(cov.r, cov.b) <= 0.0) discard;
-  const vec3 light = vec3(0.0042, 0.0092, 0.0086);             // what the sky and the aurora lay on snow
+  vec4 t = texture(uLand, vec2((p.x - uLandMap.x) / uLandMap.y, 1.0 - yb / uLandMap.z)); // premultiplied
+  float cov = t.a * step(yb, uLandMap.z - 1.0);
+  float lin = pow(t.r / max(t.a, 0.004), 2.2);              // how much of the light on it the land returns
+  lin *= mix(0.5, 1.0, smoothstep(0.10, 0.55, lin));         // under the trees there is less sky to light anything
 
-  // Far ridge: snow broken by rock; the faces turned to the aurora take more of its light. The facing comes from
-  // the ridge's broad shape (a wide difference), never from the texel-to-texel slope, which would stripe it.
-  float fall = g.r - yb;
-  float tx = (p.x / uRes.x * (uGroundN - 1.0) + 0.5) / uGroundN; float wide = 9.0 / uRes.x * (uGroundN - 1.0) / uGroundN;
-  float lean = (texture(uGround, vec2(tx + wide, 0.5)).r - texture(uGround, vec2(tx - wide, 0.5)).r) / 18.0;
-  float rib = n2(vec2(p.x * 0.085 + fall * 0.05 * lean, fall * 0.04 + 3.0));
-  float lie = n2(vec2(p.x * 0.021 + 7.0, fall * 0.06)) * 0.6 + rib * 0.4;
-  float snow = smoothstep(0.3, 0.66, lie + 0.12 * smoothstep(0.0, 16.0, fall));
-  float facing = clamp(0.6 - lean * 0.9, 0.2, 1.25);
-  vec3 farCol = mix(vec3(0.0014, 0.0020, 0.0026), light * 1.7 * facing * (0.7 + 0.45 * rib), snow);
-  farCol = mix(farCol, vec3(0.0052, 0.0088, 0.0098), smoothstep(g.r * 0.6, 0.0, yb) * 0.7);   // mist off the fjord at its foot
-  // Near hill: wind-packed snow in soft drifts; the spruce and the dome on it are the darkest things in the frame.
-  float drift = n2(vec2(p.x * 0.018 + yb * 0.05, yb * 0.11)) * 0.6 + n2(vec2(p.x * 0.07, yb * 0.3 + 5.0)) * 0.4;
-  vec3 nearCol = light * (0.26 + 0.36 * drift) * smoothstep(-10.0, 30.0, yb);
-  vec3 dark = vec3(0.00035, 0.00048, 0.0006);
-  // The dome is metal: a dull highlight where it turns to the aurora.
-  vec2 dd = (p - uDome.xy) / uDome.z; float inDome = step(dot(dd, dd), 1.0) * step(dd.y, 0.0);
-  vec3 nrm = vec3(dd, sqrt(max(1.0 - dot(dd, dd), 0.0)));
-  dark += inDome * light * (0.10 + 0.9 * pow(max(dot(nrm, normalize(vec3(0.55, -0.6, 0.58))), 0.0), 5.0)) * step(0.06, abs(dd.x + 0.09));
-  vec3 col = mix(farCol, dark, cov.b);
-  col = mix(col, nearCol, cov.g);
-  // The red work light by the dome's door: a point, and what it throws on the snow.
-  vec2 dl = p - uLamp.xy; float l2 = dot(dl, dl);
-  col += vec3(1.0, 0.12, 0.03) * uLamp.z * (0.5 * exp(-l2 / 0.9) + 0.016 * exp(-sqrt(l2) / 7.0) * cov.g);
-  o = vec4(col, max(cov.r, cov.b));
+  // The aurora over this stretch of land, gathered very wide (its coarse mips): snow is lit by the whole sky above
+  // it, so no single ray may print itself on the ground. Snow hands it back whiter than it came.
+  vec3 aur = textureLod(uAurora, vec2(vUv.x, 0.18), 5.5).rgb + textureLod(uAurora, vec2(vUv.x, 0.32), 6.0).rgb + textureLod(uAurora, vec2(vUv.x, 0.48), 6.5).rgb;
+  aur = mix(aur, vec3(dot(aur, vec3(0.3333))), 0.35);
+  vec3 light = vec3(0.030, 0.040, 0.052) + aur * uAuroraGain;
+  vec3 col = lin * light * mix(0.3, 1.0, smoothstep(2.0, 46.0, yb)); // the nearest snow lies in the rise's own shadow
+
+  // The observatory stands just behind the crest of the rise, so the snow's own edge buries its foot: a dome with its
+  // shutter open and the keeper's hut beside it, one window lit. Units: dome radii, y up from the foot.
+  vec2 d = (p - uDome.xy) / uDome.z; d.y = -d.y;
+  float px = 1.5 / (uDome.z * uRatio);                       // edges as soft as the lens makes a star
+  vec2 w = d - vec2(-1.95, 0.42);                            // from the middle of the window
+  float pane = box(w, vec2(0.17, 0.13));
+  vec4 hut = vec4(0.0);                                       // premultiplied
+  if (abs(d.x + 0.95) < 2.3 && d.y < 2.0) {
+    float cap = max(length(d - vec2(0.0, 0.8)) - 1.0, 0.8 - d.y);
+    float drum = max(abs(d.x) - 0.94, d.y - 0.8);
+    float wall = max(abs(d.x + 1.95) - 0.95, d.y - 0.72);
+    float roof = box(d - vec2(-1.95, 0.86), vec2(1.02 - 0.5 * (d.y - 0.72), 0.14)) - 0.03; // a snow-laden slope, seen from its eaves
+    float flue = box(d - vec2(-2.5, 1.14), vec2(0.09, 0.16));
+    vec3 snow = light * 0.8;
+    // The dome: white paint under a sky whose light comes from above and behind, so its crown and its limb are the
+    // bright of it and its face is in shade; snow keeps to the crown.
+    vec3 n = vec3(d.x, d.y - 0.8, 0.0); n.z = sqrt(max(1.0 - dot(n.xy, n.xy), 0.0));
+    float top = max(n.y, 0.0);
+    float sky = cap < drum ? 0.14 + 0.42 * pow(top, 1.3) + 0.55 * (1.0 - n.z) * (1.0 - n.z) * (0.25 + top)
+      : 0.10 + 0.16 * pow(abs(d.x), 3.0) - 0.05 * smoothstep(0.62, 0.8, d.y);          // the drum, under the dome's lip
+    vec3 body = light * 0.7 * sky;
+    body = mix(body, snow * (0.5 + 0.5 * top), smoothstep(0.74, 0.90, n.y + 0.07 * sin(d.x * 8.0 + 1.0)) * step(cap, drum));
+    float slit = (1.0 - smoothstep(0.10, 0.10 + px, abs(d.x + 0.24))) * step(0.84, d.y) * step(cap, drum);
+    body = mix(body, vec3(0.9, 0.06, 0.02) * 0.004 * (1.9 - d.y), slit);   // the red light they work by, deep inside
+    float a = clamp(0.5 - min(cap, drum) / px, 0.0, 1.0);
+    hut = vec4(body * a, a);
+    // The hut: dark timber, lit only by what its own window throws back off the snow; a white roof; a flue.
+    vec3 timber = light * 0.035 * (1.0 - 0.6 * smoothstep(0.55, 0.72, d.y)) + LAMP * 0.03 * exp(-max(pane, 0.0) / 0.3);
+    a = clamp(0.5 - min(wall, flue) / px, 0.0, 1.0); hut = mix(hut, vec4(timber, 1.0), a);
+    a = clamp(0.5 - roof / px, 0.0, 1.0); hut = mix(hut, vec4(snow * (0.45 + 0.55 * smoothstep(0.72, 0.98, d.y)), 1.0), a);
+    // The window: a bulb somewhere inside, glazing bars across it.
+    a = clamp(0.5 - pane / px, 0.0, 1.0);
+    float bars = (0.4 + 0.6 * smoothstep(0.0, px, abs(w.x))) * (0.6 + 0.4 * smoothstep(0.0, px, abs(w.y - 0.02)));
+    hut = mix(hut, vec4(LAMP * (2.0 + 2.5 * exp(-dot(w - vec2(0.05, 0.03), w - vec2(0.05, 0.03)) / 0.02)) * bars, 1.0), a);
+    // Snow has drifted against the walls.
+    hut.rgb = mix(hut.rgb, snow * 0.85 * hut.a, smoothstep(0.17, 0.03, d.y + 0.05 * sin(d.x * 5.0 + 2.0)));
+  }
+  // What the window throws: a pool on the snow in front of it, and a little glow in the lens.
+  float fall = length(vec2(w.x, min(w.y + 0.45, 0.0) * 1.6));
+  col += LAMP * lin * 0.55 * exp(-fall / 0.75) * smoothstep(0.1, -0.5, w.y);
+  vec3 halo = LAMP * (0.35 * exp(-max(pane, 0.0) / 0.10) + 0.035 * exp(-max(pane, 0.0) / 0.7));
+  o = vec4(col * cov + hut.rgb * (1.0 - cov) + halo, cov + hut.a * (1.0 - cov));
+  if (o.a + halo.r < 0.002) discard;
 }
 `;
 

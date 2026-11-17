@@ -43,16 +43,18 @@ export function loop(el, cb) {
 export function governor({ min = 0.6, max = Math.min(devicePixelRatio || 1, 2), onChange }) {
   const q = quality();
   let ratio = q === 'low' ? min : max; let frames = 0; let load = 0; let calm = 0;
+  let beat = Infinity; // the display's own frame interval, learnt from the shortest frame: not every screen is 60 Hz
   onChange(ratio);
   return {
     get ratio() { return ratio; },
     tick(dt) {
       if (q !== 'auto') return;
+      if (dt > 0.004) beat = Math.min(beat, dt);
       load += dt;
       if (++frames < 30) return;
       const avg = load / frames; frames = 0; load = 0;
-      const next = avg > 1 / 45 ? Math.max(min, ratio * 0.85) : avg < 1 / 57 && ++calm >= 6 ? Math.min(max, ratio * 1.1) : ratio;
-      if (avg >= 1 / 57) calm = 0;
+      calm = avg < Math.max(1 / 57, beat * 1.05) ? calm + 1 : 0; // at most one late frame in thirty
+      const next = avg > 1 / 45 ? Math.max(min, ratio * 0.85) : calm >= 6 ? Math.min(max, ratio * 1.1) : ratio;
       if (next !== ratio) { ratio = next; calm = 0; onChange(ratio); }
     },
   };

@@ -3,7 +3,7 @@
   --gutter: clamp(16px, 4vw, 48px);
   --ink: #f2f2ee;
   --ink-2: #bdbdb5;
-  --muted: #8d8d85;
+  --muted: #9c9c94;
   display: grid;
   justify-items: start;
   align-content: end;
@@ -36,6 +36,7 @@
   line-height: 0.94;
   letter-spacing: -0.04em;
   text-wrap: balance;
+  text-shadow: 0 0 0.35em rgb(5 7 11 / 0.45); /* on a phone it lies on the aurora, which surges */
   pointer-events: none;
 }
 
@@ -52,11 +53,12 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.25em;
   text-decoration-color: rgb(242 242 238 / 0.3);
+  text-shadow: 0 0 4px rgb(5 7 11 / 0.8), 0 0 12px rgb(5 7 11 / 0.8); /* the sky runs behind it: a little night of its own */
   transition: color 200ms var(--ease-out), text-decoration-color 200ms var(--ease-out);
 }
 .sch__cue:hover { color: var(--ink); text-decoration-color: currentColor; }
 
-/* The plate line rests on the dark of the ridge, which does for it what the original's tape did. */
+/* The plate line: the forest is dark enough to carry it, the lit snow is not, so each piece sits on night-coloured tape. */
 .sch__note {
   position: absolute;
   left: var(--gutter);
@@ -73,8 +75,9 @@
   color: var(--muted);
   pointer-events: none;
 }
+.sch__note span { margin: -3px -7px; padding: 3px 7px; border-radius: 2px; background: rgb(5 7 11 / 0.8); }
 
 /* No WebGL2: the photographed sky as a still, the headline on it. Nothing to pin, so no cue. */
 .sch.is-static { background: #05070b url('/assets/stars/sky.webp') 62% 42% / 260% auto no-repeat; }
-.sch.is-static::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(5 7 11 / 0.92), rgb(5 7 11 / 0.35) 55%, rgb(5 7 11 / 0.55)); }
+.sch.is-static::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(5 7 11 / 0.9), rgb(5 7 11 / 0.1) 55%, rgb(5 7 11 / 0.3)); }
 .sch.is-static > canvas, .sch.is-static .sch__cue { display: none; }

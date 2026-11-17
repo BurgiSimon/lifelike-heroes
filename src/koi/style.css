@@ -52,7 +52,8 @@
 .koi__cue::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 .koi__cue:hover { color: var(--koi-ink); border-color: rgb(246 243 234 / 0.6); background: rgb(9 20 18 / 0.62); }
 
-/* The plate line, pinned to the foot. */
+/* The plate line, pinned to the foot. Small type cannot depend on what swims beneath it: each half sits on its
+   own slip of the same smoked glass as the button. */
 .koi__note {
   position: absolute;
   left: var(--gutter);
@@ -66,11 +67,19 @@
   font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(246 243 234 / 0.82);
-  text-shadow: 0 0 10px rgb(4 12 10 / 0.9), 0 1px 2px rgb(4 12 10 / 0.7);
+  color: rgb(246 243 234 / 0.88);
   pointer-events: none;
+}
+.koi__note span {
+  margin: -4px -8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: rgb(9 20 18 / 0.58); /* 11 px type over open sun: keeps 4.5:1 on the brightest floor */
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
 }
 
 @media (prefers-reduced-motion: reduce) { .koi__canvas, .koi__cue { transition: none; } }
 
-.koi--static .koi__canvas { display: none; }
+.koi--static .koi__canvas { visibility: hidden; }
+.koi--static .koi__cue { display: none; } /* no pond to feed */

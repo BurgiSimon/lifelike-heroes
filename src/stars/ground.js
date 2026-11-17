@@ -1,72 +1,35 @@
-// The land under the sky, as three skylines across the hero's width (px above its bottom edge): the far ridge
-// across the fjord, the near hill, and the near hill with what stands on it (spruce, the observatory dome).
-// Built on the CPU so the chart knows where the sky ends; the shader shades them and softens their edges.
-import { rnd, clamp } from '../shared/kit.js';
+// The land under the sky: a real horizon (land.webp — a snow field, spruce, a bare rise; see CREDITS.md) that the
+// shader relights for the night. Here: where it sits on the hero, where the sky ends above it (the chart needs to
+// know), and where the observatory (drawn by the shader: a dome and a hut) stands on it.
+import { clamp } from '../shared/kit.js';
 
-const smooth = (t) => t * t * (3 - 2 * t);
-// 1D value noise, seeded: the same land on every load.
-const noise = (x, seed) => { const i = Math.floor(x); const f = x - i; return rnd(i * 7 + seed * 1013) * (1 - smooth(f)) + rnd((i + 1) * 7 + seed * 1013) * smooth(f); };
-const fbm = (x, seed, oct = 4) => { let v = 0; let a = 0.5; let f = 1; for (let o = 0; o < oct; o++) { v += a * noise(x * f, seed + o * 17); a *= 0.5; f *= 2.07; } return v; };
-// Peaks rather than hills: each octave folded about its middle.
-const ridged = (x, seed, oct = 5) => { let v = 0; let a = 0.5; let f = 1; for (let o = 0; o < oct; o++) { const n = 1 - Math.abs(2 * noise(x * f, seed + o * 31) - 1); v += a * n * n; a *= 0.48; f *= 2.13; } return v; };
+const LAND = { span: 168, rise: 14, under: 3 }; // land.webp: degrees of azimuth, of altitude, and of those under the horizon
+const DOME = { az: 20, r: 2.6 };              // the dome on the bare rise: degrees in from the right edge, radius in degrees
 
-export function buildGround(W, H) {
-  const U = clamp(H * 0.105, 54, 112);          // one unit of ridge height; the land keeps its shape, a phone sees less of it
-  const n = Math.min(4096, Math.ceil(W * 2) + 1);
-  const data = new Float32Array(n * 4);         // far, near, cover, unused
-  const step = W / (n - 1);
-  const domeX = W - clamp(W * 0.17, 74, 250);   // the observatory, on the near hill to the right
-  const domeR = U * 0.13;
+// The top of the land in every column of land.webp, as a share of its height: read once from its alpha.
+export function profile(bitmap) {
+  const c = document.createElement('canvas'); c.width = bitmap.width; c.height = bitmap.height;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(bitmap, 0, 0);
+  const px = g.getImageData(0, 0, c.width, c.height).data; const tops = new Float32Array(c.width);
+  for (let x = 0; x < c.width; x++) { let y = 0; while (y < c.height && px[(y * c.width + x) * 4 + 3] < 128) y++; tops[x] = 1 - y / c.height; }
+  return tops;
+}
 
-  // Spruce along the near hill: clumps and gaps, no two alike.
-  const trees = [];
-  for (let x = -20, k = 0; x < W + 20; k++) {
-    const s = (x - W) / U;
-    const thick = smooth(clamp((fbm(s * 0.55 + 40, 5, 2) - 0.36) * 3.2, 0, 1));
-    x += U * (0.035 + 0.16 * rnd(k * 3 + 1) * (1.6 - thick)) + (thick < 0.05 ? U * 0.5 : 0);
-    if (thick < 0.05 || Math.abs(x - domeX) < domeR * 3.2) continue;
-    const h = U * (0.07 + 0.2 * rnd(k * 3 + 2) ** 1.6) * (0.55 + 0.6 * thick);
-    trees.push({ x, h, w: h * (0.2 + 0.1 * rnd(k * 3 + 3)), lean: (rnd(k * 5 + 9) - 0.5) * 0.12, tiers: 3 + Math.floor(rnd(k * 7 + 4) * 4), ph: rnd(k * 11 + 6) });
-  }
-
-  let top = 0;
-  for (let i = 0; i < n; i++) {
-    const x = i * step; const s = (x - W) / U;
-    // Far ridge: alpine, lower to the left where the headline stands, a massif right of centre.
-    const far = U * (0.34 + 0.72 * ridged(s * 0.21 + 3.1, 1) * (0.62 + 0.38 * smooth(clamp((s + 15) / 9, 0, 1))) + 0.06 * fbm(s * 2.3, 9, 3) + 0.018 * fbm(s * 11, 21, 3));
-    // Near hill: rolling, rising toward the dome.
-    const rise = Math.exp(-(((x - domeX) / (U * 3.4)) ** 2));
-    const near = U * (0.2 + 0.2 * fbm(s * 0.33 + 11, 3) + 0.17 * rise + 0.012 * fbm(s * 7, 13, 2));
-    data[i * 4] = far; data[i * 4 + 1] = near; data[i * 4 + 2] = near;
-  }
-  const nearAt = (x) => { const f = clamp(x / step, 0, n - 1.001); const i = Math.floor(f); return data[i * 4 + 1] + (data[(i + 1) * 4 + 1] - data[i * 4 + 1]) * (f - i); };
-  for (const t of trees) {
-    const base = nearAt(t.x) - 1.5;
-    for (let i = Math.max(0, Math.floor((t.x - t.w - 2) / step)); i <= Math.min(n - 1, Math.ceil((t.x + t.w + 2) / step)); i++) {
-      const d = Math.abs(i * step - t.x - t.lean * t.h) / t.w;
-      if (d >= 1) continue;
-      // A spruce: a spire whose boughs step out in tiers.
-      const up = 1 - d; const tier = (up * t.tiers + t.ph) % 1;
-      const y = base + t.h * clamp(up ** 0.85 - 0.11 * tier * (1 - up * 0.7), 0, 1);
-      if (y > data[i * 4 + 2]) data[i * 4 + 2] = y;
-    }
-  }
-  // The dome: a drum, a hemisphere, the raised lip of its shutter; a low annex beside it.
-  const domeBase = nearAt(domeX) - 1;
-  for (let i = Math.max(0, Math.floor((domeX - domeR * 4) / step)); i <= Math.min(n - 1, Math.ceil((domeX + domeR * 4) / step)); i++) {
-    const dx = i * step - domeX; let y = 0;
-    if (Math.abs(dx) < domeR) y = domeBase + domeR * 0.75 + Math.sqrt(domeR * domeR - dx * dx) + (dx > -domeR * 0.28 && dx < domeR * 0.1 ? domeR * 0.07 : 0);
-    else if (Math.abs(dx) < domeR * 1.06) y = domeBase + domeR * 0.75;
-    else if (dx > domeR * 1.06 && dx < domeR * 3.3) y = domeBase + domeR * 0.62;
-    if (y > data[i * 4 + 2]) data[i * 4 + 2] = y;
-  }
-  for (let i = 0; i < n; i++) top = Math.max(top, data[i * 4], data[i * 4 + 2]);
-
+export function buildGround(W, H, tops) {
+  const U = clamp(H * 0.105, 54, 112);              // the land keeps its scale; a phone sees less of it
+  const k = Math.max(U / 10, W / LAND.span);         // px per degree: a spruce stands about U tall; a very wide hero widens the band rather than run out of it
+  const w = LAND.span * k; const h = LAND.rise * k; const left = W - w; // its right edge is the hero's: the open rise is always in view
+  const height = (x) => { const f = clamp(((x - left) / w) * tops.length - 0.5, 0, tops.length - 1.001); const i = Math.floor(f); return (tops[i] + (tops[i + 1] - tops[i]) * (f - i)) * h; };
+  const domeX = W - DOME.az * k; const r = DOME.r * k;
+  let low = 1e9; for (let x = -3; x <= 1; x += 0.5) low = Math.min(low, height(domeX + x * r)); // the hut reaches 3 r to the left
+  const foot = H - low + 3;                          // behind the crest: the snow's own edge covers the foot
+  let top = 0; for (let x = 0; x <= W; x += 2) top = Math.max(top, height(x));
   return {
-    data, n, top, U,
-    lamp: { x: domeX + domeR * 1.5, y: H - domeBase - domeR * 0.3 },  // the red work light by the door
-    dome: { x: domeX, y: H - domeBase - domeR * 0.75, r: domeR },      // centre of the hemisphere, for its highlight
+    U, left, w, h,
+    top: Math.max(top, H - foot + r * 2.2),
+    horizon: H - LAND.under * k,                     // the true horizon, out of sight behind the trees
+    dome: { x: domeX, y: foot, r },
     // y (CSS px, down) where the sky ends at x.
-    skyline(x) { const f = clamp(x / step, 0, n - 1.001); const i = Math.floor(f); const t = f - i; return H - Math.max(data[i * 4] + (data[(i + 1) * 4] - data[i * 4]) * t, data[i * 4 + 2] + (data[(i + 1) * 4 + 2] - data[i * 4 + 2]) * t); },
+    skyline(x) { return H - height(x); },
   };
 }

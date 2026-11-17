@@ -27,8 +27,12 @@ function emit(css, out) {
   return out;
 }
 
+// Options as the chart takes them: inside the ranges its buffers and its layout were built for, and a pin colour
+// that is one (anything else would ink in black, which on this sky is no ink at all).
+const tidy = (o) => ({ ...o, drift: clamp(+o.drift || 0, 0, 2), cell: clamp(+o.cell || DEFAULTS.cell, 28, 56), reach: clamp(+o.reach || DEFAULTS.reach, 80, 240), join: Math.round(clamp(+o.join || DEFAULTS.join, 3, 9)), tone: Object.hasOwn(TONES, o.tone) || CSS.supports('color', `${o.tone}`) ? o.tone : DEFAULTS.tone });
+
 export default function mount(root, options = {}) {
-  let cfg = { ...DEFAULTS, ...options };
+  let cfg = tidy({ ...DEFAULTS, ...options });
   const still = reducedMotion();
   const fine = finePointer();
   const low = quality() === 'low';
@@ -45,15 +49,18 @@ export default function mount(root, options = {}) {
     <p class="sch__note"><span>Meridian · home hero</span><span>69° north</span></p>`;
   const cv = root.querySelector('.sch__sky');
   const title = root.querySelector('.sch__title');
+  const cue = root.querySelector('.sch__cue');
   const status = root.querySelector('[role="status"]');
 
   // The view: everything index.js, the chart and the shaders agree on, in CSS px with y down.
-  const view = { W: 0, H: 0, poleX: 0, poleY: 0, ring: 100, scale: 1, rot: -1.83, time: 0, reach: 150, still, box: { l: 0, t: 0, r: 0, b: 0 }, tone: emit(TONES.accent, [0, 0, 0]) };
+  const view = { W: 0, H: 0, poleX: 0, poleY: 0, ring: 100, scale: 1, rot: -1.83, time: 0, surge: 0, reach: 150, still, box: { l: 0, t: 0, r: 0, b: 0 }, rects: [], cue: { l: 0, t: 0, r: 0, b: 0 }, tone: [0, 0, 0] };
   const pencilCol = emit('#bdbdb5', [0, 0, 0]);
   let gl = null; let chart = null; let land = null; let ratio = 1; let fling = 0; let drag = null; let ptr = null; let skipClick = false; let stop = null; let queued = 0;
+  let stir = 0; // a pin sets it to 1: the aurora answers, up in a second and gone in ten
   const labels = createLabels(root.querySelector('.sch__labels'));
   const skyline = (x) => (land ? land.skyline(x) : view.H);
   const setTone = () => emit(TONES[cfg.tone] || cfg.tone, view.tone);
+  setTone();
 
   const draw = (now = performance.now()) => {
     queued = 0;
@@ -64,11 +71,16 @@ export default function mount(root, options = {}) {
   };
   const once = () => { if (still && !queued) queued = requestAnimationFrame(() => draw()); }; // without motion there is no loop: redraw on input
 
+  // Where the type is: the headline's lines (the sky is quiet under them, nothing is selectable behind them) and the cue.
   const measure = () => {
-    const h = root.getBoundingClientRect(); const t = title.getBoundingClientRect();
-    Object.assign(view.box, { l: t.left - h.left - 6, t: t.top - h.top - 2, r: t.right - h.left + 6, b: t.bottom - h.top + 2 });
+    const h = root.getBoundingClientRect(); const c = cue.getBoundingClientRect();
     const range = document.createRange(); range.selectNodeContents(title);
-    gl?.mask([...range.getClientRects()].map((r) => ({ l: r.left - h.left, t: r.top - h.top, r: r.right - h.left, b: r.bottom - h.top })));
+    view.rects = [...range.getClientRects()].map((r) => ({ l: r.left - h.left, t: r.top - h.top, r: r.right - h.left, b: r.bottom - h.top }));
+    const b = view.box; b.l = b.t = 1e9; b.r = b.b = -1e9;
+    for (const r of view.rects) { b.l = Math.min(b.l, r.l - 6); b.t = Math.min(b.t, r.t - 2); b.r = Math.max(b.r, r.r + 6); b.b = Math.max(b.b, r.b + 2); }
+    Object.assign(view.cue, { l: c.left - h.left, t: c.top - h.top, r: c.right - h.left, b: c.bottom - h.top });
+    gl?.mask(view.rects, view.cue);
+    labels.touch();
   };
   const size = () => {
     const w = root.clientWidth; const h = root.clientHeight;
@@ -78,31 +90,36 @@ export default function mount(root, options = {}) {
       const wide = w > h * 0.9;
       view.poleX = Math.round(w * 0.68); view.poleY = Math.round(h * (wide ? 0.44 : 0.36));
       const far = Math.max(...[[0, 0], [w, 0], [0, h], [w, h]].map(([x, y]) => Math.hypot(x - view.poleX, y - view.poleY)));
-      // One 15° ring, as the original; on very large screens it grows so the far corner stays on the map (148° out).
-      view.ring = Math.max(clamp(Math.min(w, h) * 0.16, 84, 150), far / (148 / 15));
+      // One 15° ring, as the original; on large screens it grows so the far corner stays on the map (148° out) and
+      // the left edge stays inside the sky that rises here (104° out).
+      view.ring = Math.max(clamp(Math.min(w, h) * 0.16, 84, 150), far / (148 / 15), wide ? view.poleX / (104 / 15) : 0);
       view.scale = view.ring / 15;
     }
     view.W = w; view.H = h;
     view.reach = cfg.reach * clamp(w / 900, 0.6, 1); // a phone's constellations stay phone-sized
     labels.resize(w, h);
     if (gl) {
-      land = buildGround(w, h);
+      land = buildGround(w, h, gl.tops);
       gl.resize(w, h, ratio); gl.ground(land);
-      const horizon = h - land.U * 0.3; // the true horizon, out of sight behind the ridge
       // ponytail: land, extinction and aurora live in a flat altitude frame along the bottom edge, not in the chart's
       // own projection (whose horizon would run down the left edge). A true all-sky horizon needs a second projection.
-      gl.frameOfGround(horizon, horizon / 74, view.poleX);
-      chart.limit(cfg.cell);
+      gl.frameOfGround(land.horizon, land.horizon / (w > h * 0.9 ? 74 : 48), view.poleX); // a tall screen looks through a longer lens: the curtains stand clear of the headline
+      chart.limit(cfg.cell); gl.depth(cfg.cell);
     }
     measure();
     if (still) draw();
   };
 
-  const gov = governor({ min: Math.max(0.6, 0.5 * Math.min(devicePixelRatio || 1, 2)), onChange: (r) => { ratio = r; if (gl && view.W) gl.resize(view.W, view.H, ratio); } });
+  // A HiDPI screen opens at about 2.2 megapixels (never under one render pixel per CSS pixel): the first frames
+  // are the ones a governor cannot save.
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (gl && view.W) gl.resize(view.W, view.H, ratio); } });
 
   const turn = (dt, t) => {
     gov.tick(dt);
     view.time += dt;
+    view.surge += (stir - view.surge) * (1 - Math.exp(-dt / 0.8)); stir *= Math.exp(-dt / 5);
     if (!drag?.moved) {
       view.rot = (view.rot + (SPIN * (cfg.drift * Math.PI) / 180 + fling) * dt) % TAU;
       fling = Math.abs(fling) < 0.002 ? 0 : fling * Math.exp(-FLING.decay * dt);
@@ -125,7 +142,8 @@ export default function mount(root, options = {}) {
       if (!drag.moved) {
         if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 6) return;
         drag.moved = true; drag.a = angle(p); drag.t = e.timeStamp;
-        cv.setPointerCapture?.(e.pointerId); root.classList.add('is-turning');
+        try { cv.setPointerCapture(e.pointerId); } catch { /* the pointer has already lifted */ }
+        root.classList.add('is-turning');
         return;
       }
       let da = angle(p) - drag.a; da = clamp(Math.atan2(Math.sin(da), Math.cos(da)), -0.35, 0.35); // near the pole a small move is a big angle
@@ -149,9 +167,23 @@ export default function mount(root, options = {}) {
   cv.addEventListener('pointerup', release, { signal });
   cv.addEventListener('pointercancel', release, { signal });
   cv.addEventListener('pointerleave', () => { if (!drag?.moved) { ptr = null; once(); } }, { signal });
-  cv.addEventListener('click', (e) => { if (skipClick) { skipClick = false; return; } if (chart) { chart.pin(at(e), cfg); once(); } }, { signal });
-  const pinSpot = () => { if (chart) { chart.pin(chart.spot(cfg), cfg); once(); } };
-  root.querySelector('.sch__cue').addEventListener('click', pinSpot, { signal });
+  cv.addEventListener('click', (e) => {
+    if (skipClick) { skipClick = false; return; }
+    if (!chart) return;
+    if (chart.pin(at(e), cfg)) stir = 1;
+    ptr = null; // the pencil lifts off the fresh ink until the pointer moves again
+    once();
+  }, { signal });
+  const pinSpot = () => {
+    if (!chart || !gl || gl.lost) return;
+    const p = chart.spot(cfg);
+    if (p && chart.pin(p, cfg)) stir = 1; else if (!p) status.textContent = 'No room left on the chart.';
+    once();
+  };
+  cue.addEventListener('click', pinSpot, { signal });
+  // A lost context leaves the still in charge until it comes back.
+  cv.addEventListener('webglcontextlost', () => root.classList.add('is-static'), { signal });
+  cv.addEventListener('webglcontextrestored', () => { root.classList.remove('is-static'); labels.touch(); once(); }, { signal });
 
   const ro = new ResizeObserver(size); ro.observe(root);
   size();
@@ -179,10 +211,10 @@ export default function mount(root, options = {}) {
 
   return {
     update(next = {}) {
-      const before = cfg; cfg = { ...cfg, ...next };
+      const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.tone !== before.tone) setTone();
       view.reach = cfg.reach * clamp(view.W / 900, 0.6, 1);
-      if (cfg.cell !== before.cell) chart?.limit(cfg.cell);
+      if (cfg.cell !== before.cell) { chart?.limit(cfg.cell); gl?.depth(cfg.cell); }
       once();
     },
     action(id) {

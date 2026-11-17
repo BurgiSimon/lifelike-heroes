@@ -21,13 +21,13 @@ const vec3 SUN_A = vec3(-0.373, -0.574, 0.729);
 const vec3 SUN_W = vec3(-0.280, -0.431, 0.857);
 const vec2 SHDIR = vec2(0.545, 0.838);
 const float TANW = 0.6;
-const vec3 SUNCOL = vec3(3.25, 3.0, 2.62);
+const vec3 SUNCOL = vec3(3.4, 3.0, 2.5);
 const vec3 SKYCOL = vec3(0.34, 0.47, 0.62);
 // Water: what a unit of depth (DREF px at scale 1) takes out of the light on its way down and back, and the
-// green-teal haze it puts in.
-const float DREF = 100.0;
-const vec3 SIGMA = vec3(1.75, 0.82, 1.02);
-const vec3 HAZE = vec3(0.01, 0.05, 0.043);
+// green-teal haze that sunlight scatters into it.
+const float DREF = 145.0;
+const vec3 SIGMA = vec3(0.78, 0.36, 0.5);
+const vec3 HAZE = vec3(0.006, 0.024, 0.021);
 
 vec2 uvOf(vec2 p) { return vec2(p.x / uRes.x, 1.0 - p.y / uRes.y); }
 
@@ -46,15 +46,22 @@ float fbm(vec2 p) {
   return s;
 }
 
-// The basin: a shallow shelf where the pads grow, dropping to a pool under the headline. Px, like everything else.
+// The basin: a shallow shelf where the pads grow, falling in one long uneven slope to a pool that lies under
+// the headline and runs out of frame toward the lower right. Px, like everything else.
 float depthAt(vec2 p) {
-  vec2 q = (p / uRes - vec2(0.5, 0.47)) * vec2(1.9, 2.15);
+  vec2 q = (p / uRes - vec2(0.47, 0.5)) * vec2(1.62, 1.9);
   float lump = vnoise(p / (uS * 260.0) + 3.7) - 0.5;
-  float bowl = 1.0 - smoothstep(0.05, 0.95, dot(q, q) + lump * 0.34);
-  return (30.0 + 100.0 * bowl * bowl * (3.0 - 2.0 * bowl) + 7.0 * lump) * uS;
+  float fine = vnoise(p / (uS * 105.0) + 11.3) - 0.5;
+  float lobe = 1.0 - 0.5 * smoothstep(-0.3, 0.9, dot(q, vec2(0.74, 0.67)) / (length(q) + 0.05));
+  float bowl = 1.0 - smoothstep(-0.1, 1.15, dot(q, q) * lobe + lump * 0.44 + fine * 0.2);
+  return (44.0 + 186.0 * bowl + 10.0 * lump) * uS;
 }
-// Koi keep to the upper half of the water: near the surface over the shelf, deeper over the pool.
-float koiDepth(float d) { return clamp(0.45 * d, 13.0 * uS, 52.0 * uS); }
+// How far below the surface a koi of size z lies where the water is d deep: its back just under the surface
+// at dive 0, as low as it goes at dive 1, and never in the stones.
+float koiDepth(float d, float dive, float z) {
+  float top = (8.0 + 2.5 * z) * uS;
+  return mix(top, max(top, min(d - (6.0 + 3.0 * z) * uS, 125.0 * uS)), dive);
+}
 // What a path of d px through the water does to light that started as c.
 vec3 throughWater(vec3 c, float d, float lit) {
   float k = d / (DREF * uS);
@@ -62,13 +69,17 @@ vec3 throughWater(vec3 c, float d, float lit) {
 }
 `;
 
-// The canopy overhead doubles as the gobo: where the photograph shows sky, the sun gets through.
+// What stands between the sun and the water, as seen from the point p on the surface where a ray enters: the
+// pavilion's roof of timber beams, running a little off the frame's long side and ending at an eave, beyond
+// which the court lies in open sun. soft is the penumbra in px: wider the deeper the light lands.
 export const gobo = /* glsl */ `
-uniform sampler2D uSky;
-float goboAt(vec2 p) {
-  vec2 sway = vec2(sin(uTime * 0.21), cos(uTime * 0.17)) * 0.004 + vec2(sin(uTime * 0.53 + p.y * 0.004), cos(uTime * 0.47 + p.x * 0.004)) * 0.0015;
-  vec2 uv = vec2(0.47, 0.44) + (p - uRes * 0.5) / (uS * 2300.0) + sway;
-  float l = dot(textureLod(uSky, uv, 3.6).rgb, vec3(0.3, 0.5, 0.2));
-  return mix(0.2, 1.0, smoothstep(0.22, 0.5, l));
+const vec2 BEAM = vec2(-0.41, 0.912);    // across the beams
+float goboAt(vec2 p, float soft) {
+  float a = dot(p - uRes * 0.5, BEAM) / uS;
+  float e = 3.5 + soft / uS;
+  float bar = abs(fract(a / 150.0 + 0.26) - 0.5) * 150.0;            // px from the middle of the nearest gap
+  float gaps = 1.0 - smoothstep(46.0 - e, 46.0 + e, bar);             // the beams take two fifths of the light
+  float court = smoothstep(260.0 - e, 260.0 + e, a);                  // past the eave nothing is overhead
+  return mix(0.05, 1.0, max(gaps, court));
 }
 `;

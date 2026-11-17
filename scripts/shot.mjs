@@ -43,7 +43,8 @@ for (const step of o.steps.split(/;\s*(?=(?:wait|move|click|drag|key|eval|fps|sh
   else if (kind === 'fps') {
     const ms = await p.evaluate((span) => new Promise((done) => { const d = []; let last = 0; const t0 = performance.now(); const f = (now) => { if (last) d.push(now - last); last = now; if (now - t0 < span) requestAnimationFrame(f); else done(d); }; requestAnimationFrame(f); }), Number(arg));
     ms.sort((a, b) => a - b); const avg = ms.reduce((a, b) => a + b, 0) / ms.length;
-    console.log(`fps → avg ${(1000 / avg).toFixed(1)} (frame ${avg.toFixed(1)} ms, median ${ms[ms.length >> 1].toFixed(1)}, p95 ${ms[Math.floor(ms.length * 0.95)].toFixed(1)}) over ${ms.length} frames at ${w}x${h} dpr ${o.dpr}`);
+    if (!ms.length) console.log(`fps → fewer than two frames in ${arg} ms`);
+    else console.log(`fps → avg ${(1000 / avg).toFixed(1)} (frame ${avg.toFixed(1)} ms, median ${ms[ms.length >> 1].toFixed(1)}, p95 ${ms[Math.floor(ms.length * 0.95)].toFixed(1)}) over ${ms.length} frames at ${w}x${h} dpr ${o.dpr}`);
   }
   else if (kind === 'shot') await shoot(path.resolve(path.dirname(out), arg));
   else throw new Error(`unknown step: ${kind}`);

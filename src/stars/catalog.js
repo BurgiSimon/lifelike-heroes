@@ -5,7 +5,7 @@
 const RAD = Math.PI / 180;
 
 // B–V colour index → linear sRGB at unit luminance. Temperature by Ballesteros' formula, chromaticity by the Kim
-// et al. fit of the Planckian locus; then pulled 45 % toward white, which is how a sensor (and an eye) sees stars.
+// et al. fit of the Planckian locus; then pulled 30 % toward white, which is how a sensor sees stars.
 function starColour(bv, out, o) {
   const T = 4600 * (1 / (0.92 * bv + 1.7) + 1 / (0.92 * bv + 0.62));
   const t = Math.min(25000, Math.max(1667, T)); const u = 1000 / t;
@@ -15,7 +15,7 @@ function starColour(bv, out, o) {
       : 3.081758 * x ** 3 - 5.8733867 * x * x + 3.75112997 * x - 0.37001483;
   const X = x / y; const Z = (1 - x - y) / y; // Y = 1
   const r = 3.2406 * X - 1.5372 - 0.4986 * Z; const g = -0.9689 * X + 1.8758 + 0.0415 * Z; const b = 0.0557 * X - 0.204 + 1.057 * Z;
-  const k = 0.55;
+  const k = 0.7;
   out[o] = Math.max(0, 1 + (r - 1) * k); out[o + 1] = Math.max(0, 1 + (g - 1) * k); out[o + 2] = Math.max(0, 1 + (b - 1) * k);
 }
 
