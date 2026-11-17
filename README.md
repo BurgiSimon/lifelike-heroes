@@ -66,7 +66,7 @@ You are looking straight down into a clear, shallow pond. Sunlight ripples acros
 
 <p>
   <a href="https://burgisimon.github.io/lifelike-heroes/stars.html">
-    <img src="docs/readme/stars.jpg" width="100%" alt="A night sky full of stars with the Milky Way and a green and violet aurora above a snowy spruce forest and a small observatory; two constellations are drawn in glowing red-orange lines beside the headline Every constellation began with someone pointing">
+    <img src="docs/readme/stars.jpg" width="100%" alt="A night sky full of stars with the Milky Way and a green and violet aurora above a snowy spruce forest and a small observatory; two constellations are drawn in glowing red-orange lines above the headline Polar Night">
   </a>
 </p>
 

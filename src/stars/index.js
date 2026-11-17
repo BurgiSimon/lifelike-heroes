@@ -52,7 +52,7 @@ export default function mount(root, options = {}) {
   root.innerHTML = `
     <canvas class="sch__sky" aria-hidden="true"></canvas>
     <canvas class="sch__labels" aria-hidden="true"></canvas>
-    <h1 class="sch__title" id="sch-title">Every constellation began with someone pointing.</h1>
+    <h1 class="sch__title" id="sch-title">Polar Night</h1>
     <button type="button" class="sch__cue">Pin a constellation</button>
     <p class="sr-only" role="status"></p>
     <p class="sch__note"><span>Meridian · home hero</span><span>69° north</span></p>`;
