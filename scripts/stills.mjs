@@ -4,7 +4,7 @@
 import { chromium } from 'playwright';
 
 const base = process.env.BASE || 'http://localhost:5173';
-const ids = process.argv.slice(2).length ? process.argv.slice(2) : ['meadow', 'koi', 'stars', 'rain'];
+const ids = process.argv.slice(2).length ? process.argv.slice(2) : ['meadow', 'koi', 'stars', 'mist'];
 const SIZES = { wide: { viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 }, tall: { viewport: { width: 450, height: 800 }, deviceScaleFactor: 2 } };
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

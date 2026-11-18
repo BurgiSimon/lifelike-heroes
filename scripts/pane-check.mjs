@@ -4,7 +4,7 @@
 // stopping or leaving the frame. Left raining for five minutes the pane keeps to its number of drops, no drop
 // grows past what glass can hold, and drops keep letting go.
 import assert from 'node:assert/strict';
-import { createPane, MAX } from '../src/rain/pane.js';
+import { createPane, MAX } from '../src/mist/pane.js';
 
 const cfg = { rain: 1, mist: 1 };
 const make = (W = 1440, H = 900) => { const p = createPane(cfg); p.fit(W, H); return p; };

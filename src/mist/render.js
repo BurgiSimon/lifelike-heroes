@@ -12,7 +12,7 @@ import { CAPS, fullscreenVert, lensFrag, wideFrag, mistFrag, dropVert, dropFrag,
 import { MAX } from './pane.js';
 import { TX, VFOV, VTALL } from './optics.js';
 
-const ASSETS = '/assets/rain/';
+const ASSETS = '/assets/mist/';
 const EXPOSURE = 0.3;    // the photographer's exposure for the city: the sky stays night, the lamps still burn out
 const MIST = 2;          // CSS px per texel of the mist's field: its edges are soft things
 const BACK = 1 / 60;     // share of the mist that comes back per second: a wiped patch has closed in about a minute

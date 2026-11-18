@@ -9,7 +9,7 @@
 //   city_wide.webp   the same view in focus and very wide (±LON by ±LAT, longitude by latitude), for the drops:
 //                    each one is a small strong lens that shows the whole city upside down. (c / WIDE) ^ (1 / 2.2)
 //
-//   node src/rain/tools/build-assets.mjs --hdr hansaplatz_4k.hdr --out public/assets/rain [--preview dir]
+//   node src/mist/tools/build-assets.mjs --hdr hansaplatz_4k.hdr --out public/assets/mist [--preview dir]
 //
 // The numbers a shader needs to read these back are exported from ../optics.js; this file imports them too.
 import fs from 'node:fs';

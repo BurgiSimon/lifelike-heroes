@@ -1,29 +1,29 @@
-/* Night rain hero — Lantern House. The canvas is the photograph. The headline is written in the mist on the glass,
+/* Misted window hero — Lantern House. The canvas is the photograph. The headline is written in the mist on the glass,
    low on the left where the quay is dark; the cue and the plate line are DOM on it. */
-.rain {
-  --rain-ground: #0b0a12;   /* the quiet ground before the scene arrives, and under the fallback */
-  --rain-ink: #f1f0f6;
+.mist {
+  --mist-ground: #0b0a12;   /* the quiet ground before the scene arrives, and under the fallback */
+  --mist-ink: #f1f0f6;
   display: grid;
   justify-items: start;
   align-content: end;
   gap: 26px;
   padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(64px, 12vh, 112px);
-  background: var(--rain-ground);
-  color: var(--rain-ink);
+  background: var(--mist-ground);
+  color: var(--mist-ink);
   touch-action: pan-y;   /* a scroll that starts on the glass stays a scroll */
   -webkit-tap-highlight-color: transparent;
   cursor: default;
 }
 
 /* The scene fades in once it is drawn: first paint is the dark ground and the headline. */
-.rain__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
-.rain.is-ready .rain__canvas { opacity: 1; }
-.rain.is-still .rain__canvas { transition: none; }
+.mist__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.mist.is-ready .mist__canvas { opacity: 1; }
+.mist.is-still .mist__canvas { transition: none; }
 
 /* The headline is real text, laid exactly where the scene wipes its letters out of the mist (letters.js reads this
    layout). Once the scene is drawn the DOM letters go transparent, not hidden: assistive tech still reads them, and
    they are what shows before the scene arrives and when it never does. Wide strokes: a fingertip wrote this. */
-.rain__title {
+.mist__title {
   position: relative;
   max-width: 9ch;
   font-size: clamp(3.1rem, 1rem + 6.6vw, 8rem);
@@ -34,11 +34,11 @@
   transition: opacity 1.2s var(--ease-out);
   pointer-events: none;
 }
-.rain.is-ready .rain__title { opacity: 0; }
-.rain.is-still .rain__title { transition: none; }
+.mist.is-ready .mist__title { opacity: 0; }
+.mist.is-still .mist__title { transition: none; }
 
 /* The invitation and the keyboard path: a small pane of smoked glass, so nothing in the scene shows through its label. */
-.rain__cue {
+.mist__cue {
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -54,12 +54,12 @@
   font-size: 0.875rem;
   transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
 }
-.rain__cue::before { content: ''; width: 5px; height: 7px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: currentColor; }
-.rain__cue:hover { color: var(--rain-ink); border-color: rgb(241 240 246 / 0.6); background: rgb(10 9 16 / 0.68); }
+.mist__cue::before { content: ''; width: 5px; height: 7px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: currentColor; }
+.mist__cue:hover { color: var(--mist-ink); border-color: rgb(241 240 246 / 0.6); background: rgb(10 9 16 / 0.68); }
 
 /* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
    strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
-.rain__note {
+.mist__note {
   position: absolute;
   left: var(--gutter);
   right: var(--gutter);
@@ -75,15 +75,15 @@
   color: rgb(241 240 246 / 0.92);
   pointer-events: none;
 }
-.rain__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(10 9 16 / 0.74); }
+.mist__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(10 9 16 / 0.74); }
 
 /* The text can be switched off (the text option): the pane alone. Hidden, not removed, so the layout holds. */
-.rain.is-bare .rain__title, .rain.is-bare .rain__cue, .rain.is-bare .rain__note { visibility: hidden; }
+.mist.is-bare .mist__title, .mist.is-bare .mist__cue, .mist.is-bare .mist__note { visibility: hidden; }
 
 /* No WebGL2, or the context is gone: a still, legible ground in the picture's own colours (the city's glow through
    a misted pane). Nothing to act on, so no cue; the headline is plain type again. */
-.rain.is-static { background: radial-gradient(90% 60% at 62% 38%, #6d5a86 0%, #3b3257 38%, #1b1830 70%, var(--rain-ground) 100%); }
-.rain.is-static > canvas, .rain.is-static .rain__cue { display: none; }
-.rain.is-static .rain__title { opacity: 1; }
+.mist.is-static { background: radial-gradient(90% 60% at 62% 38%, #6d5a86 0%, #3b3257 38%, #1b1830 70%, var(--mist-ground) 100%); }
+.mist.is-static > canvas, .mist.is-static .mist__cue { display: none; }
+.mist.is-static .mist__title { opacity: 1; }
 
-@media (prefers-reduced-motion: reduce) { .rain__canvas, .rain__title, .rain__cue { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .mist__canvas, .mist__title, .mist__cue { transition: none; } }

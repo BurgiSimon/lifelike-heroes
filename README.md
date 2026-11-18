@@ -99,8 +99,8 @@ A map of the real northern sky, with the northern lights over a snowy forest. Ev
 ### 4 &nbsp;·&nbsp; Night rain
 
 <p>
-  <a href="https://burgisimon.github.io/lifelike-heroes/rain.html">
-    <img src="docs/readme/rain.jpg" width="100%" alt="A misted window at night, beaded with rain, with the lights of a city far out of focus behind it; the headline Stay in tonight is written in the mist with a fingertip, and a hand has wiped one clear stroke across the lights">
+  <a href="https://burgisimon.github.io/lifelike-heroes/mist.html">
+    <img src="docs/readme/mist.jpg" width="100%" alt="A misted window at night, beaded with rain, with the lights of a city far out of focus behind it; the headline Stay in tonight is written in the mist with a fingertip, and a hand has wiped one clear stroke across the lights">
   </a>
 </p>
 
@@ -110,7 +110,7 @@ A hotel room window on a wet night. The camera is focused on the glass, so the r
 - **Click** and a drop gathers there and runs down the pane, in fits and starts, leaving a clear track behind it.
 - **Wait a moment** and the rain does it by itself: drops land, grow heavy and let go.
 
-**[Open the night rain →](https://burgisimon.github.io/lifelike-heroes/rain.html)**
+**[Open the night rain →](https://burgisimon.github.io/lifelike-heroes/mist.html)**
 
 <br>
 
@@ -168,8 +168,8 @@ The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi p
 - A hover joins the brightest stars within reach (seven by default) with a minimum spanning tree. A click inks it in, edge by edge. Up to six constellations are kept.
 - The aurora, airglow and the little observatory are procedural. The horizon is a photograph, relit by the aurora above it.
 
-**Night rain** (`src/rain`)
-- The city is one photographed HDR panorama (Shanghai, from the Bund). A build script (`src/rain/tools/build-assets.mjs`) defocuses it offline in linear light, as a 50 mm lens at f/2 focused on a pane half a metre away would: every lamp becomes the aperture's disc, with the lamp's real energy.
+**Night rain** (`src/mist`)
+- The city is one photographed HDR panorama (Shanghai, from the Bund). A build script (`src/mist/tools/build-assets.mjs`) defocuses it offline in linear light, as a 50 mm lens at f/2 focused on a pane half a metre away would: every lamp becomes the aperture's disc, with the lamp's real energy.
 - The pane has two wet sides. Rain beads on the far one: up to 2,600 drops that land, merge, grow too heavy for the glass and run in fits and starts, swallowing what they meet and leaving beads behind (`pane.js`: rules that draw nothing, which `scripts/pane-check.mjs` steps in Node). The near side is misted, and the mist is a field kept on the GPU: wiped along the pointer's path and along a running drop's track, and creeping back in about a minute.
 - Drops are drawn as a height map (instanced caps, MAX-blended, so drops that touch are one body of water). Each point of a drop turns the lens's line of sight by Snell's law, so a drop holds the defocused city upside down. Mist is a diffuser: it hands on the light behind it, spread wide.
 - The headline is the DOM's own `<h1>`, drawn into a mask from its layout: the mist is gone where the letters are.
@@ -227,7 +227,7 @@ hero.destroy();                // remove it and release its GPU resources
 
 ```
 index.html                    gallery: an endless line of cards (wheel, drag or arrow keys), a click opens a card into its scene
-meadow.html, koi.html, stars.html, rain.html
+meadow.html, koi.html, stars.html, mist.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
   meadow/  koi/  stars/  rain/   one folder per scene
@@ -265,6 +265,6 @@ All third-party material is public domain or under an open licence (CC0, SIL OFL
 | All scenes | Interface typefaces | [Mona Sans](https://github.com/github/mona-sans) by GitHub and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) by JetBrains (SIL OFL 1.1) |
 | All scenes | Rendering library | [three.js](https://threejs.org) (MIT) |
 
-See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md) and [`public/assets/rain/CREDITS.md`](public/assets/rain/CREDITS.md).
+See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md) and [`public/assets/mist/CREDITS.md`](public/assets/mist/CREDITS.md).
 
 This repository does not include a licence for its own code yet. Please open an issue if you would like to reuse it.

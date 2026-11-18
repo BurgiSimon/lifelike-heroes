@@ -15,7 +15,7 @@ await p.waitForTimeout(400);
 
 // the cards on screen, left to right
 const seen = () => p.evaluate(() => [...document.querySelectorAll('.list a')].map((a, n) => { const r = a.getBoundingClientRect(); return { n, id: a.dataset.id, left: r.left, right: r.right, copy: a.classList.contains('is-copy') }; }).filter((c) => c.right > 0 && c.left < innerWidth).sort((a, b) => a.left - b.left));
-const ORDER = ['meadow', 'koi', 'stars', 'rain'];
+const ORDER = ['meadow', 'koi', 'stars', 'mist'];
 async function whole(when) {
   const c = await seen();
   assert.ok(c[0].left <= 20.5 && c.at(-1).right >= W - 20.5, `${when}: the line reaches both edges (${c[0].left.toFixed(0)} to ${c.at(-1).right.toFixed(0)})`);

@@ -1,4 +1,4 @@
-// Night rain hero — the first screen of Lantern House, a small hotel, in the wet months. It is one photograph: a
+// Misted window hero — the first screen of Lantern House, a small hotel, in the wet months. It is one photograph: a
 // 50 mm lens wide open, half a metre from the window of a room, focused on the glass. So the rain on the pane is
 // sharp and the city across the river (Shanghai, from a photographed panorama) is far out of focus, every lamp a
 // soft disc. The room is warm and the glass is cold: the near side is misted, thickest low down, and somebody has
@@ -40,12 +40,12 @@ export default function mount(root, options = {}) {
   const still = reducedMotion(); const fine = finePointer(); const low = quality() === 'low';
   const ac = new AbortController(); const { signal } = ac;
 
-  root.classList.add('rain'); root.classList.toggle('is-still', still); root.classList.toggle('is-bare', !cfg.text);
+  root.classList.add('mist'); root.classList.toggle('is-still', still); root.classList.toggle('is-bare', !cfg.text);
   root.innerHTML = `
-    <canvas class="rain__canvas" aria-hidden="true"></canvas>
-    <h1 class="rain__title">Stay in tonight</h1>
-    <button type="button" class="rain__cue">Let a drop run</button>
-    <p class="rain__note"><span>Lantern House · home hero</span><span>Shanghai · 2026</span></p>
+    <canvas class="mist__canvas" aria-hidden="true"></canvas>
+    <h1 class="mist__title">Stay in tonight</h1>
+    <button type="button" class="mist__cue">Let a drop run</button>
+    <p class="mist__note"><span>Lantern House · home hero</span><span>Shanghai · 2026</span></p>
     <p class="sr-only" role="status"></p>`;
   const canvas = root.querySelector('canvas'); const title = root.querySelector('h1'); const cue = root.querySelector('button');
   const status = root.querySelector('[role="status"]');
@@ -161,7 +161,7 @@ export default function mount(root, options = {}) {
     if (!still) stop = loop(root, tick);
   }).catch((err) => {
     if (dead) return;   // destroyed while it was still starting: the root has been handed back clean
-    console.info('Night rain: no WebGL2 scene, the headline stands on the still ground.', err?.message || err);
+    console.info('Misted window: no WebGL2 scene, the headline stands on the still ground.', err?.message || err);
     root.classList.add('is-static');
   });
   // A lost context (GPU process restart, driver reset) leaves the still ground in charge until it comes back.
@@ -196,7 +196,7 @@ export default function mount(root, options = {}) {
     destroy() {
       dead = true; ac.abort(); stop?.(); ro.disconnect(); cancelAnimationFrame(queued); snd.destroy();
       R?.dispose(); R = null;
-      root.classList.remove('rain', 'is-ready', 'is-still', 'is-static', 'is-bare'); root.innerHTML = '';
+      root.classList.remove('mist', 'is-ready', 'is-still', 'is-static', 'is-bare'); root.innerHTML = '';
     },
   };
 }
