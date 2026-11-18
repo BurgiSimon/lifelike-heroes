@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Rain on a window: one request, two builds</title>
+  <style>
+    /* A plain static page, not part of the build: system type, the site's own dark ground and ink. It compares two
+       test runs of the same request and can be deleted with its folder (public/compare) once it has done its job. */
+    :root { --ground: #07080a; --panel: #101216; --ink: #f4f2ec; --soft: #b9b7b0; --line: #ffffff24; --a: #ffb072; --b: #8fb6e0; color-scheme: dark; }
+    * { box-sizing: border-box; }
+    html { background: var(--ground); color: var(--ink); font: 16px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+    body { margin: 0 auto; max-width: 1500px; padding: clamp(20px, 4vw, 56px) clamp(16px, 3vw, 40px) 80px; }
+    h1 { margin: 0 0 12px; font-size: clamp(2rem, 1rem + 3.6vw, 4rem); line-height: 1; letter-spacing: -0.035em; font-weight: 750; text-wrap: balance; }
+    h2 { margin: 72px 0 6px; font-size: 1.5rem; letter-spacing: -0.02em; }
+    h3 { margin: 0; font-size: 1.25rem; letter-spacing: -0.015em; }
+    p { margin: 0 0 12px; max-width: 68ch; color: var(--soft); }
+    a { color: inherit; text-underline-offset: 0.2em; }
+    :focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+    .label, th, .tag, button { font: 500 0.6875rem/1.4 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+    .label { color: var(--soft); margin: 0 0 14px; }
+    blockquote { margin: 20px 0 0; padding: 14px 18px; max-width: 76ch; border-left: 2px solid var(--line); color: var(--ink); background: var(--panel); border-radius: 0 8px 8px 0; }
+    .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(14px, 2vw, 28px); margin-top: 28px; align-items: start; }
+    .run { display: grid; gap: 14px; }
+    .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; color: #0b0d0c; }
+    .a .tag { background: var(--a); } .b .tag { background: var(--b); }
+    .shot { display: block; position: relative; border-radius: 12px; overflow: hidden; background: var(--panel); aspect-ratio: 16 / 10; }
+    .shot img, .shot iframe { display: block; width: 100%; height: 100%; object-fit: cover; border: 0; }
+    .shot span { position: absolute; right: 12px; bottom: 12px; padding: 8px 14px; border-radius: 999px; background: rgb(9 11 10 / 0.72); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font: 500 0.6875rem/1.4 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.08em; text-transform: uppercase; }
+    a.shot:hover span { background: var(--ink); color: #0b0d0c; }
+    .run ul { margin: 0; padding-left: 1.1em; color: var(--soft); }
+    .run li { margin-bottom: 6px; }
+    .links { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.9375rem; }
+    button { min-height: 44px; padding: 0 18px; border: 1px solid var(--line); border-radius: 999px; background: none; color: var(--ink); cursor: pointer; }
+    button:hover { border-color: var(--ink); }
+    .scroll { overflow-x: auto; margin-top: 18px; }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 0.9375rem; }
+    th, td { padding: 11px 14px 11px 0; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+    th { color: var(--soft); font-weight: 500; }
+    td:first-child { color: var(--soft); width: 24%; }
+    .sheet { display: block; width: 100%; height: auto; border-radius: 10px; margin-top: 10px; }
+    .phones { display: flex; gap: 14px; }
+    .phones figure { margin: 0; flex: 1; max-width: 240px; }
+    .phones img { display: block; width: 100%; height: auto; border-radius: 10px; }
+    figcaption { margin-top: 6px; color: var(--soft); font-size: 0.8125rem; }
+    footer { margin-top: 80px; padding-top: 20px; border-top: 1px solid var(--line); }
+    @media (max-width: 760px) { .pair { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <p class="label">Lifelike Heroes · a test of the lifelike-hero skill</p>
+  <h1>Rain on a window: one request, two builds</h1>
+  <p>The same request went to two agents, each working alone in its own copy of the project. One had the
+    <code>lifelike-hero</code> skill, the other did not. Neither saw the other's work. Both pictures are live: open
+    one, move the mouse across the glass, and click.</p>
+  <blockquote>can you add a new hero to the gallery? im thinking rain on a window at night, city lights behind it all
+    blurry. moving the mouse should wipe the fog off the glass and a click sends a drop running down. it should look as
+    real as the other three</blockquote>
+
+  <div class="pair">
+    <section class="run a" aria-labelledby="ta">
+      <div><span class="tag">A · with the skill</span></div>
+      <a class="shot" href="with-skill/rain.html" target="_blank" rel="noopener" data-live="with-skill/rain.html">
+        <img src="shots/a-wide.jpg" width="1440" height="900" alt="Run A: a heavily misted window at night with raindrops and several clear tracks; behind it large soft discs of city light in violet, orange, teal and white. The headline Stay in tonight is written into the mist at the lower left.">
+        <span>Open it live →</span>
+      </a>
+      <h3 id="ta">“Stay in tonight” · Lantern House, home</h3>
+      <p>A 50 mm lens wide open, half a metre from a hotel room's window. The headline is written into the mist on
+        the glass, from the page's own heading.</p>
+      <div class="links"><a href="https://github.com/BurgiSimon/lifelike-heroes/pull/5/files">Its code</a><a href="with-skill/rain.html?reduced" target="_blank" rel="noopener">Its still</a></div>
+    </section>
+    <section class="run b" aria-labelledby="tb">
+      <div><span class="tag">B · without the skill</span></div>
+      <a class="shot" href="without-skill/rain.html" target="_blank" rel="noopener" data-live="without-skill/rain.html">
+        <img src="shots/b-wide.jpg" width="1440" height="900" alt="Run B: a dark window at night covered in fine spray and raindrops, with dark tracks where drops have run; behind it a band of soft discs of city light in white, pink, violet and turquoise. The headline Small Hours stands at the lower left in a white serif.">
+        <span>Open it live →</span>
+      </a>
+      <h3 id="tb">“Small Hours” · Lowlight, night programme</h3>
+      <p>A lens focused on the pane, so every lamp is a disc and every drop holds the city upside down. The headline
+        is type laid over the picture.</p>
+      <div class="links"><a href="https://github.com/BurgiSimon/lifelike-heroes/pull/4/files">Its code</a><a href="without-skill/rain.html?reduced" target="_blank" rel="noopener">Its still</a></div>
+    </section>
+  </div>
+  <p style="margin-top: 22px"><button type="button" id="both">Run both live, side by side</button></p>
+
+  <h2>After a wipe and a click</h2>
+  <p>Screenshots each agent took of its own scene after wiping the mist and sending a drop down.</p>
+  <div class="pair">
+    <div class="run a"><div class="shot"><img loading="lazy" src="shots/a-touched.jpg" width="1440" height="900" alt="Run A after a wipe and a click: a clear band wiped through the mist shows the city lights sharp-edged, and a fresh track runs down from where the click landed."></div></div>
+    <div class="run b"><div class="shot"><img loading="lazy" src="shots/b-touched.jpg" width="1440" height="900" alt="Run B after a wipe and a click: a wide streaked band and a thin fingertip line are wiped clear of mist, and a drop has run a dark trail down the pane."></div></div>
+  </div>
+
+  <h2>Side by side, in numbers</h2>
+  <div class="scroll">
+    <table>
+      <thead><tr><th scope="col"></th><th scope="col">A · with the skill</th><th scope="col">B · without the skill</th></tr></thead>
+      <tbody>
+        <tr><td>Time to build</td><td>93 minutes</td><td>67 minutes</td></tr>
+        <tr><td>Tool calls · tokens</td><td>133 · 510 thousand</td><td>158 · 517 thousand</td></tr>
+        <tr><td>Scene contract check</td><td id="ca">passes, every line</td><td>passes, every line</td></tr>
+        <tr><td>Builds, gallery card, stills, README, credits</td><td>all there</td><td>all there</td></tr>
+        <tr><td>The city</td><td colspan="2">Both chose the same photograph by themselves: Poly Haven's Shanghai Bund panorama (CC0), put out of focus offline in linear light</td></tr>
+        <tr><td>The headline</td><td>Written into the mist: part of the picture, but faint. It stands 1.3 to 1 against what lies behind it</td><td>White serif type over the canvas: not part of the picture, but easy to read at 8.2 to 1</td></tr>
+        <tr><td></td><td colspan="2">By the same measure the pond's stone letters stand 2.0 to 1, the meadow's steel word 2.9 and the star chart's type 8.0</td></tr>
+        <tr><td>The mist</td><td>Comes back in about a minute</td><td>Comes back in about 14 seconds</td></tr>
+        <tr><td>Assets shipped</td><td>138 kB in 3 files</td><td>371 kB in 4 files (one is its own no-WebGL still)</td></tr>
+        <tr><td>Cost to draw, in the sandbox's software renderer</td><td>about 1 frame a second</td><td>about 4 to 6 frames a second</td></tr>
+        <tr><td>Extra it wrote</td><td>A Node self-check of the pane's rules</td><td>A Node self-check of the drop rules</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top: 14px">Neither was ever run on a real GPU: both were built and judged at a few frames a second in software, so how
+    they move at full speed, and how fast they run on a laptop, is for you to find out here.</p>
+
+  <h2>What each said about its own work</h2>
+  <div class="pair">
+    <div class="run a"><div><span class="tag">A</span></div><ul>
+      <li>The headline's contrast is under the 3 to 1 usually asked of large type (its own estimate was 1.9 to 2.8; measured afterwards, 1.3).</li>
+      <li>A wipe is subtle over the brightest lights; it reads strongly over the dark lower half.</li>
+      <li>Still a render in places: tracks are rather even in width, touching drops meet in a crease, the city has no traffic.</li>
+      <li>A visitor cannot rub the headline out: the mist round it only thins and returns in seconds. Not physics, and the code says so.</li>
+      <li>On a phone there is no wiping, only the tap that lets a drop run.</li>
+      <li>The low quality tier only drops the bloom.</li>
+    </ul></div>
+    <div class="run b"><div><span class="tag">B</span></div><ul>
+      <li>Rain and mist are treated as lying on one pane; on a real window the rain is outside and the mist inside.</li>
+      <li>Every drop shows the same wide view of the city, shifted by where it sits; the lens maths is by eye.</li>
+      <li>The fine spray between the drops is a tile that repeats every 512 px.</li>
+      <li>The opening picture matches the live scene only near 16:10.</li>
+      <li>The wipe screenshots were taken in reduced-motion mode, because the slow renderer held each mouse move back.</li>
+      <li>The sound passes the level check but has not been listened to.</li>
+    </ul></div>
+  </div>
+
+  <h2>Every state, on one sheet</h2>
+  <p>Each scene live, after a hover and a click, without its text, as its reduced-motion still, without WebGL, and on a phone.</p>
+  <p class="label" style="margin-top: 22px">A · with the skill</p>
+  <img class="sheet" loading="lazy" src="shots/a-sheet.jpg" width="2160" height="952" alt="Run A in six states: live, after a hover and a click, without text, reduced motion, without WebGL, and on a phone.">
+  <p class="label" style="margin-top: 26px">B · without the skill</p>
+  <img class="sheet" loading="lazy" src="shots/b-sheet.jpg" width="2160" height="952" alt="Run B in six states: live, after a hover and a click, without text, reduced motion, without WebGL, and on a phone.">
+
+  <footer>
+    <p>Both scenes here are built copies, kept in <code>public/compare/</code> so the site serves them as they were made.
+      Their source is in the pull requests linked above. Run B has since been merged as the gallery's Night rain; run A
+      is proposed beside it as Misted window. Nothing links to this page; delete the folder to remove it.</p>
+    <p><a href="../">← The gallery</a></p>
+  </footer>
+
+  <script>
+    // Two WebGL scenes at once are heavy, so they start only when asked: each picture is swapped for its live scene.
+    document.getElementById('both').addEventListener('click', (e) => {
+      for (const a of document.querySelectorAll('a.shot[data-live]')) {
+        const box = document.createElement('div'); box.className = 'shot';
+        const f = document.createElement('iframe'); f.src = a.dataset.live; f.title = a.querySelector('img').alt.split(':')[0] + ', live'; f.allow = 'autoplay';
+        box.append(f); a.replaceWith(box);
+      }
+      e.currentTarget.remove();
+    });
+  </script>
+</body>
+</html>

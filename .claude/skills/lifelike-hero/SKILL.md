@@ -56,8 +56,10 @@ Things that make a brief good:
 - **One verb, with a consequence that stays.** A click does one physical thing that lasts and has rules (a flower
   grows and later wilts when there are too many; a pellet falls, may roll off a lily pad, and is eaten). Hover is
   the gentle, continuous version. The verb also has a real button, which is the keyboard's way in.
-- **The headline belongs to the picture.** Best is an object in the scene, lit by the scene's light. Otherwise the
-  scene must make room for it. Type merely laid over a busy picture is the commonest way these fall short.
+- **The headline belongs to the picture, and can still be read.** Best is an object in the scene, lit by the
+  scene's light. Otherwise the scene must make room for it. Type merely laid over a busy picture is the commonest
+  way these fall short; a headline so much part of the picture that it sinks into it is the other
+  (`check-hero.mjs` measures how well it stands out).
 - **Something is real.** Decide which ingredients are photographed, scanned or measured (step 3).
 - **It can be drawn at 60 Hz on a laptop's integrated graphics.** One fixed camera makes this possible: everything
   can be composed for that one view.
@@ -145,6 +147,7 @@ Useful ways to look:
 - Put it beside `public/assets/gallery/*.jpg`. Would it hang on the same wall?
 - `--steps` drives it: `--steps "move:0.5,0.6;wait:400;click:0.3,0.7;wait:1200;shot:after.png"`. `--mobile`,
   `--reduced` and `--q low` show the other states; `check-hero.mjs` renders all of them onto one sheet.
+  For a picture without the page's tabs, begin the steps with `eval:document.querySelector('.chrome').remove()`.
 - Crop in. Zoomed out, most things look fine; faults live at 100 %.
 - Ask the user for a real photograph of the subject if they have one in mind.
 
@@ -208,10 +211,21 @@ node --import ./.claude/skills/lifelike-hero/scripts/browser.mjs scripts/shot.mj
 node --import ./.claude/skills/lifelike-hero/scripts/browser.mjs scripts/stills.mjs tidepool
 ```
 
-(The skill's own scripts do this already.) The software renderer draws the same picture, about a frame a second,
-so allow `--wait` time, and treat any frame rate it reports as meaningless. Design for speed by construction
-instead (`references/craft.md`, "Fast by construction"), and ask the user to run
-`node scripts/shot.mjs <id> --steps "fps:3000"` on their own machine before calling a scene finished.
+(The skill's own scripts do this already.) The software renderer draws the same picture, about a frame a second
+on a heavy scene, and that changes how to work:
+
+- **The scene's clock runs slow.** The loop clamps each frame to 0.1 s, so at one frame a second ten seconds of
+  waiting show one second of the scene. Anything timed (a mist creeping back, a drop running, a gust crossing)
+  looks about ten times slower than it is. Do not tune timing from what a screenshot shows after a wait. Keep the
+  rules in a module that draws nothing and step them in Node (`scripts/pond-check.mjs` does this for the pond), or
+  work the time out from the frame count.
+- **Look at a smaller frame while iterating.** `--size 720x450` draws about four times faster than the default
+  1440x900; go back to full size to judge detail. `check-hero.mjs` takes several minutes, so run it at
+  milestones, not after every change.
+- **Frame rates mean nothing here.** Design for speed by construction (`references/craft.md`, "Fast by
+  construction"), and ask the user to run `node scripts/shot.mjs <id> --steps "fps:3000"` on their own machine
+  before calling a scene finished.
+- **Say what you could not see.** Nobody has watched the scene move at full speed; put that in the report.
 
 ## The manner of the code
 

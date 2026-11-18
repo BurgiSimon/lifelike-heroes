@@ -58,6 +58,8 @@ Still to do by hand (each is a judgment, or a file this script will not guess at
   - src/gallery/index.js: the lit card gets a trace in its scene's own manner (grass that parts, rings, a pencilled
     line). draw() has one block per scene, by its place in the line; give ${id} one of its own, or it has none.
   - scripts/gallery-check.mjs counts three scenes: ORDER, the "% 3" beside it, and "shown: 3" for the phone strip.
+    Its drift test also compares "the second card on screen" a second apart, which is another card once the first
+    has left the edge (it fails that way on a slow machine even with three): make it follow one card.
   - scripts/sound-check.mjs: add ${id} to SCENES (its room, its bed, one call per voice, its actions), then run it.
   - README.md: its section under "Three scenes to play with" (and that heading's count), its rows in the options
     and credits tables, a picture in docs/readme/, "How each scene works", the project layout.

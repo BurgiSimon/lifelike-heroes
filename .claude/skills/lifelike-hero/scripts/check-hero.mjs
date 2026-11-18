@@ -59,6 +59,19 @@ const shot = async (p, name) => { const buf = await p.screenshot({ timeout: 1800
 const grey = (buf) => sharp(buf).greyscale().raw().toBuffer();
 const spread = async (buf) => (sharp ? (await sharp(buf).greyscale().stats()).channels[0].stdev : NaN);                 // 0: one flat colour
 const differ = async (a, b) => { if (!sharp) return NaN; const [x, y] = await Promise.all([grey(a), grey(b)]); let n = 0; for (let i = 0; i < x.length; i++) if (Math.abs(x[i] - y[i]) > 2) n++; return n / x.length; };   // share of pixels that changed
+// How the headline stands against what lies behind it: the still with its text and without, compared inside the
+// headline's box. The pixels that change are the letters (drawn by the scene or by the DOM alike); the ratio is
+// between their light and the light of what replaces them. WCAG's measure, taken from the picture.
+const lum = (r, g, b) => { const f = (v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+const standsOut = async (withText, bare, box) => {
+  if (!sharp || box.w < 8 || box.h < 8) return null;
+  const cut = (buf) => sharp(buf).extract({ left: Math.max(0, Math.floor(box.x)), top: Math.max(0, Math.floor(box.y)), width: Math.floor(box.w), height: Math.floor(box.h) }).removeAlpha().raw().toBuffer();
+  const [x, y] = await Promise.all([cut(withText), cut(bare)]); let n = 0; let on = 0; let off = 0;
+  for (let i = 0; i < x.length; i += 3) { const p = lum(x[i], x[i + 1], x[i + 2]); const q = lum(y[i], y[i + 1], y[i + 2]); if (Math.abs(p - q) > 0.03) { n++; on += p; off += q; } }
+  if (n < 150) return null;
+  on /= n; off /= n;
+  return (Math.max(on, off) + 0.05) / (Math.min(on, off) + 0.05);
+};
 const quiet = (log, what) => { must(!log.thrown.length, `${what}: nothing throws`, log.thrown.slice(0, 3).join(' | ')); should(!log.errors.length, `${what}: the console stays free of errors`, log.errors.slice(0, 3).join(' | ')); must(!log.missing.length, `${what}: every file it asks for is there`, log.missing.slice(0, 4).join(', ')); };
 
 // ---- 1. the live scene on a desktop
@@ -161,6 +174,12 @@ await part('reduced motion', async () => {
   await settle(p);
   const a = await shot(p, 'still'); await p.waitForTimeout(1500); const b = await shot(p);
   if (sharp) must(await differ(a, b) === 0, 'nothing moves', 'two pictures 1.5 s apart differ: something still runs (a loop, the grain, a CSS transition)');
+  const box = await p.evaluate(() => { const r = document.querySelector('.hero h1').getBoundingClientRect(); return { x: r.left, y: r.top, w: Math.min(r.width, innerWidth - r.left), h: Math.min(r.height, innerHeight - r.top) }; });
+  await p.evaluate(() => window.hero.update({ text: false })); await p.waitForTimeout(1500);
+  const ratio = await standsOut(a, await shot(p), box);
+  await p.evaluate(() => window.hero.update({ text: true })); await p.waitForTimeout(1500);
+  if (ratio) should(ratio >= 1.7, `the headline can be read: it stands ${ratio.toFixed(1)} to 1 against what lies behind it (koi 2.0, meadow 2.9, stars 8.0)`, 'that is fainter than the headline of any of the three scenes; large type is usually asked 3 to 1');
+  else lines.push('  note   the headline\'s contrast could not be measured (too little of the picture changes when the text is switched off)');
   const act = await p.evaluate(async (id) => { const m = await import(`/src/${id}/index.js`); window.hero.action(m.actions[0].id); return m.actions[0].id; }, id);
   await p.waitForTimeout(1500);
   if (sharp) should(await differ(a, await shot(p)) > 0.0005, `action('${act}') redraws the still with its result`, 'the picture did not change');

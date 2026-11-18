@@ -73,6 +73,7 @@ land sit in a ground frame along the bottom edge.
 | A photographed horizon, relit; a small procedural building on it | `ground.js` (35), `shaders.js`, `groundFrag` |
 | The scene kept quiet under DOM type: a feathered mask from the headline's lines | `index.js`, `measure`; `render.js`, `mask` (the scaffold has this) |
 | Crisp one-pixel lines at any pixel ratio | `shaders.js`, `hair` |
+| Instanced quads (one per line segment) in a y-down space: the flip reverses their winding, so the material is `DoubleSide` or nothing is drawn | `render.js`, `additive`, `lineGeo` |
 | Interaction state as buffers the renderer reads; nothing allocated per frame | `chart.js` (231) |
 | Lines that draw themselves edge by edge, named, with a cap and fade | `chart.js`, `INK` |
 | Text labels on a second 2D canvas over the WebGL one | `labels.js` (94) |
