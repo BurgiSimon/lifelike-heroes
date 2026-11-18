@@ -1,6 +1,6 @@
 // Self-check of the gallery's endless line: node scripts/gallery-check.mjs   (needs the dev server, as shot.mjs does)
 // However the line is moved (wheel, drag, arrow keys, its own drift), the screen stays filled with cards in the
-// scenes' order with no hole and no overlap; the keyboard's focus is always on one of the page's own five cards,
+// scenes' order with no hole and no overlap; the keyboard's focus is always on one of the page's own four cards,
 // in the middle; a drag opens nothing and a click opens the card under it; on a phone the line is a plain strip.
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
@@ -15,7 +15,7 @@ await p.waitForTimeout(400);
 
 // the cards on screen, left to right
 const seen = () => p.evaluate(() => [...document.querySelectorAll('.list a')].map((a) => { const r = a.getBoundingClientRect(); return { id: a.dataset.id, left: r.left, right: r.right, copy: a.classList.contains('is-copy') }; }).filter((c) => c.right > 0 && c.left < innerWidth).sort((a, b) => a.left - b.left));
-const ORDER = ['meadow', 'koi', 'stars', 'rain', 'mist'];
+const ORDER = ['meadow', 'koi', 'stars', 'mist'];
 async function whole(when) {
   const c = await seen();
   assert.ok(c[0].left <= 20.5 && c.at(-1).right >= W - 20.5, `${when}: the line reaches both edges (${c[0].left.toFixed(0)} to ${c.at(-1).right.toFixed(0)})`);
@@ -26,10 +26,10 @@ async function whole(when) {
   return c;
 }
 const first = await whole('at rest');
-// (with five cards the screen no longer holds them all at once: those on it are the page's own, from the first)
+// (the screen may not hold them all at once: those on it are the page's own, from the first)
 const own = first.filter((c) => !c.copy).map((c) => c.id);
 assert.deepEqual(own, ORDER.slice(0, own.length), 'the page opens on its own cards, from the first');
-assert.deepEqual(await p.evaluate(() => [...document.querySelectorAll('.list a:not(.is-copy)')].map((a) => a.dataset.id)), ORDER, 'the page holds its own five cards');
+assert.deepEqual(await p.evaluate(() => [...document.querySelectorAll('.list a:not(.is-copy)')].map((a) => a.dataset.id)), ORDER, 'the page holds its own four cards');
 
 // the wheel, far both ways
 await p.mouse.move(W / 2, H / 2);
@@ -74,12 +74,12 @@ const href = await p.evaluate(([x, y]) => document.elementFromPoint(x, y).closes
 await p.mouse.click(W / 2, H / 2);
 await p.waitForURL(`**/${href}`, { waitUntil: 'commit', timeout: 15000 });   // the scene itself may take its time on a slow machine
 
-// a phone: a plain strip, the page's five cards, nothing moved by the script
+// a phone: a plain strip, the page's four cards, nothing moved by the script
 const m = await (await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })).newPage();
 m.on('pageerror', (e) => errors.push(e.message));
 await m.goto(`${base}/index.html`, { waitUntil: 'load' }); await m.waitForTimeout(600);
 const strip = await m.evaluate(() => { const l = document.querySelector('.list'); const all = [...l.querySelectorAll('a')]; return { loop: l.classList.contains('is-loop'), shown: all.filter((a) => a.offsetWidth).length, moved: all.filter((a) => a.style.transform).length, scrolls: l.scrollWidth > l.clientWidth }; });
-assert.deepEqual(strip, { loop: false, shown: 5, moved: 0, scrolls: true }, 'the phone strip');
+assert.deepEqual(strip, { loop: false, shown: 4, moved: 0, scrolls: true }, 'the phone strip');
 
 assert.deepEqual(errors, [], 'no page errors');
 await browser.close();

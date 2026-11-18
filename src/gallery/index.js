@@ -3,7 +3,7 @@
 // the pointer (or the one with the keyboard's focus) is lit and gets a trace in its scene's own manner: grass that
 // parts, ripples, a pencilled line between stars, drops that run down the glass. A chosen card opens into its scene.
 // On a phone the cards are a strip that a swipe moves from one to the next. Without this script the page is still
-// five links.
+// four links.
 import '../shared/base.css';
 import './style.css';
 import { soundPref } from '../shared/sound.js';
@@ -11,7 +11,7 @@ import { reducedMotion, finePointer, rnd } from '../shared/kit.js';
 
 const list = document.querySelector('.list');
 const rows = [...list.querySelectorAll('a')];            // one card per scene, as the page has them
-const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, rain, mist: the traces at the foot go by this order
+const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, mist: the traces at the foot go by this order
 const cards = [...rows];                                 // every card in the line; the endless line adds copies
 const phone = matchMedia('(max-width: 640px)');          // the phone layout: a strip that scrolls and snaps by itself
 const calm = reducedMotion();
@@ -33,7 +33,6 @@ const out = ids.map(() => 0);                            // how far each trace h
 let blades = []; const ripples = []; let rippled = null; let dripped = 0;
 const sky = Array.from({ length: 34 }, (_, i) => ({ u: rnd(i * 3 + 1), v: rnd(i * 3 + 2), m: rnd(i * 3 + 3) }));
 const lines = new Map();                                 // star a * 64 + star b → how far the line is drawn
-const drops = []; let wetted = null; let fell = 0;       // the drops running down the rain's card: { u, v, w (speed), r, top }
 const runs = []; let ranAt = null; let ran = 0;          // drops on the misted window's card: where each started (u, v0), how far down it is (v), when it let go
 
 // ---- the lit card: the one under the pointer or the one with the keyboard's focus, whichever spoke last. On a
@@ -188,7 +187,7 @@ function draw(dt) {
   inked = false;
   if (calm || !finePointer()) return false;
   const k = lit ? ids.indexOf(lit.dataset.id) : -1;
-  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) drops.length = 0; if (k === 4) runs.length = 0; }   // on another card of its scene it starts over
+  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) runs.length = 0; }   // on another card of its scene it starts over
   out.forEach((o, i) => { out[i] = o + ((k === i ? 1 : 0) - o) * (1 - Math.exp(-dt * 5)); });
   const box = spot.map((a) => a?.getBoundingClientRect());
   const within = (r) => { g.save(); g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, 14); g.clip(); };
@@ -256,34 +255,10 @@ function draw(dt) {
     g.restore();
   }
 
-  // Night rain: a drop starts where the pointer has been on the card and runs down it in fits and starts, its trail
-  // fading behind it; lit with no pointer on it, one starts by itself now and then.
-  const pane = box[3];
-  if (pane && k === 3) {
-    if (inside(pane, ptr)) {
-      const at = { u: ptr.x - pane.left, v: ptr.y - pane.top };
-      if (!wetted || Math.hypot(at.u - wetted.u, at.v - wetted.v) > 46) { wetted = at; drops.push({ ...at, top: at.v, w: 0, r: 2 + 1.6 * Math.random(), n: drops.length * 7 + Math.floor(clock * 10) }); }
-    } else if (clock - fell > 0.7) { fell = clock; const v = pane.height * 0.5 * Math.random(); drops.push({ u: pane.width * (0.08 + 0.84 * Math.random()), v, top: v, w: 0, r: 2 + 1.6 * Math.random(), n: Math.floor(clock * 10) }); }
-  }
-  if (drops.length) {
-    within(pane);
-    for (let i = drops.length; i--;) {
-      const p = drops[i]; const stall = rnd(p.n + Math.floor(clock * 2.5)) < 0.3;   // it catches on the glass, then lets go
-      p.w += ((stall ? 0 : 60 + 46 * p.r) - p.w) * Math.min(1, dt * 5); p.v += p.w * dt; p.u += (rnd(p.n + Math.floor(clock * 4) * 3) - 0.5) * p.w * dt * 0.5;
-      const gone = Math.min(1, Math.max(0, (p.v - pane.height) / 60)); if (gone >= 1 || p.v - p.top > 520) { drops.splice(i, 1); continue; }
-      const far = Math.min(1, (p.v - p.top) / 30); const fade = 1 - Math.min(1, Math.max(0, (p.v - p.top - 380) / 140));
-      const from = pane.top + Math.max(p.top, p.v - 150); const to = pane.top + p.v - p.r;
-      const trail = g.createLinearGradient(0, from, 0, to); trail.addColorStop(0, `rgb(${INK} / 0)`); trail.addColorStop(1, `rgb(${INK} / ${0.4 * far * fade})`);
-      g.beginPath(); g.moveTo(pane.left + p.u, from); g.lineTo(pane.left + p.u, to); g.strokeStyle = trail; g.stroke();
-      g.beginPath(); g.arc(pane.left + p.u, pane.top + p.v, p.r, 0, 6.2832); g.strokeStyle = `rgb(${INK} / ${0.75 * fade})`; g.stroke();
-    }
-    g.restore();
-  }
-
   // Misted window: a drop lets go wherever the pointer has been on the card and runs down it in fits and starts, a
   // thin wet line behind it; lit with no pointer on it, one lets go by itself now and then.
-  const glass = box[4];
-  if (glass && k === 4) {
+  const glass = box[3];
+  if (glass && k === 3) {
     if (inside(glass, ptr)) {
       const at = { u: ptr.x - glass.left, v: ptr.y - glass.top };
       if (!ranAt || Math.hypot(at.u - ranAt.u, at.v - ranAt.v) > 44) { ranAt = at; runs.push({ u: at.u, v0: at.v, v: at.v, t: clock, s: Math.random() }); }
@@ -304,6 +279,6 @@ function draw(dt) {
     g.restore();
   }
 
-  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || drops.length > 0 || runs.length > 0 || out.some((o) => o > 0.01);
+  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || runs.length > 0 || out.some((o) => o > 0.01);
   return inked;
 }
