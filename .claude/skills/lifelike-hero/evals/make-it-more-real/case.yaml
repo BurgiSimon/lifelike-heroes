@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: make-it-more-real
+expected_outcome: |
+  The far ridge and tree line in the meadow's sky (src/meadow/sky.js) read as real distance: haze, variation in the silhouette, light that agrees with the sun in the plate. Nothing else in the scene changes, the scene still passes its contract check, and the agent shows before and after pictures and says what still gives it away.

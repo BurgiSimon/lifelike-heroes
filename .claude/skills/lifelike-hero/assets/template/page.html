@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{Name:html}} hero — {{client:html}}, {{title:html}}</title>
+</head>
+<body>
+  <main id="hero" class="hero"></main>
+  <script type="module">
+    import '/src/shared/base.css';
+    import mount, { controls, actions } from '/src/{{id}}/index.js';
+    import { chrome } from '/src/shared/chrome.js';
+    import { soundPref } from '/src/shared/sound.js';
+    window.hero = mount(document.getElementById('hero'), { sound: soundPref.get() });   // as the visitor left it, here or on the gallery
+    chrome(window.hero, { controls, actions });
+  </script>
+</body>
+</html>

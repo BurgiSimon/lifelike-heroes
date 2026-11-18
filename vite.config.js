@@ -19,5 +19,5 @@ const assetBase = () => {
 export default defineConfig({
   plugins: [assetBase()],
   server: { host: true, port: 5173, strictPort: true },
-  build: { rollupOptions: { input: ['index.html', 'meadow.html', 'koi.html', 'stars.html', 'mist.html'] } },
+  build: { rollupOptions: { input: ['index.html', 'meadow.html', 'koi.html', 'stars.html', 'rain.html', 'mist.html'] } },
 });
