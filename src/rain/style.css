@@ -1,0 +1,87 @@
+/* Night rain hero. The canvas is the window; the headline, the cue and the plate line are DOM in front of it,
+   bottom left, where the pane is at its darkest. */
+.rain {
+  --gutter: clamp(16px, 4vw, 48px);
+  --rain-ground: #07070c; /* the night before the window arrives, and the fallback's ground */
+  --rain-ink: #f3f1ec;
+  display: grid;
+  justify-items: start;
+  align-content: end;
+  gap: 22px;
+  padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(60px, 11vh, 104px);
+  background: var(--rain-ground);
+  color: var(--rain-ink);
+  touch-action: pan-y; /* a scroll that starts on the glass stays a scroll; a sideways stroke wipes */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+.rain__glass { opacity: 0; transition: opacity 1.4s var(--ease-out); }
+.rain.is-ready .rain__glass { opacity: 1; }
+.rain.is-still .rain__glass { transition: none; }
+
+/* The headline lets the pointer through: the glass under it is wiped like the rest. */
+.rain__title {
+  position: relative;
+  max-width: 9ch;
+  font-family: var(--font-serif);
+  font-size: clamp(3rem, 1rem + 7.2vw, 8.5rem);
+  font-weight: 520;
+  font-optical-sizing: none;
+  font-variation-settings: 'opsz' 18; /* the cut for small sizes: at this size its hairlines hold against the lamps */
+  line-height: 0.9;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  text-shadow: 0 0 0.3em rgb(7 7 12 / 0.5), 0 2px 18px rgb(7 7 12 / 0.4); /* a lamp's disc may lie under a letter */
+  pointer-events: none;
+}
+
+/* The invitation and the keyboard path: a slip of the same misted glass. */
+.rain__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 36px;
+  padding: 0 15px 0 12px;
+  border: 1px solid rgb(243 241 236 / 0.26);
+  border-radius: 999px;
+  background: rgb(10 10 16 / 0.46);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: rgb(243 241 236 / 0.88);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+/* its mark is a drop */
+.rain__cue::before { content: ''; width: 6px; height: 8px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: currentColor; }
+.rain__cue:hover { color: var(--rain-ink); border-color: rgb(243 241 236 / 0.6); background: rgb(10 10 16 / 0.6); }
+
+/* The plate line, pinned to the foot. Small type cannot depend on which lamp lies behind it: each half sits on its
+   own slip of dark glass. */
+.rain__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(243 241 236 / 0.84);
+  pointer-events: none;
+}
+.rain__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 6px; background: rgb(10 10 16 / 0.6); -webkit-backdrop-filter: blur(9px); backdrop-filter: blur(9px); }
+
+/* The text can be switched off (the text option): the window alone. Hidden, not removed, so the layout holds. */
+.rain.is-bare .rain__title, .rain.is-bare .rain__cue, .rain.is-bare .rain__note { visibility: hidden; }
+
+@media (prefers-reduced-motion: reduce) { .rain__glass, .rain__cue { transition: none; } }
+
+/* No WebGL2, or the context is lost: a frame of the window as a still, the headline on it. No glass to touch, so no cue. */
+.rain.is-static { background: var(--rain-ground) url('/assets/rain/still.jpg') center / cover no-repeat; }
+.rain.is-static::before { content: ''; position: absolute; inset: 0; background: linear-gradient(to top, rgb(7 7 12 / 0.6), rgb(7 7 12 / 0) 55%); }
+.rain.is-static .rain__glass, .rain.is-static .rain__cue { display: none; }
