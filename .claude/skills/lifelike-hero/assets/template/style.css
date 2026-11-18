@@ -1,0 +1,86 @@
+/* {{Name}} hero — {{client}}. The canvas is the photograph; the headline, the cue and the plate line are DOM on it,
+   bottom-left. STARTER: move the type to where this picture leaves room for it. */
+.{{id}} {
+  --{{id}}-ground: #14110d;   /* the quiet ground before the scene arrives, and under the fallback */
+  --{{id}}-ink: #f4f2ec;
+  display: grid;
+  justify-items: start;
+  align-content: end;
+  gap: 22px;
+  padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(60px, 11vh, 104px);
+  background: var(--{{id}}-ground);
+  color: var(--{{id}}-ink);
+  touch-action: pan-y;   /* a scroll that starts on the scene stays a scroll */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+/* The scene fades in once it is drawn: first paint is the dark ground and the headline. */
+.{{id}}__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.{{id}}.is-ready .{{id}}__canvas { opacity: 1; }
+.{{id}}.is-still .{{id}}__canvas { transition: none; }
+
+/* The headline is real text and lets the pointer through, so the scene under it still answers; the scene is dimmed
+   behind it in the shader (index.js measures its lines). */
+.{{id}}__title {
+  position: relative;
+  max-width: 12ch;
+  font-size: clamp(2.4rem, 1rem + 4.7vw, 5.5rem);
+  font-weight: 760;
+  font-stretch: 118%;
+  line-height: 0.94;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+  text-shadow: 0 1px 2px rgb(10 8 6 / 0.3), 0 0 0.4em rgb(10 8 6 / 0.35);
+  pointer-events: none;
+}
+
+/* The invitation and the keyboard path: a small pane of smoked glass, so nothing in the scene shows through its label. */
+.{{id}}__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgb(244 242 236 / 0.26);
+  border-radius: 999px;
+  background: rgb(14 12 9 / 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: rgb(244 242 236 / 0.88);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+.{{id}}__cue::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+.{{id}}__cue:hover { color: var(--{{id}}-ink); border-color: rgb(244 242 236 / 0.6); background: rgb(14 12 9 / 0.62); }
+
+/* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
+   strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
+.{{id}}__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(244 242 236 / 0.92);
+  pointer-events: none;
+}
+.{{id}}__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(14 12 9 / 0.72); }
+
+/* The text can be switched off (the text option): the scene alone. Hidden, not removed, so the layout holds. */
+.{{id}}.is-bare .{{id}}__title, .{{id}}.is-bare .{{id}}__cue, .{{id}}.is-bare .{{id}}__note { visibility: hidden; }
+
+/* No WebGL2, or the context is gone: a still, legible ground in the picture's own colours. Nothing to act on, so no cue.
+   STARTER: once the scene has a still (public/assets/gallery/{{id}}-wide.jpg), that picture can stand here instead. */
+.{{id}}.is-static { background: radial-gradient(120% 90% at 30% 30%, #5b4a36 0%, #2c241a 55%, var(--{{id}}-ground) 100%); }
+.{{id}}.is-static > canvas, .{{id}}.is-static .{{id}}__cue { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .{{id}}__canvas, .{{id}}__cue { transition: none; } }

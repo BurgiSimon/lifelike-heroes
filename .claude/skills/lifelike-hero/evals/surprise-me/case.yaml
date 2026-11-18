@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: surprise-me
+expected_outcome: |
+  The agent decides on one photograph (an invented client and page, a camera position, a light, a headline that belongs to the picture, one verb) and says so, then builds it as a fourth scene that keeps the project's contract, is on the gallery with stills and credits, and could hang beside the other three.

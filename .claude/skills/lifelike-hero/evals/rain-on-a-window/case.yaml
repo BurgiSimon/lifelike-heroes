@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: rain-on-a-window
+expected_outcome: |
+  A fourth scene exists as its own page and module, in the manner of the meadow, the koi pond and the star chart: a window at night with rain on the glass and blurred city lights behind it. A fine pointer wipes mist from the glass, a click (and a real button) sends a drop running down. It keeps the project's scene contract (mount/update/action/destroy, controls and actions, a real h1 and button, a status line, a reduced-motion still, a fallback without WebGL), it is on the gallery with its own stills, its assets are credited, and the picture could hang beside the other three.
