@@ -3,7 +3,7 @@
 // the pointer (or the one with the keyboard's focus) is lit and gets a trace in its scene's own manner: grass that
 // parts, ripples, a pencilled line between stars, drops that run down the glass. A chosen card opens into its scene.
 // On a phone the cards are a strip that a swipe moves from one to the next. Without this script the page is still
-// four links.
+// five links.
 import '../shared/base.css';
 import './style.css';
 import { soundPref } from '../shared/sound.js';
@@ -11,7 +11,7 @@ import { reducedMotion, finePointer, rnd } from '../shared/kit.js';
 
 const list = document.querySelector('.list');
 const rows = [...list.querySelectorAll('a')];            // one card per scene, as the page has them
-const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, rain: the traces at the foot go by this order
+const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, rain, mist: the traces at the foot go by this order
 const cards = [...rows];                                 // every card in the line; the endless line adds copies
 const phone = matchMedia('(max-width: 640px)');          // the phone layout: a strip that scrolls and snaps by itself
 const calm = reducedMotion();
@@ -34,6 +34,7 @@ let blades = []; const ripples = []; let rippled = null; let dripped = 0;
 const sky = Array.from({ length: 34 }, (_, i) => ({ u: rnd(i * 3 + 1), v: rnd(i * 3 + 2), m: rnd(i * 3 + 3) }));
 const lines = new Map();                                 // star a * 64 + star b → how far the line is drawn
 const drops = []; let wetted = null; let fell = 0;       // the drops running down the rain's card: { u, v, w (speed), r, top }
+const runs = []; let ranAt = null; let ran = 0;          // drops on the misted window's card: where each started (u, v0), how far down it is (v), when it let go
 
 // ---- the lit card: the one under the pointer or the one with the keyboard's focus, whichever spoke last. On a
 // phone it is the card in the middle.
@@ -187,7 +188,7 @@ function draw(dt) {
   inked = false;
   if (calm || !finePointer()) return false;
   const k = lit ? ids.indexOf(lit.dataset.id) : -1;
-  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) drops.length = 0; }   // on another card of its scene it starts over
+  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) drops.length = 0; if (k === 4) runs.length = 0; }   // on another card of its scene it starts over
   out.forEach((o, i) => { out[i] = o + ((k === i ? 1 : 0) - o) * (1 - Math.exp(-dt * 5)); });
   const box = spot.map((a) => a?.getBoundingClientRect());
   const within = (r) => { g.save(); g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, 14); g.clip(); };
@@ -279,6 +280,30 @@ function draw(dt) {
     g.restore();
   }
 
-  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || drops.length > 0 || out.some((o) => o > 0.01);
+  // Misted window: a drop lets go wherever the pointer has been on the card and runs down it in fits and starts, a
+  // thin wet line behind it; lit with no pointer on it, one lets go by itself now and then.
+  const glass = box[4];
+  if (glass && k === 4) {
+    if (inside(glass, ptr)) {
+      const at = { u: ptr.x - glass.left, v: ptr.y - glass.top };
+      if (!ranAt || Math.hypot(at.u - ranAt.u, at.v - ranAt.v) > 44) { ranAt = at; runs.push({ u: at.u, v0: at.v, v: at.v, t: clock, s: Math.random() }); }
+    } else if (clock - ran > 0.8) { ran = clock; const v = glass.height * 0.55 * Math.random(); runs.push({ u: glass.width * Math.random(), v0: v, v, t: clock, s: Math.random() }); }
+  }
+  if (runs.length) {
+    within(glass);
+    for (let i = runs.length; i--;) {
+      const d = runs[i]; const age = clock - d.t; const fade = 1 - age / 2.8;
+      if (fade <= 0) { runs.splice(i, 1); continue; }
+      d.v += 170 * (0.25 + 0.75 * Math.max(0, Math.sin(age * 5.1 + d.s * 6.28)) ** 2) * Math.min(1, age * 3) * dt;   // it sticks, and slips
+      const x = (v) => glass.left + d.u + 2.5 * Math.sin(v * 0.04 + d.s * 9);
+      g.beginPath(); g.moveTo(x(d.v0), glass.top + d.v0);
+      for (let v = d.v0 + 6; v < d.v; v += 6) g.lineTo(x(v), glass.top + v);
+      g.lineTo(x(d.v), glass.top + d.v); g.strokeStyle = `rgb(${INK} / ${0.3 * fade})`; g.stroke();
+      g.beginPath(); g.ellipse(x(d.v), glass.top + d.v, 2.4, 3, 0, 0, 6.2832); g.fillStyle = `rgb(${INK} / ${0.75 * fade})`; g.fill();
+    }
+    g.restore();
+  }
+
+  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || drops.length > 0 || runs.length > 0 || out.some((o) => o > 0.01);
   return inked;
 }
