@@ -1,12 +1,13 @@
 <h1 align="center">Lifelike Heroes</h1>
 
 <p align="center">
-  <b>Three living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
+  <b>Four living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
 </p>
 
 <p align="center">
   These are not videos. Each scene is drawn live in your browser, dozens of times a second,
-  so the grass leans in the wind, the fish come when you feed them, and the sky turns when you drag it.
+  so the grass leans in the wind, the fish come when you feed them, the sky turns when you drag it,
+  and the mist on a rainy window wipes away under your hand.
 </p>
 
 <h3 align="center">
@@ -35,17 +36,17 @@
 </p>
 
 <p align="center">
-  A 22-second recording of all three scenes being played with.
+  A 22-second recording of the first three scenes being played with.
   <b><a href="https://burgisimon.github.io/lifelike-heroes/video/lifelike-heroes.mp4">Watch the video →</a></b>
 </p>
 
 <br>
 
-## Three scenes to play with
+## Four scenes to play with
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
 
-On a phone you can tap to plant a flower, feed the koi or draw a constellation. The effects that follow the pointer need a mouse or trackpad, so a laptop or desktop shows the scenes at their best.
+On a phone you can tap to plant a flower, feed the koi, draw a constellation or send a drop down the glass. The effects that follow the pointer need a mouse or trackpad, so a laptop or desktop shows the scenes at their best.
 
 ### 1 &nbsp;·&nbsp; Meadow
 
@@ -95,10 +96,28 @@ A map of the real northern sky, with the northern lights over a snowy forest. Ev
 
 <br>
 
+### 4 &nbsp;·&nbsp; Night rain
+
+<p>
+  <a href="https://burgisimon.github.io/lifelike-heroes/rain.html">
+    <img src="docs/readme/rain.jpg" width="100%" alt="A misted window at night, beaded with rain, with the lights of a city far out of focus behind it; the headline Stay in tonight is written in the mist with a fingertip, and a hand has wiped one clear stroke across the lights">
+  </a>
+</p>
+
+A hotel room window on a wet night. The camera is focused on the glass, so the rain on it is sharp and the city beyond is all soft discs of light. The room is warm, the pane has misted over, and somebody has written on it with a finger.
+
+- **Move the mouse over the glass** and it wipes the mist away, like a hand. The city shows through clear until the mist creeps back.
+- **Click** and a drop gathers there and runs down the pane, in fits and starts, leaving a clear track behind it.
+- **Wait a moment** and the rain does it by itself: drops land, grow heavy and let go.
+
+**[Open the night rain →](https://burgisimon.github.io/lifelike-heroes/rain.html)**
+
+<br>
+
 ## Why it looks real
 
-- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way.
-- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright.
+- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way. The city behind the rainy window is a photograph of Shanghai's skyline, thrown out of focus the way a lens would do it.
+- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright. A raindrop holds on to the glass until it is too heavy, and each one shows the city upside down, as a real drop does.
 - **A real camera's habits.** Soft focus on the grass closest to the lens, a glow around the sun, a little film grain. A lens does these things, so the scenes do too.
 
 ## Good to know
@@ -118,7 +137,7 @@ A map of the real northern sky, with the northern lights over a snowy forest. Ev
 
 Everything from here on is for developers.
 
-The three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi pond* and *Star chart* from [AwardComponents](https://github.com/BurgiSimon/AwardComponents), rebuilt in WebGL with one goal: photographs you can touch. Behaviour, options and accessibility of the originals are kept.
+The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi pond* and *Star chart* from [AwardComponents](https://github.com/BurgiSimon/AwardComponents), rebuilt in WebGL with one goal: photographs you can touch. Behaviour, options and accessibility of the originals are kept. The fourth, *Night rain*, has no 2D original: it was made for this project, to the same contract.
 
 ### Built with
 
@@ -148,6 +167,12 @@ The three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi pond* a
 - The sky drifts slowly around the pole and can be dragged, with inertia.
 - A hover joins the brightest stars within reach (seven by default) with a minimum spanning tree. A click inks it in, edge by edge. Up to six constellations are kept.
 - The aurora, airglow and the little observatory are procedural. The horizon is a photograph, relit by the aurora above it.
+
+**Night rain** (`src/rain`)
+- The city is one photographed HDR panorama (Shanghai, from the Bund). A build script (`src/rain/tools/build-assets.mjs`) defocuses it offline in linear light, as a 50 mm lens at f/2 focused on a pane half a metre away would: every lamp becomes the aperture's disc, with the lamp's real energy.
+- The pane has two wet sides. Rain beads on the far one: up to 2,600 drops that land, merge, grow too heavy for the glass and run in fits and starts, swallowing what they meet and leaving beads behind (`pane.js`: rules that draw nothing, which `scripts/pane-check.mjs` steps in Node). The near side is misted, and the mist is a field kept on the GPU: wiped along the pointer's path and along a running drop's track, and creeping back in about a minute.
+- Drops are drawn as a height map (instanced caps, MAX-blended, so drops that touch are one body of water). Each point of a drop turns the lens's line of sight by Snell's law, so a drop holds the defocused city upside down. Mist is a diffuser: it hands on the light behind it, spread wide.
+- The headline is the DOM's own `<h1>`, drawn into a mask from its layout: the mist is gone where the letters are.
 
 ### Run it locally
 
@@ -192,19 +217,20 @@ hero.destroy();                // remove it and release its GPU resources
 | Meadow | `wind`, `reach`, `density`, `cap`, `petals`, `text`, `sound` | `sow`, `gust` |
 | Koi pond | `count`, `pads`, `speed`, `reach`, `ripple`, `text`, `sound` | `feed` |
 | Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text`, `sound` | `pin`, `clear` |
+| Night rain | `reach`, `rain`, `mist`, `text`, `sound` | `drip` |
 
 `text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same, and the **Options** tab beside it slides out a panel with a control for every other option and a button for every action.
 
-`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all three; the choice is remembered from page to page.
+`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart, rain on the pane and the small wet sounds of a drop letting go at the window. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all four; the choice is remembered from page to page.
 
 ### Project layout
 
 ```
 index.html                    gallery: an endless line of cards (wheel, drag or arrow keys), a click opens a card into its scene
-meadow.html, koi.html, stars.html
+meadow.html, koi.html, stars.html, rain.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
-  meadow/  koi/  stars/       one folder per scene
+  meadow/  koi/  stars/  rain/   one folder per scene
   gallery/                    the gallery page
 public/assets/<scene>/        textures and data, each with a CREDITS.md
 public/video/                 the 22-second showcase video, served by the live site (its README loop is in docs/readme/)
@@ -215,9 +241,9 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 ### Accessibility and performance
 
-- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin) with a status message for screen readers. The canvas itself is hidden from assistive technology.
+- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky.
+- Hover effects are for mouse and pen only (on a phone the rainy window cannot be wiped: a tap lets a drop run instead). Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
 - Sound is off until a visitor switches it on, and it pauses with the tab.
@@ -235,9 +261,10 @@ All third-party material is public domain or under an open licence (CC0, SIL OFL
 | Star chart | Milky Way and deep star field | [NASA/Goddard Space Flight Center Scientific Visualization Studio](https://svs.gsfc.nasa.gov/4851), *Deep Star Maps 2020* (public domain). Gaia DR2: ESA/Gaia/DPAC |
 | Star chart | Star catalogue | [d3-celestial](https://github.com/ofrohn/d3-celestial) by Olaf Frohn (BSD 3-Clause) |
 | Star chart | Horizon photograph | [Poly Haven](https://polyhaven.com/a/stierberg_sunrise) (CC0) |
+| Night rain | The city: an HDR panorama of the Shanghai Bund by Greg Zaal | [Poly Haven](https://polyhaven.com/a/shanghai_bund) (CC0) |
 | All scenes | Interface typefaces | [Mona Sans](https://github.com/github/mona-sans) by GitHub and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) by JetBrains (SIL OFL 1.1) |
 | All scenes | Rendering library | [three.js](https://threejs.org) (MIT) |
 
-See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md) and [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md).
+See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md) and [`public/assets/rain/CREDITS.md`](public/assets/rain/CREDITS.md).
 
 This repository does not include a licence for its own code yet. Please open an issue if you would like to reuse it.

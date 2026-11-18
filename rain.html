@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Night rain hero — Lantern House, Stay in tonight</title>
+  <style>
+    /* The scene's still: what the gallery closed on, and what the page shows until the scene itself is drawn. */
+    .poster { background-image: url('/assets/gallery/rain-wide.jpg'); }
+    @media (orientation: portrait) { .poster { background-image: url('/assets/gallery/rain-tall.jpg'); } }
+  </style>
+</head>
+<body>
+  <main id="hero" class="hero"></main>
+  <div class="poster" aria-hidden="true"></div>
+  <script type="module">
+    import '/src/shared/base.css';
+    import mount, { controls, actions } from '/src/rain/index.js';
+    import { chrome } from '/src/shared/chrome.js';
+    import { soundPref } from '/src/shared/sound.js';
+    window.hero = mount(document.getElementById('hero'), { sound: soundPref.get() });   // as the visitor left it, here or on the gallery
+    chrome(window.hero, { controls, actions });
+  </script>
+</body>
+</html>
