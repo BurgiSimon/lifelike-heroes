@@ -19,11 +19,14 @@ try { pw = require('playwright'); } catch { throw new Error('Playwright is not i
 export const { chromium } = pw;
 
 const own = () => { try { return fs.existsSync(chromium.executablePath()); } catch { return false; } };
-const other = [process.env.CHROMIUM_PATH, process.env.PLAYWRIGHT_BROWSERS_PATH && path.join(process.env.PLAYWRIGHT_BROWSERS_PATH, 'chromium'), '/opt/pw-browsers/chromium']
-  .find((p) => p && fs.existsSync(p));
-if (other && (process.env.CHROMIUM_PATH || !own())) {
+// The headless shell first: it is what Playwright itself launches headless, and it asks a page for nothing the page
+// did not ask for (full Chromium also fetches /favicon.ico, whose 404 the project's checks would count as an error).
+const dirs = [process.env.PLAYWRIGHT_BROWSERS_PATH, '/opt/pw-browsers'].filter(Boolean);
+const find = (...names) => names.flatMap((n) => dirs.map((d) => path.join(d, n))).find((p) => fs.existsSync(p));
+const shell = process.env.CHROMIUM_PATH || find('chromium_headless_shell', 'chromium'); const full = process.env.CHROMIUM_PATH || find('chromium');
+if ((shell || full) && (process.env.CHROMIUM_PATH || !own())) {
   const launch = chromium.launch.bind(chromium);
-  chromium.launch = (options = {}) => launch({ executablePath: other, ...options });
+  chromium.launch = (options = {}) => launch({ executablePath: options.headless === false ? full : shell, ...options });
 }
 
 // Software rendering (SwiftShader): the same picture on every machine, GPU or none. Slow (about a frame a second on

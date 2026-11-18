@@ -148,6 +148,12 @@ Three ways, best first:
    headline, `render.js` builds a feathered mask from them, and the shader dims the scene there (most from the
    brightest light) so nothing competes.
 
+A headline that belongs to the picture still has to be read at a glance, and that is where this goes wrong: letters
+made of the scene's own stuff (mist, stone, shadow) drift toward the tone of what surrounds them. `check-hero.mjs`
+measures it from the still, with the text and without: the pond's stone letters stand about 2 to 1 against the bed,
+the steel word 2.9 to 1 against sky and grass, the chart's type 8 to 1. Under the pond's figure a headline is too
+faint; give the letters an edge the eye can find (a rim of light, a shadow, a cleaner or darker ground behind them).
+
 Whichever it is: small type (the cue, the plate line) never depends on what passes beneath it. It sits on its own
 strip of dark tape or smoked glass, chosen to keep 4.5:1 over the brightest part of the picture. `text: false`
 must remove the headline *from the picture too* (the steel word leaves the field, and its shadow with it).
