@@ -31,6 +31,7 @@ export const controls = [
 export const actions = [{ id: 'sow', label: 'Sow a flower' }, { id: 'gust', label: 'Send a gust' }];
 const ASSETS = `${import.meta.env.BASE_URL}assets/meadow/`;
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const CLEAR = 64;   // px the steel capitals keep below the top of a short frame: a phone page's menu button and some air
 const num = (v, d) => (Number.isFinite(+v) ? +v : d);
 const tidy = (c) => ({
   wind: clamp(num(c.wind, 1), 0, 3), reach: clamp(num(c.reach, 150), 60, 280), density: clamp(num(c.density, 1), 0.5, 1.5),
@@ -66,10 +67,13 @@ export default function mount(root, options = {}) {
     const r = root.getBoundingClientRect(); const W = Math.round(r.width); const H = Math.round(r.height);
     if (!W || !H) return false;
     const aspect = W / H;
-    let tanH = box.width / (aspect < 0.8 ? 0.86 : SHARE) / 2 / D; let tanV = tanH / aspect;
-    if (CAP / D / (2 * tanV) > 0.38) { tanV = CAP / D / 0.76; tanH = tanV * aspect; }   // a very wide, short frame: the word stops growing
     // eye level as a share of the height, from the top: higher in a tall frame, lower in a wide one
     const hz = lerp(0.47, 0.53, smooth(0.6, 1.3, aspect)) + 0.03 * smooth(1.9, 2.4, aspect);
+    // A very wide, short frame: the word stops growing at 38 % of the height, and in a frame as short as a phone on
+    // its side, where the page's menu button sits in the top left corner, its capitals stop CLEAR px below the top.
+    const capShare = clamp(hz - CLEAR / H, 0.12, 0.38);   // the most of the height the capitals may take
+    let tanH = box.width / (aspect < 0.8 ? 0.86 : SHARE) / 2 / D; let tanV = tanH / aspect;
+    if (CAP / D / (2 * tanV) > capShare) { tanV = CAP / D / (2 * capShare); tanH = tanV * aspect; }
     Object.assign(view, { W, H, tanH, tanV, tanTop: 2 * tanV * hz, tanBot: 2 * tanV * (1 - hz), hz, foot: (H + 24) / H });
     const fs = EM * W / (2 * tanH * D); const base = (hz - (box.baseY + SINK - eyeY) / D / (2 * tanV)) * H;
     root.style.setProperty('--title-size', `${fs.toFixed(1)}px`); root.style.setProperty('--title-top', `${(base + 0.0375 * fs - 0.8 * fs).toFixed(1)}px`);
@@ -325,7 +329,8 @@ export default function mount(root, options = {}) {
   const fingers = new AbortController(); off.push(() => fingers.abort());
   let row = null;   // where the stroke last sowed
   stroke(root, {
-    move(x, y, t) {
+    move(x, y, t, first) {
+      if (first) ptr.x = null;   // a finger's speed is its own, never measured from where a mouse was
       if (!still) {
         if (ptr.x !== null && t > ptr.t) ptr.v = 0.7 * ptr.v + 0.3 * clamp((x - ptr.x) / (t - ptr.t), -3, 3);
         ptr.x = x; ptr.y = y; ptr.t = t;

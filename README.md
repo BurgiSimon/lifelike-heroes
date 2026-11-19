@@ -112,7 +112,7 @@ A hotel room window on a wet night. The camera is focused on the glass, so the r
 - **Move the mouse over the glass** and it wipes the mist away, like a hand. The city shows through clear until the mist creeps back.
 - **Click** and a drop gathers there and runs down the pane, in fits and starts, leaving a clear track behind it.
 - **Wait a moment** and the rain does it by itself: drops land, grow heavy and let go.
-- **On a phone,** draw a finger across the glass to wipe it, and tap to let a drop run.
+- **On a phone,** draw a finger sideways across the glass to wipe it, and tap to let a drop run.
 
 **[Open the misted window →](https://burgisimon.github.io/lifelike-heroes/mist.html)**
 
@@ -248,7 +248,7 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 - Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond, turns the star chart and wipes the misted window. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
+- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond and wipes the misted window; on the star chart a sideways drag of its own turns the sky. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
 - Phones in both orientations: the pages are `viewport-fit=cover`, so the picture runs under a notch while the type, the buttons and the page chrome keep clear of it (`--safe-*` and `--edge-*` in `src/shared/base.css`). On a phone held sideways the hero takes the screen's height and the chrome folds into one menu button. Buttons are 44 px tall on a touch screen.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.

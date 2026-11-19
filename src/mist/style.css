@@ -34,6 +34,13 @@
   transition: opacity 1.2s var(--ease-out);
   pointer-events: none;
 }
+/* On its side a phone can be under 300 px tall: the headline is sized by the height too, and the cue comes down to
+   just above the plate line, so the two lines and the cue stand under the menu button in the top left corner, not
+   beneath it. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .mist { padding-bottom: calc(48px + var(--edge-b)); }
+  .mist__title { font-size: min(clamp(3.1rem, 1rem + 6.6vw, 8rem), 16svh); }
+}
 .mist.is-ready .mist__title { opacity: 0; }
 .mist.is-still .mist__title { transition: none; }
 

@@ -37,6 +37,9 @@
 }
 /* A phone's pond is narrow and tall: the letters take more of its width, as they do of a laptop's. */
 @media (max-width: 640px) { .koi__title { font-size: clamp(2.8rem, 15vw, 4.4rem); } }
+/* On its side a phone's pond can be under 300 px tall (a 360 dp Android, under Chrome's bars): the headline is
+   centred in the water above the Feed button's band (its 40 px lift, its 44 px and some air), not over it. */
+@media (orientation: landscape) and (max-height: 500px) { .koi { padding-bottom: calc(clamp(14px, 3vh, 24px) + 96px + var(--edge-b)); } }
 .koi--ready .koi__title { opacity: 0; }
 
 /* The invitation and the keyboard path: a small pane of smoked glass, so no koi shows through its label. It sits

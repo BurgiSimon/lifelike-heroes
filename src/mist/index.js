@@ -183,7 +183,7 @@ export default function mount(root, options = {}) {
     root.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') ptr = at(e); }, { signal });
     for (const type of ['pointerleave', 'pointercancel']) root.addEventListener(type, () => { ptr = null; }, { signal });
   }
-  if (!still) stroke(root, { move: (x, y) => { if (!ptr) was = { x, y }; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // the wipe starts where the finger came down
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) was = { x, y }; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // the wipe starts where the finger came down, not where a mouse was
   // click, not pointerdown: a touch scroll that starts on the glass must not start a drop.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); drip(p.x, p.y); } }, { signal });
   cue.addEventListener('click', dripSeeded, { signal });

@@ -82,7 +82,7 @@
    foot below all fit it, with nothing below the fold. */
 @media (orientation: landscape) and (max-height: 500px) {
   .list { padding-top: max(64px, var(--safe-t) + 56px); padding-bottom: 8px; }
-  .list a { height: calc(100svh - 132px - var(--safe-t) - var(--safe-b)); min-height: 180px; padding: 16px 18px; }
+  .list a { height: calc(100svh - 132px - var(--safe-t) - var(--safe-b)); min-height: 140px; padding: 16px 18px; }   /* 140: what a card's own words need; a 360 dp Android on its side is 280 tall */
   .foot { padding-bottom: max(8px, var(--safe-b)); }
 }
 

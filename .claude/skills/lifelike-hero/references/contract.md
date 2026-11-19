@@ -111,9 +111,10 @@ scenes' `is-live` and `koi--ready` are also recognised; see the `ponytail:` note
 - **The screen's own edges.** Pages are `viewport-fit=cover`, so the picture runs under a notch and round corners.
   Place type and buttons with `--edge-l`, `--edge-r` and `+ var(--edge-b)` from `base.css`, not `--gutter`
   alone, so they keep clear of them.
-- **On its side** a phone is 320 to 430 px tall, and there the hero takes the screen's height (`base.css` lifts
-  its 420 px floor): the scene's layout has to hold at that height, with the plate line on screen.
-  `check-hero.mjs` photographs it at 844 × 390.
+- **On its side** a phone is about 280 to 430 px tall (a 360 dp Android under Chrome's bars is 280), and there the
+  hero takes the screen's height (`base.css` lifts its 420 px floor): the scene's layout has to hold at that
+  height, with the headline clear of the menu button in the top left corner, the cue clear of the headline and the
+  plate line on screen. `check-hero.mjs` photographs it at 780 × 280.
 - **A cue a thumb can hit:** 44 px tall under `(pointer: coarse)`. Hover looks go under `(hover: hover)`, or a
   tapped button keeps its hover look on a phone.
 - **A lighter start:** see `opening()` under Quality.

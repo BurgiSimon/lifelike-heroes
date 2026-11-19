@@ -207,17 +207,25 @@ await part('phone, 390 × 844, touch', async () => {
   await close();
 });
 
-// ---- 3b. the same phone on its side: under 420 px tall, where the scene takes the screen's height
-await part('phone on its side, 844 × 390, touch', async () => {
-  const { p, log, close } = await open({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+// ---- 3b. a phone on its side: a 360 dp Android under Chrome's bars is 780 × 280, the shortest screen a scene meets
+// (base.css lifts the hero's 420 px floor there, so the scene takes the screen's height).
+await part('phone on its side, 780 × 280, touch', async () => {
+  const { p, log, close } = await open({ viewport: { width: 780, height: 280 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
   must(await until(p, READY), 'the scene is drawn'); await settle(p);
   const m = await p.evaluate(() => {
     const r = (q) => document.querySelector(q)?.getBoundingClientRect();
     const out = [['the headline', r('.hero h1')], ['the cue', r('.hero button')], ['the plate line', r('.hero h1 ~ p:not(.sr-only)')]].filter(([, b]) => b && b.width && (b.top < -1 || b.bottom > innerHeight + 1 || b.left < -1 || b.right > innerWidth + 1)).map(([n]) => n);
-    return { tall: document.documentElement.scrollHeight - innerHeight, wide: document.documentElement.scrollWidth - innerWidth, out };
+    // The headline's letters, line by line: each line's box less the room above the capitals and below the baseline.
+    const range = document.createRange(); range.selectNodeContents(document.querySelector('.hero h1'));
+    const ink = [...range.getClientRects()].map((q) => ({ l: q.left, r: q.right, t: q.top + q.height * 0.18, b: q.bottom - q.height * 0.2 }));
+    const hit = (q, b) => b && q.l < b.right && q.r > b.left && q.t < b.bottom && q.b > b.top;
+    const cue = r('.hero button'); const menu = { left: 0, top: 0, right: 56, bottom: 56 };   // the page chrome's menu button, 12 to 56 px in (chrome.css)
+    return { tall: document.documentElement.scrollHeight - innerHeight, wide: document.documentElement.scrollWidth - innerWidth, out, cue: ink.some((q) => hit(q, cue)), menu: ink.some((q) => hit(q, menu)) };
   });
   should(m.tall <= 0 && m.wide <= 0, 'the scene fits the screen, with nothing below the fold', `the page is ${m.tall} px taller and ${m.wide} px wider than the screen`);
   should(!m.out.length, 'its type and its cue are all on the screen', `off it: ${m.out.join(', ')}`);
+  should(!m.cue, 'the cue keeps off the headline', 'on a screen this short the button lies over the letters');
+  should(!m.menu, 'the headline keeps clear of the menu button in the top left corner', 'its first letters lie under where the page puts its menu');
   await shot(p, 'side');
   quiet(log, 'on its side');
   await close();

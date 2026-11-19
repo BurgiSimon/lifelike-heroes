@@ -22,30 +22,37 @@ export const quality = () => params.get('q') || 'auto';
 // The render pixel ratio a scene opens at. A screen held in the hand (no fine pointer: a phone, a tablet) opens at
 // about a megapixel however dense its glass, never under one render pixel per CSS pixel: a phone's GPU is drawing
 // on a few square inches, and the grain and the lens's softness hide the rest. The governor climbs from there when
-// the frames have room. A desktop opens at the scene's own ceiling.
+// the frames have room. A desktop opens at the scene's own ceiling, and so does a still (reduced motion): it is
+// drawn once, with no loop to climb, so it is drawn sharp.
 const HANDHELD = 1.0e6;   // render pixels a handheld screen opens at
-export const opening = (w, h, max) => (finePointer() ? max : Math.min(max, Math.max(1, Math.sqrt(HANDHELD / Math.max(1, w * h)))));
+export const opening = (w, h, max) => (finePointer() || reducedMotion() ? max : Math.min(max, Math.max(1, Math.sqrt(HANDHELD / Math.max(1, w * h)))));
 
-// A finger drawn across a scene. The scene's root has touch-action: pan-y, so a stroke that starts upright is the
-// page's (a scroll, which ends this with pointercancel) and one that starts sideways is the scene's, to the end,
-// whichever way it turns after. It starts after TRAVEL px, as every drag here does, so a tap stays a tap and its
-// click stays the scene's verb; a click the stroke ends with is swallowed. move(x, y, t) is in CSS px of el's box and
-// ms (event time), the first call at the point and the moment the finger came down, so a speed worked out from two
-// calls is honest from the start; end() when it lifts. Touch only: a mouse has hover.
+// A finger drawn across a scene. The scene's root has touch-action: pan-y, so the page scrolls on a stroke that
+// starts upright and leaves one that starts sideways to the scene, to the end, whichever way it turns after. The
+// direction is decided here too, after TRAVEL px, and an upright start is let go: a browser whose own pan threshold
+// is longer than TRAVEL (Firefox on Android, Chrome on a Windows touch screen) would otherwise hand the scene the
+// first steps of every scroll. A tap stays a tap, so its click stays the scene's verb; a click the stroke itself
+// ends with is swallowed, and any new press ends that, so the next tap is never lost. move(x, y, t, first) is in CSS
+// px of el's box and ms (event time); the first call is at the point and the moment the finger came down, so a speed
+// worked out from two calls is honest from the start, and first says to forget wherever a mouse last was. end()
+// when it lifts. Touch only: a mouse has hover.
 const TRAVEL = 8;   // px a finger moves before it is a stroke and not a tap
 export function stroke(el, { move, end }, signal) {
   let f = null; let skip = -1;
   const at = (x, y) => { const r = el.getBoundingClientRect(); return [x - r.left, y - r.top]; };
   el.addEventListener('pointerdown', (e) => {
+    skip = -1;
     if (e.pointerType === 'touch' && e.isPrimary && !e.target.closest('button')) f = { id: e.pointerId, x: e.clientX, y: e.clientY, t: e.timeStamp, on: false };
   }, { signal });
   el.addEventListener('pointermove', (e) => {
     if (!f || e.pointerId !== f.id) return;
     if (!f.on) {
-      if (Math.hypot(e.clientX - f.x, e.clientY - f.y) < TRAVEL) return;
-      f.on = true; move(...at(f.x, f.y), f.t);
+      const dx = Math.abs(e.clientX - f.x); const dy = Math.abs(e.clientY - f.y);
+      if (Math.hypot(dx, dy) < TRAVEL) return;
+      if (dy >= dx) { f = null; return; }   // upright: the page's scroll, however late the browser claims it
+      f.on = true; move(...at(f.x, f.y), f.t, true);
     }
-    move(...at(e.clientX, e.clientY), e.timeStamp);
+    move(...at(e.clientX, e.clientY), e.timeStamp, false);
   }, { signal });
   const lift = (e) => {
     if (!f || e.pointerId !== f.id) return;

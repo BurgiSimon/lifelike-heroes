@@ -125,7 +125,7 @@ export default function mount(root, options = {}) {
   }
   // A phone has no hover: a finger drawn sideways across the scene does what a mouse over it does (upright, it is
   // the page's scroll). STARTER: give the finger whatever of the hover a hand on this subject would really do.
-  if (!still) stroke(root, { move: (x, y) => { ptr = { x, y }; }, end: () => { ptr = null; } }, signal);
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) view.ptr.k = 0; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // first: the dent starts under the finger, not where a mouse was
   // click, not pointerdown: a touch scroll that starts on the scene must not leave a mark.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); mark(p.x, p.y); } }, { signal });
   cue.addEventListener('click', markSeeded, { signal });

@@ -132,7 +132,7 @@ export default function mount(root, options = {}) {
   }
   // A finger trailed sideways through the water is the phone's way of being there: drawn slowly the koi come to
   // it, drawn fast they bolt and it skims the surface. They lose interest when it lifts.
-  if (live) stroke(root, { move: (x, y, t) => pond.pointer(x, y, t), end: () => pond.leave() }, ac.signal);
+  if (live) stroke(root, { move: (x, y, t, first) => { if (first) pond.leave(); pond.pointer(x, y, t); }, end: () => pond.leave() }, ac.signal);   // a finger's speed is its own, never measured from where a mouse was
   // click, not pointerdown: a touch scroll that starts on the water must not feed.
   on(root, 'click', (e) => {
     if (e.target.closest('button')) return;
