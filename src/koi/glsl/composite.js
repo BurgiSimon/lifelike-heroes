@@ -133,7 +133,7 @@ void main() {
 
 // Bright-pass and blur for a restrained bloom, then the lens and the grade.
 export const brightFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene; uniform vec2 uTexel;
@@ -144,7 +144,7 @@ void main() {
 }
 `;
 export const blurFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uStep;
@@ -158,7 +158,7 @@ void main() {
 
 // One small tent over a texel's neighbourhood: the sun is a disc, not a point, and it hides the caustic sheet's facets.
 export const softFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uStep;
@@ -168,7 +168,7 @@ void main() {
 `;
 
 export const postFrag = (toneChunk) => /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene; uniform sampler2D uBloom;

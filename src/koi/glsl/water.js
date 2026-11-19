@@ -7,7 +7,7 @@ export const DROPS = 20;
 
 // One tile of wind ripples: the height's gradient per unit of tile uv. Whole wave numbers, so it tiles.
 export const windFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform vec4 uWave[${WAVES}];  // kx, ky (cycles per tile), amplitude, angular speed
@@ -25,7 +25,7 @@ void main() {
 
 // One step of the wave equation on the heightfield: r = height, g = velocity. Drops are added to the height.
 export const simFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uPrev;
@@ -128,7 +128,7 @@ void main() {
 }
 `;
 export const causticFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 in float vI; out vec4 o;
 void main() { o = vec4(vI, vI, vI, 1.0); }
 `;

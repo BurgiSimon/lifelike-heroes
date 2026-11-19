@@ -61,7 +61,7 @@ export function chrome(hero, { controls = [], actions = [] } = {}) {
   // a cap lowered for a moment would already have wilted flowers, a count would have restocked the pond.
   const pass = (el) => { const c = controls.find((k) => k.id === el.name); if (c) hero.update({ [c.id]: read(c) }); };
   let held = null;   // the slider a finger is on, before its touch has said what it is
-  form.addEventListener('pointerdown', (e) => { held = e.pointerType === 'touch' && e.target.type === 'range' ? { el: e.target, was: e.target.value, x: e.clientX, y: e.clientY } : null; });
+  form.addEventListener('pointerdown', (e) => { if (e.isPrimary) held = e.pointerType !== 'mouse' && e.target.type === 'range' ? { el: e.target, was: e.target.value, x: e.clientX, y: e.clientY } : null; });   // a finger or a pen (it jumps the thumb too); a second finger leaves the first one's hold alone
   form.addEventListener('pointermove', (e) => { if (held?.el === e.target && Math.abs(e.clientX - held.x) > Math.abs(e.clientY - held.y) + 6) { const { el } = held; held = null; pass(el); } });
   form.addEventListener('pointerup', (e) => { if (held?.el === e.target) { const { el } = held; held = null; pass(el); } });
   form.addEventListener('pointercancel', (e) => { if (held?.el === e.target) { const { el, was } = held; held = null; el.value = was; read(controls.find((k) => k.id === el.name)); } });

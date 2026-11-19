@@ -8,7 +8,9 @@
 
 export const MARKS = 8;   // marks kept (index.js drops the oldest); the size of uMarks
 
-const head = /* glsl */`precision highp float;
+// highp int as well as float: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many
+// phone GPUs (Mali; Adreno under Mesa), where it returns 0.
+const head = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 uniform vec2 uRes;    // hero box, CSS px
 uniform float uPx;    // device px per CSS px, for edges that stay crisp at any ratio
@@ -112,7 +114,7 @@ void main() {
 `;
 
 // Bright-pass and blur for a restrained bloom: only light that really is brighter than paper white glows.
-export const brightFrag = /* glsl */`precision highp float;
+export const brightFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uTexel;
@@ -122,7 +124,7 @@ void main() {
   o = vec4(min(c, vec3(40.0)) * smoothstep(2.4, 5.0, l), 1.0);
 }
 `;
-export const blurFrag = /* glsl */`precision highp float;
+export const blurFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uStep;
@@ -136,7 +138,7 @@ void main() {
 
 // The lens and the film, in the order a camera does them: glow round what burns out, falloff toward the corners,
 // the tone curve that folds scene light into the display's range, a grade, the display's own encoding, grain.
-export const filmFrag = (toneChunk) => /* glsl */`precision highp float;
+export const filmFrag = (toneChunk) => /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene; uniform sampler2D uBloom;

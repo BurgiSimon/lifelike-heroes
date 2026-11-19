@@ -16,6 +16,8 @@ const ASSETS = '/assets/mist/';
 const EXPOSURE = 0.3;    // the photographer's exposure for the city: the sky stays night, the lamps still burn out
 const MIST = 2;          // CSS px per texel of the mist's field: its edges are soft things
 const BACK = 1 / 60;     // share of the mist that comes back per second: a wiped patch has closed in about a minute
+const RETURN = 0.1;      // s of that return banked into one pass. The field is half-float: near 1, one 120 Hz frame's
+                         // share is under half a step and rounds away, and a wiped track would stay half clear for good
 
 export async function createRenderer(canvas, { low = false } = {}) {
   // The city is loaded before there is a context to leak if a file fails.
@@ -53,7 +55,7 @@ export async function createRenderer(canvas, { low = false } = {}) {
   const u = {
     uRes: { value: new Vector2(1, 1) }, uPx: { value: 1 }, uFrame: { value: 0 },
     uBase: { value: maps[0] }, uGlow: { value: maps[1] }, uExposure: { value: EXPOSURE },
-    uPrev: { value: null }, uDt: { value: 0 }, uBack: { value: BACK }, uCaps: { value: 0 },
+    uPrev: { value: null }, uDt: { value: 0 }, uRet: { value: 0 }, uBack: { value: BACK }, uCaps: { value: 0 },
     uCap: { value: Array.from({ length: CAPS }, () => new Vector4()) }, uCapK: { value: Array.from({ length: CAPS }, () => new Vector4()) },
     uWater: { value: water.texture }, uMist: { value: null }, uText: { value: textTex }, uMask: { value: maskTex }, uMaskMap: { value: new Vector4(1, 1, 0, 0) },
     uLens: { value: lens.texture }, uWide: { value: wide.texture }, uTexel: { value: new Vector2() }, uCam: { value: new Vector3() }, uLodLens: { value: 1 },
@@ -81,16 +83,16 @@ export async function createRenderer(canvas, { low = false } = {}) {
   }));
   drops.frustumCulled = false;
 
-  let W = 0; let H = 0; let S = 1; let frames = 0; let baked = false; let misted = false; let old = [];
+  let W = 0; let H = 0; let S = 1; let frames = 0; let baked = false; let misted = false; let old = []; let owed = 0;   // owed: s of return not yet given back
   const clear = (t, r, g, b) => { renderer.setRenderTarget(t); renderer.setClearColor((Math.round(r * 255) << 16) | (Math.round(g * 255) << 8) | Math.round(b * 255), 1); renderer.clear(true, false, false); };
 
-  // Strokes wiped out of the mist, CAPS at a time; dt goes with the first pass only.
-  const wipe = (strokes, dt) => {
+  // Strokes wiped out of the mist, CAPS at a time; dt and the return (ret, s) go with the first pass only.
+  const wipe = (strokes, dt, ret = 0) => {
     let i = 0;
     do {
       let n = 0;
       for (; n < CAPS && i < strokes.length; n++, i++) { const s = strokes[i]; u.uCap.value[n].set(s.ax, s.ay, s.bx, s.by); u.uCapK.value[n].set(s.r, s.v, s.k, 0); }
-      u.uCaps.value = n; u.uDt.value = dt; dt = 0; u.uPrev.value = mistA.texture;
+      u.uCaps.value = n; u.uDt.value = dt; u.uRet.value = ret; dt = 0; ret = 0; u.uPrev.value = mistA.texture;
       run(passes.mist, mistB);
       const t = mistA; mistA = mistB; mistB = t;
     } while (i < strokes.length);
@@ -143,7 +145,8 @@ export async function createRenderer(canvas, { low = false } = {}) {
     frame(view, cfg, st, strokes, dt) {
       if (!baked) { u.uTex.value = maps[2]; run(passes.lens, lens); run(passes.wide, wide); baked = true; }
       if (!misted) fresh();
-      if (dt > 0 || strokes.length) wipe(strokes, dt);
+      owed += dt; const ret = owed >= RETURN ? owed : 0; if (ret) owed = 0;
+      if (dt > 0 || strokes.length) wipe(strokes, dt, ret);
       u.uThick.value = cfg.mist;
 
       let n = 0; const a = aDrop.array; const k = aKind.array;
