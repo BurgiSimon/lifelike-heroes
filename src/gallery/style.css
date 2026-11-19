@@ -2,14 +2,15 @@
    line endless and moves the cards itself (.is-loop); on a phone it is a strip that a swipe moves from card to card.
    A chosen card opens into its scene: a copy of it grows to fill the screen, and the scene's page begins on that
    same picture. */
-:root { --meadow: url('/assets/gallery/meadow-wide.jpg'); --koi: url('/assets/gallery/koi-wide.jpg'); --stars: url('/assets/gallery/stars-wide.jpg'); --mist: url('/assets/gallery/mist-wide.jpg'); }
+:root { --meadow: url('/assets/gallery/meadow-wide.jpg'); --koi: url('/assets/gallery/koi-wide.jpg'); --stars: url('/assets/gallery/stars-wide.jpg'); --mist: url('/assets/gallery/mist-wide.jpg'); --light: url('/assets/gallery/light-wide.jpg'); }
 @media (orientation: portrait) {
-  :root { --meadow: url('/assets/gallery/meadow-tall.jpg'); --koi: url('/assets/gallery/koi-tall.jpg'); --stars: url('/assets/gallery/stars-tall.jpg'); --mist: url('/assets/gallery/mist-tall.jpg'); }
+  :root { --meadow: url('/assets/gallery/meadow-tall.jpg'); --koi: url('/assets/gallery/koi-tall.jpg'); --stars: url('/assets/gallery/stars-tall.jpg'); --mist: url('/assets/gallery/mist-tall.jpg'); --light: url('/assets/gallery/light-tall.jpg'); }
 }
 [data-id='meadow'] { --still: var(--meadow); }
 [data-id='koi'] { --still: var(--koi); }
 [data-id='stars'] { --still: var(--stars); }
 [data-id='mist'] { --still: var(--mist); }
+[data-id='light'] { --still: var(--light); }
 
 .gallery { display: flex; flex-direction: column; min-height: 100svh; height: auto; overflow-x: hidden; }
 .gallery > * { transition: opacity 0.35s var(--ease-out); }
