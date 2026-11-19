@@ -6,13 +6,14 @@
 // that thing's distance: the letters soft, the leaves softer.
 // Left alone, the leaves flutter and the boughs sway on a breeze that comes and goes, the curtain breathes, and
 // the crystals that hang in the window turn on their threads, so the spectra they throw glide across the shade.
-// A pointer is a breeze: what it passes over stirs (touch the shadow and the thing moves). A click (or the
-// button) hangs another cut-glass crystal there; its spectra come from following sunlight through its facets.
+// A pointer is a breeze: what it passes over stirs (touch the shadow and the thing moves), and so is a finger
+// drawn across a phone's screen. A click (or the button) hangs another cut-glass crystal there; its spectra come
+// from following sunlight through its facets.
 // This file is the DOM, the input and the loop; room.js holds the rules, render.js and shaders.js the picture.
 // Reduced motion: no loop; one settled frame, drawn again whenever the visitor does something.
 // mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
 import { createRoom, CRYSTALS } from './room.js';
 import { createRenderer } from './render.js';
 import { drawLetters } from './letters.js';
@@ -58,7 +59,8 @@ export default function mount(root, options = {}) {
   const view = { W: 0, H: 0, still, stirred: false };
   const room = createRoom(cfg); const st = room.st;
   let R = null; let stop = null; let dead = false; let lost = false; let ratio = 1; let queued = 0;
-  let ptr = null; let was = null;   // where a fine pointer is, and where it was a frame ago
+  let ptr = null; let was = null;   // where a fine pointer or a finger is, and where it was a frame ago
+  let gusts = 0;
   const wind = { x: 0, y: 0, vx: 0, vy: 0 };   // the pointer as the room takes it: where, and how fast (px/s, eased)
   const snd = createSound(voices, { room: 1.4 }); snd.set(cfg.sound);
   const pan = (x) => x / Math.max(1, view.W) * 2 - 1;
@@ -99,13 +101,19 @@ export default function mount(root, options = {}) {
     once();
   };
   const hangSeeded = () => { if (R && !lost && view.W) hang(...room.seeded()); };
-  const gust = () => { if (!R || lost || !view.W) return; room.gust(); status.textContent = 'A gust goes through the lime tree and lifts the curtain.'; if (still) heard(); once(); };
+  // A gust is announced with its number: text the same as before is not read out again. Without motion there is
+  // no gust to see, and the button says so rather than claim one.
+  const gust = () => {
+    if (!R || lost || !view.W) return;
+    if (still) { status.textContent = 'The room stays still while motion is reduced.'; return; }
+    room.gust(); status.textContent = `Gust ${++gusts} goes through the lime tree and lifts the curtain.`; once();
+  };
 
   // A HiDPI screen opens at about 2.2 megapixels (never under one render pixel per CSS pixel): the first frames are
   // the ones a governor cannot save. On a 2x screen it may fall to 1x: soft, but it holds its frame rate.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
-  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
 
   const tick = (dt) => {
     gov.tick(dt);
@@ -148,12 +156,14 @@ export default function mount(root, options = {}) {
   const ro = new ResizeObserver(size); ro.observe(root);
   size();
 
-  // Pointer: hover is a breeze (a mouse or a pen, and only while things move); a click hangs a crystal.
+  // Pointer: hover is a breeze (a mouse or a pen, and only while things move), and so is a finger drawn sideways
+  // across the wall (upright, it is the page's scroll); a click or a tap hangs a crystal.
   const at = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   if (!still && fine) {
     root.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') ptr = at(e); }, { signal });
     for (const type of ['pointerleave', 'pointercancel']) root.addEventListener(type, () => { ptr = null; }, { signal });
   }
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) was = null; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // first: the breeze starts from rest, not from where a mouse was
   // click, not pointerdown: a touch scroll that starts on the wall must not hang a crystal.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); hang(p.x, p.y); } }, { signal });
   cue.addEventListener('click', hangSeeded, { signal });

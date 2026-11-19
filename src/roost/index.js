@@ -6,14 +6,15 @@
 // Left alone, the flock wheels over the roofs (each bird minding its seven nearest neighbours), birds leave the
 // sign for a turn with it and come back, and now and then a falcon comes through and the flock rolls away from it.
 // A pointer is a falcon: it flies in the flock's sky and follows the pointer, and the flock folds away from it; a
-// pointer that sweeps along the sign puts up the birds it passes. A click (or the button) is a clap: every bird on
-// the sign goes up, and over the next minute they trickle back.
+// pointer that sweeps along the sign puts up the birds it passes. A finger drawn across a phone's screen is the
+// same falcon. A click (or the button) is a clap: every bird on the sign goes up, and over the next minute they
+// trickle back.
 // This file is the DOM, the input and the loop; flock.js holds the rules, skyline.js paints the roofline and the
 // sign, render.js and shaders.js draw the picture.
 // Reduced motion: no loop; one settled frame, drawn again whenever the visitor does something.
 // mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, rnd, clamp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, rnd, clamp } from '../shared/kit.js';
 import { createFlock, MAXF } from './flock.js';
 import { createRenderer } from './render.js';
 import { paintSkyline } from './skyline.js';
@@ -56,7 +57,8 @@ export default function mount(root, options = {}) {
   const view = { W: 0, H: 0, still };
   const flock = createFlock(cfg); const st = flock.st;
   let R = null; let stop = null; let dead = false; let lost = false; let ratio = 1; let queued = 0; let claps = 0;
-  let ptr = null; let was = null;   // where a fine pointer is, and where it was a frame ago
+  let ptr = null; let was = null;   // where a fine pointer or a finger is, and where it was a frame ago
+  let falcons = 0;
   const air = { x: 0, y: 0, vx: 0, vy: 0 };   // the pointer as the flock takes it: where, and how fast (px/s, eased)
   const snd = createSound(voices, { room: 2.2 }); snd.set(cfg.sound);
   const pan = (x) => x / Math.max(1, view.W) * 2 - 1;
@@ -95,13 +97,19 @@ export default function mount(root, options = {}) {
   };
   // The button's claps: from a spot along the sign, a new one each time, the same ones on every load.
   const clapSeeded = () => { const b = box(); clap(b.l + (0.15 + 0.7 * rnd(claps * 2 + 5)) * (b.r - b.l), b.t + 0.5 * (b.b - b.t)); };
-  const falcon = () => { if (!R || lost || !view.W) return; flock.pass(); status.textContent = 'A falcon comes in over the roofs, and the flock rolls away from it.'; once(); };
+  // A falcon is announced with its number: text the same as before is not read out again. Without motion none can
+  // come through, and the button says so rather than claim one.
+  const falcon = () => {
+    if (!R || lost || !view.W) return;
+    if (still) { status.textContent = 'The flock stays as it is while motion is reduced.'; return; }
+    flock.pass(); status.textContent = `Falcon ${++falcons} comes in over the roofs, and the flock rolls away from it.`; once();
+  };
 
   // A HiDPI screen opens at about 2.2 megapixels (never under one render pixel per CSS pixel): the first frames are
   // the ones a governor cannot save. On a 2x screen it may fall to 1x: soft, but it holds its frame rate.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
-  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
 
   const tick = (dt) => {
     gov.tick(dt);
@@ -144,12 +152,14 @@ export default function mount(root, options = {}) {
   const ro = new ResizeObserver(size); ro.observe(root);
   size();
 
-  // Pointer: hover is the falcon (a mouse or a pen, and only while things move); a click is a clap.
+  // Pointer: hover is the falcon (a mouse or a pen, and only while things move), and so is a finger drawn sideways
+  // across the sky (upright, it is the page's scroll); a click or a tap is a clap.
   const at = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   if (!still && fine) {
     root.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') ptr = at(e); }, { signal });
     for (const type of ['pointerleave', 'pointercancel']) root.addEventListener(type, () => { ptr = null; }, { signal });
   }
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) was = null; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // first: the falcon's speed starts from rest, not from where a mouse was
   // click, not pointerdown: a touch scroll that starts on the sky must not put the birds up.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); clap(p.x, p.y); } }, { signal });
   cue.addEventListener('click', clapSeeded, { signal });

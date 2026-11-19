@@ -9,10 +9,10 @@
   align-content: center;
   gap: 24px;
   /* the picture is laid out round the headline (room.js), so this padding is the composition: where the sun falls */
-  padding: 19.5svh var(--gutter) 0 33.5%;
+  padding: 19.5svh var(--edge-r) 0 33.5%;
   background: var(--light-ground);
   color: var(--light-ink);
-  touch-action: pan-y;   /* a scroll that starts on the wall stays a scroll */
+  touch-action: pan-y pinch-zoom;   /* a scroll that starts on the wall stays a scroll; a sideways finger is a breeze */
   -webkit-tap-highlight-color: transparent;
   cursor: default;
 }
@@ -59,15 +59,16 @@
 }
 /* a cut crystal, as a mark: a small diamond */
 .light__cue::before { content: ''; width: 6px; height: 6px; transform: rotate(45deg) scaleY(1.25); background: currentColor; }
-.light__cue:hover { color: var(--light-paper); border-color: rgb(244 241 234 / 0.62); background: rgb(24 21 17 / 0.74); }
+@media (hover: hover) { .light__cue:hover { color: var(--light-paper); border-color: rgb(244 241 234 / 0.62); background: rgb(24 21 17 / 0.74); } }
+@media (pointer: coarse) { .light__cue { min-height: 44px; padding: 0 18px 0 16px; } }   /* a finger's target */
 
 /* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
    strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
 .light__note {
   position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: clamp(14px, 3vh, 24px);
+  left: var(--edge-l);
+  right: var(--edge-r);
+  bottom: calc(clamp(14px, 3vh, 24px) + var(--edge-b));
   display: flex;
   justify-content: space-between;
   gap: 16px;
@@ -93,5 +94,8 @@
 
 /* A narrow screen: the headline moves left, and the curtain makes do with less room. */
 @media (max-width: 640px) { .light { padding-left: 27%; } }
+/* On its side a phone can be under 300 px tall: the headline and the cue are centred above the plate line's band
+   (its lift, its height and some air), not down onto it, and stand a little closer together. */
+@media (orientation: landscape) and (max-height: 500px) { .light { padding-bottom: calc(clamp(14px, 3vh, 24px) + 34px + var(--edge-b)); gap: 16px; } }
 
 @media (prefers-reduced-motion: reduce) { .light__canvas, .light__title, .light__cue { transition: none; } }

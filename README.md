@@ -47,7 +47,7 @@
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
 
-On a phone, tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Draw a finger sideways across a scene and it answers as it would to a hand: the grass parts, the koi come over, the sky turns, the mist wipes away. Hold the phone either way up; the scene fills the screen.
+On a phone, tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Draw a finger sideways across a scene and it answers as it would to a hand: the grass parts, the koi come over, the sky turns, the mist wipes away, the curtain lifts, a falcon gives chase. Hold the phone either way up; the scene fills the screen.
 
 ### 1 &nbsp;·&nbsp; Meadow
 
@@ -132,6 +132,7 @@ A tea room at four o'clock on an October afternoon. The low sun comes through th
 - **Move the mouse over the wall** and a breeze follows it. Touch the shadow of the leaves and they rustle; pass the curtain and it lifts.
 - **Click** to hang a cut-glass crystal in the window. It spins, settles, and scatters small rainbows over the wall in the shade.
 - **Wait a moment** and a gust comes by itself: the curtain billows across the lettering and the rainbows glide.
+- **On a phone,** tap to hang a crystal, and draw a finger sideways across the wall to be the breeze.
 
 **[Open the window light →](https://burgisimon.github.io/lifelike-heroes/light.html)**
 
@@ -150,6 +151,7 @@ A rooftop in Rome, twenty minutes after sunset. The starlings come to this part 
 - **Move the mouse across the sky** and a falcon follows it. The flock folds away from wherever it goes, and a dark wave runs through the birds.
 - **Click** to clap your hands. Every bird on the sign goes up and joins the flock. Over the next minute they come back, one at a time.
 - **Wait a moment** and birds leave the sign and return on their own, and now and then a falcon comes through by itself.
+- **On a phone,** tap to clap, and draw a finger sideways across the sky: the falcon follows it. Sweep it along the sign and the birds go up.
 
 **[Open the roost →](https://burgisimon.github.io/lifelike-heroes/roost.html)**
 
@@ -301,7 +303,7 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 - Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal, clap) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond and wipes the misted window; on the star chart a sideways drag of its own turns the sky. The window light's breeze still needs a pointer (a tap hangs a crystal), and so does the roost's falcon (without a pointer one still comes through by itself, and a tap is a clap). A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
+- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond, wipes the misted window, is the breeze in the window light and the falcon over the roost; on the star chart a sideways drag of its own turns the sky. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
 - Phones in both orientations: the pages are `viewport-fit=cover`, so the picture runs under a notch while the type, the buttons and the page chrome keep clear of it (`--safe-*` and `--edge-*` in `src/shared/base.css`). On a phone held sideways the hero takes the screen's height and the chrome folds into one menu button. Buttons are 44 px tall on a touch screen.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
