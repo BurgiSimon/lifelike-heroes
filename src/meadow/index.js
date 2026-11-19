@@ -130,7 +130,11 @@ export default function mount(root, options = {}) {
   const depthY = (p) => (view.hz + (view.foot - view.hz) * p ** CURVE) * view.H;   // the original's depth → screen y
   const depthOf = (y) => clamp((y / view.H - view.hz) / (view.foot - view.hz), 0, 1) ** (1 / CURVE);
 
-  const say = () => { status.textContent = `${flowers.filter((f) => !f.gone).length} flowers in the field.`; };
+  // What a screen reader hears. Each sowing and each gust says so in words of its own, with its number: text the
+  // same as before is not read out again, so at the cap a plain count would go silent.
+  let sown = 0; let gusts = 0;
+  const count = () => flowers.filter((f) => !f.gone).length;
+  const say = () => { status.textContent = `${count()} flowers in the field.`; };
   const sync = () => { parts?.flowers.sync(flowers); settled = false; };
   const species = (n) => { const set = PETALS[cfg.petals] || PETALS.mixed; return set[n % set.length]; };
   // Past the cap the oldest goes: it wilts over FADE in the loop, or is simply gone when nothing moves.
@@ -149,18 +153,19 @@ export default function mount(root, options = {}) {
     const n = planted++;
     const f = { n, u, p, ph: rnd(n * 7 + 1), species: species(n), size: 0.95 + 0.3 * rnd(n * 7 + 2), seed: rnd(n * 7 + 3), born, gone: 0 };
     stand(f); flowers.push(f);
-    trim(); if (!quiet) { say(); snd.play('sow', u); } sync();
+    trim(); if (!quiet) { status.textContent = `Flower ${++sown} sown; ${count()} in the field.`; snd.play('sow', u); } sync();
     if (still) redraw();
   };
   const plantAt = (px, py) => { if (parts) plant(px / view.W, depthOf(py), still ? -1e3 : now); };
   const plantSeeded = () => { if (parts) plant(0.05 + 0.9 * rnd(planted * 13 + 5), 0.14 + 0.78 * rnd(planted * 13 + 6), still ? -1e3 : now); };
   const gust = () => {
-    if (still || burst || !parts) return;
+    if (burst || !parts) return;
+    if (still) { status.textContent = 'The field stays still while motion is reduced.'; return; }
     // The front starts just off the field's upwind corner (the near left one; the far left one in a very wide frame),
     // so the grass answers at once, and leaves by the downwind corner.
     const upwind = Math.min(0, 34 * (-WIND.dir[1] - view.tanH * WIND.dir[0]));
     burst = { x: upwind - WIND.burst.width * 1.3, end: view.tanH * 34 * WIND.dir[0] - 34 * WIND.dir[1] + WIND.burst.width * 1.5 };
-    settled = false;
+    settled = false; status.textContent = `Gust ${++gusts} crosses the field.`;
   };
 
   const layout = () => {
@@ -345,7 +350,7 @@ export default function mount(root, options = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.petals !== before.petals) for (const f of flowers) f.species = species(f.n);
       snd.set(cfg.sound); if (still) snd.play('air', cfg.wind, 0, 0);
-      trim(); say(); sync();
+      const had = count(); trim(); if (count() < had) say(); sync();   // heard only when lowering the cap wilts flowers
       if (cfg.text !== before.text) { word(); settled = false; if (!stop) redraw(); }
       if (cfg.density !== before.density) layout(); else if (still) redraw();
     },

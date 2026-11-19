@@ -136,16 +136,18 @@ rows.forEach((a, i) => {
   a.addEventListener('click', (e) => open(e, a));
 });
 
-// ---- left alone for a few seconds, the line drifts (on a phone: the strip goes on by a card); any input hands it back
-let idle = 0; let turning = 0;
+// ---- left alone for a few seconds, the line drifts (on a phone: the strip goes on by a card, once, to show that it
+// can: a strip that kept turning would carry the card a screen reader is reading out from under it, and TalkBack
+// tells the page nothing); any input hands it back, and so does focus, which VoiceOver moves as it reads
+let idle = 0;
 const turn = () => rows[(was + 1) % rows.length].scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
 const wake = () => {
-  clearTimeout(idle); clearInterval(turning); drifting = false;
+  clearTimeout(idle); drifting = false;
   if (!calm) idle = setTimeout(() => {
-    if (!phone.matches) { drifting = true; kick(); } else if (!list.contains(document.activeElement)) { turn(); turning = setInterval(turn, 5200); }
+    if (!phone.matches) { drifting = true; kick(); } else if (!list.contains(document.activeElement)) turn();
   }, 4000);
 };
-for (const type of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart']) addEventListener(type, wake, { passive: true });
+for (const type of ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'focusin']) addEventListener(type, wake, { passive: true });
 
 // ---- a chosen card opens into its scene: a copy of it grows from where the card is until it is the screen, and
 // the scene's page begins on that same picture. A click meant for a new tab stays a plain link.
@@ -153,7 +155,7 @@ function open(e, a) {
   if (dragged && e.detail) { e.preventDefault(); return; }   // the click that ends a drag (a key's click has no detail)
   if (calm || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
-  clearTimeout(idle); clearInterval(turning); drifting = false; v = 0; want = x;
+  clearTimeout(idle); drifting = false; v = 0; want = x;
   const r = a.getBoundingClientRect(); const page = document.documentElement;
   const o = document.createElement('div'); o.className = 'opener'; o.dataset.id = a.dataset.id;
   Object.assign(o.style, { inset: `${r.top}px ${page.clientWidth - r.right}px ${page.clientHeight - r.bottom}px ${r.left}px`, borderRadius: getComputedStyle(a).borderRadius });
