@@ -162,6 +162,9 @@ Say plainly what still gives the picture away when you report; the user will see
 - **Time comes from `dt`, clamped.** The loop hands you seconds; a stalled tab must not fling the scene.
 - **Hover is for a mouse or pen.** Gate it on `finePointer()` and ignore `pointerType === 'touch'`. Act on
   `click`, not `pointerdown`, so a scroll that starts on the scene stays a scroll.
+- **A finger gets a stroke.** The scaffold wires the kit's `stroke()`: a finger drawn sideways across the scene
+  (an upright one stays the page's scroll). Give it what a hand on this subject would really do: part the grass,
+  trail in the water, wipe the glass. Look at the scene on a phone held both ways; `check-hero.mjs` does too.
 - **Without motion, show the result.** Under reduced motion there is no loop: an action draws one settled frame
   of its outcome (the flower fully grown, the rings a second old).
 - **Sound** is a function `voices(kit)` in `sound.js`: a quiet bed that never quite repeats, and one small voice
@@ -174,9 +177,9 @@ Say plainly what still gives the picture away when you report; the user will see
 node .claude/skills/lifelike-hero/scripts/check-hero.mjs tidepool --out /tmp/check-tidepool
 ```
 
-It needs the dev server. It drives the page live, under reduced motion, on a phone and with WebGL taken away, and
-prints one line per check: `MUST` is the contract, `SHOULD` is the manner of the three scenes (fix it or know
-why not). It also writes `sheet.jpg`, all six states on one page. Open it: a scene that is right live is often
+It needs the dev server. It drives the page live, under reduced motion, on a phone (upright and on its side) and
+with WebGL taken away, and prints one line per check: `MUST` is the contract, `SHOULD` is the manner of the three
+scenes (fix it or know why not). It also writes `sheet.jpg`, every state on one page. Open it: a scene that is right live is often
 wrong on the phone or in its still.
 
 `references/contract.md` has every rule with its reason, for when a check fails or a scene needs something the

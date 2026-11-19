@@ -12,6 +12,8 @@
 // to keep turning; and a bird that is frightened rolls away, and its neighbours roll because it did, which is the
 // dark wave that crosses a flock faster than any bird in it flies.
 
+import { SKY } from './optics.js';   // how high the sky photograph reaches: the lens may not look past it
+
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
 // A stream of numbers from a seed: the flock is the same on every load.
@@ -191,6 +193,9 @@ export function createFlock(options) {
 
   // ---- the flock as it is when the scene opens: a long comma of birds going round the roost, thick at its head
   const gather = (n) => {
+    // The flock's clock starts again at 0, so the lone falcon's next pass is carried over to it, and so is the
+    // last wave's sound; left as they were, no falcon would come by itself for as long as the page had been open.
+    const t0 = st.t; st.falcon.dueAt = Math.max(0, st.falcon.dueAt - t0); waved = -10;
     rand = stream(11); st.n = n; st.tick = 0; const h = g.home;
     const bell = () => (rand() + rand() + rand() - 1.5) / 1.5;
     for (let i = 0; i < n; i++) {
@@ -315,7 +320,10 @@ export function createFlock(options) {
     // just under the letters' feet, and the flock's sky is the open sky above them. Returns true when the box is new.
     fit(W, H, title) {
       const fresh = W !== g.W || H !== g.H; const was = { ...g.home };
-      g.W = W; g.H = H; g.ppm = clamp(0.72 * title.em / CAP, 40, 120); g.F = g.ppm * DS; g.cx = W / 2; g.hy = title.b + 0.1 * title.em;
+      // The lens is never so short that the frame looks past the sky photograph: past its top (an upright tablet, a
+      // tall window) or its sides (an ultrawide monitor), where its last row or column would be smeared across.
+      g.W = W; g.H = H; g.hy = title.b + 0.1 * title.em;
+      g.ppm = Math.max(clamp(0.72 * title.em / CAP, 40, 120), g.hy / (SKY.top * DS), W / 2 / (SKY.half * DS)); g.F = g.ppm * DS; g.cx = W / 2;
       // The flock's sky: the open sky over the sign. On a narrow frame it is further off, so that a flock which
       // cannot turn in much less than ten metres still turns inside the picture.
       const h = g.home; h.rxp = 0.27 * W; h.ryp = 0.3 * title.t; h.syc = g.hy - 0.45 * title.t; h.z = clamp(10 * g.F / h.rxp, Z0, 150); h.rz = RZ;

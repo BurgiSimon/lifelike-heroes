@@ -7,7 +7,7 @@ the scaffold.
 
 Contents: [The module](#the-module) · [The DOM](#the-dom) · [States](#states) · [Input](#input) ·
 [Motion and its absence](#motion-and-its-absence) · [When WebGL is not there](#when-webgl-is-not-there) ·
-[Quality](#quality) · [Sound](#sound) · [Files a new scene touches](#files-a-new-scene-touches) ·
+[Phones](#phones) · [Quality](#quality) · [Sound](#sound) · [Files a new scene touches](#files-a-new-scene-touches) ·
 [A scene in another project](#a-scene-in-another-project)
 
 ## The module
@@ -72,11 +72,17 @@ scenes' `is-live` and `koi--ready` are also recognised; see the `ponytail:` note
 
 ## Input
 
-- **Hover belongs to fine pointers:** gate on `finePointer()` and skip `pointerType === 'touch'`. A phone gets the
-  tap and the button; say so in the README rather than faking hover with touch.
-- **Act on `click`, not `pointerdown`,** and give the root `touch-action: pan-y`: a scroll that starts on the
-  scene stays a scroll. A drag that the scene uses (sowing a row, turning the sky) starts only after a few pixels
-  of travel, and the click that ends it is swallowed.
+- **Hover belongs to fine pointers:** gate on `finePointer()` and skip `pointerType === 'touch'`: a finger that
+  merely passes over the scene does nothing.
+- **A finger gets the tap, the button and a stroke.** `stroke(root, { move, end }, signal)` from the kit is a
+  finger drawn sideways across the scene. Give it what a hand on this subject would really do (the grass parts
+  and a row is sown, a finger trails in the pond, the misted glass is wiped), not a copy of the hover for its own
+  sake. It starts after a few pixels, a stroke that starts upright (or that the page scrolls under) is the page's
+  scroll, the click it might end with is swallowed, and the next tap always gets through. Its first `move()` says
+  `first`: forget wherever a mouse last was. Say in the README what a phone can do.
+- **Act on `click`, not `pointerdown`,** and give the root `touch-action: pan-y pinch-zoom`: a scroll that starts
+  on the scene stays a scroll, and a reader can still zoom. A drag that the scene uses (sowing a row, turning the
+  sky) starts only after a few pixels of travel, and the click that ends it is swallowed.
 - **Pointer positions are measured against the canvas's box** each time; the page may have scrolled.
 - Listeners are added with an `AbortController` signal (or collected for removal) so `destroy()` cannot miss one.
 
@@ -101,12 +107,27 @@ scenes' `is-live` and `koi--ready` are also recognised; see the `ponytail:` note
   render target you filled once) or build a fresh renderer, then remove `is-static`.
 - A texture that fails to load is the same case as no WebGL: fall back, do not half-draw.
 
+## Phones
+
+- **The screen's own edges.** Pages are `viewport-fit=cover`, so the picture runs under a notch and round corners.
+  Place type and buttons with `--edge-l`, `--edge-r` and `+ var(--edge-b)` from `base.css`, not `--gutter`
+  alone, so they keep clear of them.
+- **On its side** a phone is about 280 to 430 px tall (a 360 dp Android under Chrome's bars is 280), and there the
+  hero takes the screen's height (`base.css` lifts its 420 px floor): the scene's layout has to hold at that
+  height, with the headline clear of the menu button in the top left corner, the cue clear of the headline and the
+  plate line on screen. `check-hero.mjs` photographs it at 780 × 280.
+- **A cue a thumb can hit:** 44 px tall under `(pointer: coarse)`. Hover looks go under `(hover: hover)`, or a
+  tapped button keeps its hover look on a phone.
+- **A lighter start:** see `opening()` under Quality.
+
 ## Quality
 
 - `quality()` is `'low'`, `'high'` or `'auto'`. `low` is a genuinely cheaper scene: fewer instances, no bloom,
   smaller targets. The screenshot tools pass `q=high`.
 - `governor()` scales the render pixel ratio between a floor and a ceiling to hold the frame rate; the scene
-  resizes its targets in `onChange`. Choose the ceiling for the first frames, which no governor can save.
+  resizes its targets in `onChange`. Choose the ceiling for the first frames, which no governor can save, and pass
+  `start: opening(w, h, ceiling)`: a screen without a fine pointer (a phone, a tablet) then opens at about a
+  megapixel, and the governor climbs from there when the frames have room.
 - CSS size and render size are separate: `renderer.setSize(w * ratio, h * ratio, false)` and let CSS stretch
   the canvas.
 

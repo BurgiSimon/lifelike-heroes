@@ -4,7 +4,7 @@
 // Reduced motion: no loop; one settled frame, drawn again whenever the visitor does something.
 // mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, rnd, clamp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, rnd, clamp } from '../shared/kit.js';
 import { createRenderer } from './render.js';
 import { MARKS } from './shaders.js';
 import { createSound } from '../shared/sound.js';
@@ -47,7 +47,7 @@ export default function mount(root, options = {}) {
   // time is the scene's own clock (it runs at the pace option), now is the visitor's (marks age by it).
   const view = { W: 0, H: 0, time: STILL_T, now: 0, still, ptr: { x: -1e4, y: -1e4, k: 0 }, marks: [], rects: [] };
   let R = null; let stop = null; let dead = false; let lost = false; let ratio = 1; let queued = 0; let made = 0;
-  let ptr = null;   // where a fine pointer is, or null
+  let ptr = null;   // where a fine pointer or a finger is, or null
   const snd = createSound(voices, { room: 1.6 }); snd.set(cfg.sound);
 
   const draw = () => { queued = 0; if (R && !lost && view.W) R.frame(view, cfg); };
@@ -85,7 +85,7 @@ export default function mount(root, options = {}) {
   // the ones a governor cannot save. On a 2x screen it may fall to 1x: soft, but it holds its frame rate.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
-  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
 
   const tick = (dt) => {
     gov.tick(dt);
@@ -123,6 +123,9 @@ export default function mount(root, options = {}) {
     root.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') ptr = at(e); }, { signal });
     for (const type of ['pointerleave', 'pointercancel']) root.addEventListener(type, () => { ptr = null; }, { signal });
   }
+  // A phone has no hover: a finger drawn sideways across the scene does what a mouse over it does (upright, it is
+  // the page's scroll). STARTER: give the finger whatever of the hover a hand on this subject would really do.
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) view.ptr.k = 0; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // first: the dent starts under the finger, not where a mouse was
   // click, not pointerdown: a touch scroll that starts on the scene must not leave a mark.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); mark(p.x, p.y); } }, { signal });
   cue.addEventListener('click', markSeeded, { signal });

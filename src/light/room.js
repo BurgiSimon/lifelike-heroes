@@ -399,7 +399,13 @@ export function createRoom(options) {
 
   const room = {
     g, st,
-    setOptions(o) { cfg = o; let live = st.crystals.filter((k) => !k.gone); while (live.length > cfg.crystals) { live[0].gone = 1; live = live.slice(1); } },
+    // quiet: nothing moves (reduced motion), so no loop will fade a crystal that is taken down: it goes at once, as
+    // one does that is taken down by hang() when quiet.
+    setOptions(o, quiet = false) {
+      cfg = o; let live = st.crystals.filter((k) => !k.gone);
+      while (live.length > cfg.crystals) { live[0].gone = quiet ? 2 : 1; live = live.slice(1); }
+      if (quiet) st.crystals = st.crystals.filter((k) => k.gone < 2);
+    },
     // Lay the picture out round the headline. title: { l, t, r, b, em } in px (em: the size of its type).
     // The glass is placed so that the lettering on it falls where the page put the headline. Returns true when the
     // box is a new one. The crystals keep their places in the glass through any of this.

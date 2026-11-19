@@ -11,7 +11,9 @@
 import { SKY } from './optics.js';
 
 const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
-const head = /* glsl */`precision highp float;
+// highp int as well as float: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many
+// phone GPUs (Mali; Adreno under Mesa), where it returns 0.
+const head = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 uniform vec2 uRes;    // hero box, CSS px
 uniform float uPx;    // device px per CSS px
@@ -135,7 +137,7 @@ void main() {
   gl_Position = vec4(s.x / uRes.x * 2.0 - 1.0, 1.0 - s.y / uRes.y * 2.0, 0.0, 1.0);
 }
 `;
-export const perchFrag = /* glsl */`precision highp float;
+export const perchFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vQ; out vec4 o;
 float seg(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a; vec2 ba = b - a; return length(pa - ba * clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0)); }
 void main() {
@@ -154,7 +156,7 @@ void main() {
 
 // The lens and the print. The sky came developed (its build script exposed it and rolled its highlights off), so
 // there is no tone curve to apply here: only what the lens does to the corners, a grade, the display's encoding, grain.
-export const filmFrag = /* glsl */`precision highp float;
+export const filmFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene;

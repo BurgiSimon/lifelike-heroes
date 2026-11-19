@@ -37,7 +37,7 @@ void main() {
 `;
 // Bodies solid, fins letting some light through.
 export const koiMaskFrag = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;
 in vec4 vA; flat in vec4 vC; in float vEnd; out vec4 o;
 void main() {
   float a = smoothstep(-vA.w, vA.w, vA.z - abs(vA.y)) * smoothstep(0.0, vA.w, vEnd);

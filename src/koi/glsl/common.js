@@ -8,7 +8,7 @@ void main() { vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0
 `;
 
 export const common = /* glsl */ `
-precision highp float;
+precision highp float; precision highp int;   // int too: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many phone GPUs (it returns 0)
 precision highp sampler2D;
 uniform vec2 uRes;   // hero box, CSS px
 uniform float uS;    // scene scale (the original's S)

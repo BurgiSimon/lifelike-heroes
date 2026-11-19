@@ -1,5 +1,6 @@
 // Page chrome of the demo pages: a Hide text tab, a Sound tab and an Options panel that slides in from the right edge;
-// on a phone one menu button in the top left corner opens the panel, and the two switches sit inside it. It lives outside the hero
+// on a phone (upright or on its side) one menu button in the top left corner opens the panel, and the two switches
+// sit inside it. It lives outside the hero
 // and only talks to it through update() and action(). controls and actions come from the scene.
 import './chrome.css';
 import { soundPref } from './sound.js';
@@ -54,7 +55,17 @@ export function chrome(hero, { controls = [], actions = [] } = {}) {
     return +el.value;
   };
   controls.forEach(read);
-  form.addEventListener('input', (e) => { const c = controls.find((k) => k.id === e.target.name); if (c) hero.update({ [c.id]: read(c) }); });
+  // A finger that lands on a slider moves its thumb there at once in Chrome, before anyone knows whether the touch
+  // is a slide or the start of the panel's scroll. The scene hears of it once the touch goes sideways (a slide) or
+  // lifts where it landed (a tap); if the panel scrolls instead, the slider goes back and the scene never knew:
+  // a cap lowered for a moment would already have wilted flowers, a count would have restocked the pond.
+  const pass = (el) => { const c = controls.find((k) => k.id === el.name); if (c) hero.update({ [c.id]: read(c) }); };
+  let held = null;   // the slider a finger is on, before its touch has said what it is
+  form.addEventListener('pointerdown', (e) => { if (e.isPrimary || !held) held = e.pointerType !== 'mouse' && e.target.type === 'range' ? { el: e.target, was: e.target.value, x: e.clientX, y: e.clientY } : null; });   // a finger or a pen (it jumps the thumb too); a second finger never takes the first one's hold, but gets one of its own when there is none
+  form.addEventListener('pointermove', (e) => { if (held?.el === e.target && Math.abs(e.clientX - held.x) > Math.abs(e.clientY - held.y) + 6) { const { el } = held; held = null; pass(el); } });
+  form.addEventListener('pointerup', (e) => { if (held?.el === e.target) { const { el } = held; held = null; pass(el); } });
+  form.addEventListener('pointercancel', (e) => { if (held?.el === e.target) { const { el, was } = held; held = null; el.value = was; read(controls.find((k) => k.id === el.name)); } });
+  form.addEventListener('input', (e) => { if (held?.el === e.target) { read(controls.find((k) => k.id === e.target.name)); return; } pass(e.target); });
   // The form's own reset puts every control back to its default; the hero follows once it has.
   form.addEventListener('reset', () => setTimeout(() => hero.update(Object.fromEntries(controls.map((c) => [c.id, read(c)])))));
   form.addEventListener('submit', (e) => e.preventDefault());

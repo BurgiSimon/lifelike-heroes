@@ -80,6 +80,7 @@ land sit in a ground frame along the bottom edge.
 | A drag that turns the scene, with inertia, without stealing vertical scroll | `index.js`, the pointer block |
 | Printing an exact CSS colour through the tone curve | `index.js`, `emit` |
 | Layout that ignores a phone's address bar coming and going | `index.js`, `size` |
+| A finger drawn sideways across a scene (and an upright one left to the page) | `src/shared/kit.js`, `stroke`; used by `meadow/index.js` (sows a row), `koi/index.js` (trails in the water), `mist/index.js` (wipes the glass), `light/index.js` (is the breeze), `roost/index.js` (is the falcon) |
 
 ## Tools (`scripts/`)
 

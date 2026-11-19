@@ -10,7 +10,9 @@ import { TX, TY, GLOW, WIDE, LON, LAT } from './optics.js';
 export const CAPS = 16;   // strokes wiped out of the mist in one pass (a pointer's path, a running drop's track)
 const f = (v) => v.toFixed(4);
 
-const head = /* glsl */`precision highp float;
+// highp int as well as float: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many
+// phone GPUs (Mali; Adreno under Mesa), where it returns 0.
+const head = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 uniform vec2 uRes;    // hero box, CSS px
 uniform float uPx;    // device px per CSS px
@@ -44,13 +46,13 @@ void main() { vUv = position.xy * 0.5 + 0.5; gl_Position = vec4(position.xy, 0.0
 // ponytail: the city is one exposure and stands still. Headlights crawling along the quay would be a few instanced
 // discs added to the lens target each frame; and a fast lens squeezes its discs to cat's eyes toward the corners,
 // which the bake (one disc for the whole frame) does not do.
-export const lensFrag = /* glsl */`precision highp float;
+export const lensFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uBase; uniform sampler2D uGlow; uniform float uExposure;
 void main() { vec3 g = texture(uGlow, vUv).rgb; o = vec4((texture(uBase, vUv).rgb + g * g * ${f(GLOW)}) * uExposure, 1.0); }
 `;
-export const wideFrag = /* glsl */`precision highp float;
+export const wideFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform float uExposure;
@@ -63,6 +65,7 @@ export const mistFrag = head + noise + /* glsl */`
 in vec2 vUv; out vec4 o;
 uniform sampler2D uPrev;
 uniform float uDt;           // s since the last pass (0: only wipe)
+uniform float uRet;          // s of return owed to the mist since it last came back (render.js banks it, see RETURN)
 uniform float uBack;         // share of the mist that returns per second
 uniform int uCaps;
 uniform vec4 uCap[${CAPS}];  // a stroke from xy to zw, CSS px
@@ -75,7 +78,7 @@ void main() {
   // lies, a wipe only thins the mist, and it is back in a few seconds. (A choice for the page, not for the physics.)
   float breath = (1.0 - texture(uMask, p * uMaskMap.xy + uMaskMap.zw).r) * uLetters;
   // It comes back as fine droplets that seed sooner in some places than others, so a wiped patch closes unevenly.
-  m.r = min(1.0, m.r + uDt * uBack * (0.5 + 1.1 * fbm(p / (70.0 * S) + 3.0)) * (1.0 + 9.0 * breath));
+  m.r = min(1.0, m.r + uRet * uBack * (0.5 + 1.1 * fbm(p / (70.0 * S) + 3.0)) * (1.0 + 9.0 * breath));
   m.g *= exp(-uDt / 7.0);
   for (int i = 0; i < ${CAPS}; i++) {
     if (i >= uCaps) break;
@@ -98,7 +101,7 @@ void main() {
 // ---- the drops, as heights: each one a small cap of water, written into r (rain side) or g (room side), with
 // the radius in b. Blended with MAX, so drops that touch are one body of water.
 // ponytail: MAX leaves a crease where two drops meet; a smooth union of the caps would round it as surface tension does.
-export const dropVert = /* glsl */`precision highp float;
+export const dropVert = /* glsl */`precision highp float; precision highp int;
 in vec3 position;
 in vec4 aDrop;   // x, y, radius, length of the tail it draws out behind it (CSS px)
 in vec4 aKind;   // seed 0..1, side (0 rain, 1 room), how far from round
@@ -113,7 +116,7 @@ void main() {
   gl_Position = vec4(p.x / uRes.x * 2.0 - 1.0, 1.0 - p.y / uRes.y * 2.0, 0.0, 1.0);
 }
 `;
-export const dropFrag = /* glsl */`precision highp float;
+export const dropFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vQ; in vec4 vDrop; in vec4 vKind;
 out vec4 o;
 const float K = 1.5557;   // a cap that meets the glass at 40 degrees, as water does on a window nobody polished: 1 / sin(40°), in radii
@@ -247,7 +250,7 @@ void main() {
 `;
 
 // Bright-pass and blur for a restrained bloom: only light that really is brighter than paper white glows.
-export const brightFrag = /* glsl */`precision highp float;
+export const brightFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uTexel;
@@ -257,7 +260,7 @@ void main() {
   o = vec4(min(c, vec3(24.0)) * smoothstep(1.6, 4.0, l), 1.0);
 }
 `;
-export const blurFrag = /* glsl */`precision highp float;
+export const blurFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uStep;
@@ -271,7 +274,7 @@ void main() {
 
 // The lens and the film, in the order a camera does them: glow round what burns out, falloff toward the corners,
 // the tone curve that folds scene light into the display's range, a grade, the display's own encoding, grain.
-export const filmFrag = (toneChunk) => /* glsl */`precision highp float;
+export const filmFrag = (toneChunk) => /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene; uniform sampler2D uBloom;

@@ -4,13 +4,14 @@
 // soft disc. The room is warm and the glass is cold: the near side is misted, thickest low down, and somebody has
 // breathed on it and written the headline with a fingertip.
 // Left alone, rain keeps landing, drops grow heavy and run in fits and starts, and the mist creeps back.
-// A pointer is a hand on the glass: it wipes the mist where it goes. A click (or the button) lets one drop gather
-// there and run down, clearing a track through the mist that closes again in about a minute.
+// A pointer is a hand on the glass: it wipes the mist where it goes, and so does a finger drawn across a phone's
+// screen. A click (or the button) lets one drop gather there and run down, clearing a track through the mist that
+// closes again in about a minute.
 // This file is the DOM, the input and the loop; pane.js holds the rules, render.js and shaders.js the picture.
 // Reduced motion: no loop; one settled frame, drawn again whenever the visitor does something.
 // mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
 import { createPane } from './pane.js';
 import { createRenderer } from './render.js';
 import { drawLetters } from './letters.js';
@@ -54,7 +55,7 @@ export default function mount(root, options = {}) {
   const view = { W: 0, H: 0, still };
   const pane = createPane(cfg); const st = pane.st;
   let R = null; let stop = null; let dead = false; let lost = false; let ratio = 1; let queued = 0; let made = 0;
-  let ptr = null; let was = null; let wiped = 0;   // where a fine pointer is, where it was when the mist was last wiped, and how far it has wiped since a drop last ran from it
+  let ptr = null; let was = null; let wiped = 0;   // where a fine pointer or a finger is, where it was when the mist was last wiped, and how far it has wiped since a drop last ran from it
   const strokes = [];               // wiped since the last frame: { ax, ay, bx, by, r, v, k } as the mist pass takes them
   const snd = createSound(voices, { room: 0.9 }); snd.set(cfg.sound);
   const pan = (x) => x / Math.max(1, view.W) * 2 - 1;
@@ -128,7 +129,7 @@ export default function mount(root, options = {}) {
   // the ones a governor cannot save. On a 2x screen it may fall to 1x: soft, but it holds its frame rate.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
-  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (r) => { ratio = r; if (R && view.W) R.resize(view.W, view.H, ratio); } });
 
   const tick = (dt) => {
     gov.tick(dt);
@@ -175,12 +176,14 @@ export default function mount(root, options = {}) {
   const ro = new ResizeObserver(size); ro.observe(root);
   size();
 
-  // Pointer: hover wipes the mist (a mouse or a pen, and only while things move); a click lets a drop run.
+  // Pointer: hover wipes the mist (a mouse or a pen, and only while things move), and so does a finger drawn
+  // sideways across the glass (upright, it is the page's scroll); a click or a tap lets a drop run.
   const at = (e) => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   if (!still && fine) {
     root.addEventListener('pointermove', (e) => { if (e.pointerType !== 'touch') ptr = at(e); }, { signal });
     for (const type of ['pointerleave', 'pointercancel']) root.addEventListener(type, () => { ptr = null; }, { signal });
   }
+  if (!still) stroke(root, { move: (x, y, t, first) => { if (first) was = { x, y }; ptr = { x, y }; }, end: () => { ptr = null; } }, signal);   // the wipe starts where the finger came down, not where a mouse was
   // click, not pointerdown: a touch scroll that starts on the glass must not start a drop.
   root.addEventListener('click', (e) => { if (!e.target.closest('button')) { const p = at(e); drip(p.x, p.y); } }, { signal });
   cue.addEventListener('click', dripSeeded, { signal });

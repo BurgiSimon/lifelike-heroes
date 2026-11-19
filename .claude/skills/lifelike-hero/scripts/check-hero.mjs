@@ -4,7 +4,7 @@
 //
 // Needs the dev server (BASE, default http://localhost:5173) and runs from the project root. Renders in software, so
 // it gives the same result on any machine; it is slow, and it says nothing about frame rates.
-// Writes wide.png, acted.png, bare.png, still.png, phone.png, static.png and one sheet.jpg of all six to --out
+// Writes wide.png, acted.png, bare.png, still.png, phone.png, side.png, static.png and one sheet.jpg of them all to --out
 // (default: check/<id>/ in the system's temp folder), prints every check, and exits 1 if one marked MUST failed.
 //   MUST    the contract: a page that breaks one of these is not finished
 //   SHOULD  the manner of the three scenes: fix it or know why not
@@ -194,14 +194,40 @@ await part('phone, 390 × 844, touch', async () => {
   const m = await p.evaluate(() => {
     const top = document.elementFromPoint(innerWidth / 2, innerHeight / 2); const h1 = document.querySelector('.hero h1').getBoundingClientRect();
     const touch = []; for (let e = top; e && e !== document.documentElement; e = e.parentElement) touch.push(getComputedStyle(e).touchAction);
-    return { touch, wide: document.documentElement.scrollWidth - innerWidth, h1: [h1.left, h1.right, innerWidth] };
+    const cue = document.querySelector('.hero button')?.getBoundingClientRect();
+    return { touch, wide: document.documentElement.scrollWidth - innerWidth, h1: [h1.left, h1.right, innerWidth], cue: cue ? Math.min(cue.width, cue.height) : 0 };
   });
   must(!m.touch.includes('none') && !m.touch.includes('pan-x'), 'a finger that starts on the scene can still scroll the page', `touch-action there is ${m.touch.join(' > ')}`);
   must(m.wide <= 0, 'the page is no wider than the phone', `${m.wide} px too wide`);
   should(m.h1[0] >= 0 && m.h1[1] <= m.h1[2] + 1, 'the headline fits the phone', `it runs from ${m.h1[0].toFixed(0)} to ${m.h1[1].toFixed(0)} of ${m.h1[2]} px`);
+  should(m.cue >= 43.5, 'a finger can hit the cue (44 px on a touch screen)', `it is ${m.cue.toFixed(0)} px at its narrowest`);
   await p.touchscreen.tap(200, 400); await p.waitForTimeout(1500);
   await shot(p, 'phone');
   quiet(log, 'on the phone');
+  await close();
+});
+
+// ---- 3b. a phone on its side: a 360 dp Android under Chrome's bars is 780 × 280, the shortest screen a scene meets
+// (base.css lifts the hero's 420 px floor there, so the scene takes the screen's height).
+await part('phone on its side, 780 × 280, touch', async () => {
+  const { p, log, close } = await open({ viewport: { width: 780, height: 280 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+  must(await until(p, READY), 'the scene is drawn'); await settle(p);
+  const m = await p.evaluate(() => {
+    const r = (q) => document.querySelector(q)?.getBoundingClientRect();
+    const out = [['the headline', r('.hero h1')], ['the cue', r('.hero button')], ['the plate line', r('.hero h1 ~ p:not(.sr-only)')]].filter(([, b]) => b && b.width && (b.top < -1 || b.bottom > innerHeight + 1 || b.left < -1 || b.right > innerWidth + 1)).map(([n]) => n);
+    // The headline's letters, line by line: each line's box less the room above the capitals and below the baseline.
+    const range = document.createRange(); range.selectNodeContents(document.querySelector('.hero h1'));
+    const ink = [...range.getClientRects()].map((q) => ({ l: q.left, r: q.right, t: q.top + q.height * 0.18, b: q.bottom - q.height * 0.2 }));
+    const hit = (q, b) => b && q.l < b.right && q.r > b.left && q.t < b.bottom && q.b > b.top;
+    const cue = r('.hero button'); const menu = { left: 0, top: 0, right: 56, bottom: 56 };   // the page chrome's menu button, 12 to 56 px in (chrome.css)
+    return { tall: document.documentElement.scrollHeight - innerHeight, wide: document.documentElement.scrollWidth - innerWidth, out, cue: ink.some((q) => hit(q, cue)), menu: ink.some((q) => hit(q, menu)) };
+  });
+  should(m.tall <= 0 && m.wide <= 0, 'the scene fits the screen, with nothing below the fold', `the page is ${m.tall} px taller and ${m.wide} px wider than the screen`);
+  should(!m.out.length, 'its type and its cue are all on the screen', `off it: ${m.out.join(', ')}`);
+  should(!m.cue, 'the cue keeps off the headline', 'on a screen this short the button lies over the letters');
+  should(!m.menu, 'the headline keeps clear of the menu button in the top left corner', 'its first letters lie under where the page puts its menu');
+  await shot(p, 'side');
+  quiet(log, 'on its side');
   await close();
 });
 
@@ -234,9 +260,9 @@ const card = new RegExp(`data-id=["']${id}["']`).test(read('index.html'));
 if (card) must(here(`public/assets/gallery/${id}-wide.jpg`) && here(`public/assets/gallery/${id}-tall.jpg`), 'its gallery card has its two stills');
 else lines.push('  note   not in the gallery yet (add-to-gallery.mjs, once it has stills)');
 
-// ---- the sheet: all six pictures on one page, for one look
+// ---- the sheet: every picture on one page, for one look
 if (sharp) {
-  const cells = [['wide', 'live'], ['acted', 'after a hover and a click'], ['bare', 'text: false'], ['still', 'reduced motion'], ['static', 'without WebGL'], ['phone', 'phone']].filter(([f]) => fs.existsSync(path.join(out, `${f}.png`)));
+  const cells = [['wide', 'live'], ['acted', 'after a hover and a click'], ['bare', 'text: false'], ['still', 'reduced motion'], ['static', 'without WebGL'], ['phone', 'phone'], ['side', 'phone on its side']].filter(([f]) => fs.existsSync(path.join(out, `${f}.png`)));
   const CW = 720; const CH = 450; const LAB = 26; const cols = 3; const rows = Math.ceil(cells.length / cols);
   const layers = [];
   for (const [i, [file, label]] of cells.entries()) {

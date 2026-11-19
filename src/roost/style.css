@@ -8,10 +8,10 @@
   justify-items: center;
   align-content: end;
   /* this padding is the composition (flock.js lays the lens out round the headline): how much roof lies under the sign */
-  padding: 0 var(--gutter) clamp(60px, 8.6svh, 92px);
+  padding: 0 var(--edge-r) calc(clamp(60px, 8.6svh, 92px) + var(--edge-b)) var(--edge-l);
   background: var(--roost-ground);
   color: var(--roost-ink);
-  touch-action: pan-y;   /* a scroll that starts on the sky stays a scroll */
+  touch-action: pan-y pinch-zoom;   /* a scroll that starts on the sky stays a scroll; a sideways finger is the falcon */
   -webkit-tap-highlight-color: transparent;
   cursor: default;
 }
@@ -61,15 +61,16 @@
 }
 /* two hands: a pair of small bars that meet */
 .roost__cue::before { content: ''; width: 7px; height: 7px; border-left: 2px solid currentColor; border-right: 2px solid currentColor; transform: skewX(-14deg); }
-.roost__cue:hover { color: var(--roost-ink); border-color: rgb(244 239 230 / 0.6); background: rgb(30 27 38 / 0.74); }
+@media (hover: hover) { .roost__cue:hover { color: var(--roost-ink); border-color: rgb(244 239 230 / 0.6); background: rgb(30 27 38 / 0.74); } }
+@media (pointer: coarse) { .roost__cue { min-height: 44px; padding: 0 18px 0 16px; } }   /* a finger's target */
 
 /* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
    strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
 .roost__note {
   position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: clamp(14px, 3vh, 24px);
+  left: var(--edge-l);
+  right: var(--edge-r);
+  bottom: calc(clamp(14px, 3vh, 24px) + var(--edge-b));
   display: flex;
   justify-content: space-between;
   gap: 16px;

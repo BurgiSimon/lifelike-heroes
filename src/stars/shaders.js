@@ -5,7 +5,9 @@
 
 export const SKY_SPAN = 150; // degrees from the pole at the edge of sky.webp (tools/build-assets.mjs holds the same)
 
-const head = /* glsl */`precision highp float;
+// highp int as well as float: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many
+// phone GPUs (Mali; Adreno under Mesa), where it returns 0: no aurora rays, no grain.
+const head = /* glsl */`precision highp float; precision highp int;
 #define TAU 6.28318530718
 // The chart ends where the sky stops rising at 69° north: its stars thin out from 100° to 118° from the pole.
 float chartEdge(float deg) { return smoothstep(118.0, 100.0, deg); }

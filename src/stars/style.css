@@ -8,7 +8,7 @@
   justify-items: start;
   align-content: end;
   gap: 24px;
-  padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(60px, 11vh, 104px);
+  padding: clamp(48px, 9vh, 88px) var(--edge-r) calc(clamp(60px, 11vh, 104px) + var(--edge-b)) var(--edge-l);
   background: #05070b;
   color: var(--ink);
 }
@@ -18,8 +18,8 @@
 .sch.is-ready > canvas { opacity: 1; }
 .sch.is-still > canvas { transition: none; }
 
-/* pan-y: a vertical touch drag scrolls the page, a sideways one turns the sky. */
-.sch__sky { touch-action: pan-y; }
+/* pan-y: a vertical touch drag scrolls the page, a sideways one turns the sky; pinch-zoom is the reader's. */
+.sch__sky { touch-action: pan-y pinch-zoom; }
 .sch__labels { pointer-events: none; }
 @media (pointer: fine) {
   .sch__sky { cursor: grab; }
@@ -39,6 +39,7 @@
   text-shadow: 0 0 0.35em rgb(5 7 11 / 0.45); /* on a phone it lies on the aurora, which surges */
   pointer-events: none;
 }
+@media (max-width: 640px) { .sch__title { font-size: clamp(2.4rem, 11.5vw, 3.6rem); } }   /* a phone's headline spans more of its narrow sky */
 
 .sch__cue {
   position: relative;
@@ -56,14 +57,15 @@
   text-shadow: 0 0 4px rgb(5 7 11 / 0.8), 0 0 12px rgb(5 7 11 / 0.8); /* the sky runs behind it: a little night of its own */
   transition: color 200ms var(--ease-out), text-decoration-color 200ms var(--ease-out);
 }
-.sch__cue:hover { color: var(--ink); text-decoration-color: currentColor; }
+@media (hover: hover) { .sch__cue:hover { color: var(--ink); text-decoration-color: currentColor; } }
+@media (pointer: coarse) { .sch__cue { min-height: 44px; } }   /* a finger's target; it still reads as a line of type */
 
 /* The plate line: the forest is dark enough to carry it, the lit snow is not, so each piece sits on night-coloured tape. */
 .sch__note {
   position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: clamp(14px, 3vh, 24px);
+  left: var(--edge-l);
+  right: var(--edge-r);
+  bottom: calc(clamp(14px, 3vh, 24px) + var(--edge-b));
   display: flex;
   justify-content: space-between;
   gap: 16px;

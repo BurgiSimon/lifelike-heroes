@@ -4,7 +4,7 @@
 // it lands and a drag sows a row. mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
 import * as THREE from 'three';
-import { loop, governor, reducedMotion, finePointer, quality, rnd, clamp, lerp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, rnd, clamp, lerp } from '../shared/kit.js';
 import { D, CAP, EYE, SHARE, FAR_EDGE, NEAR_PLANT, WIND, CLOUDS, SUN_SEEN, START, CURVE, PETALS, SOW, FADE, GROW } from './config.js';
 import { ground } from './terrain.js';
 import { createShared, sward, cloudSun } from './glsl.js';
@@ -31,6 +31,7 @@ export const controls = [
 export const actions = [{ id: 'sow', label: 'Sow a flower' }, { id: 'gust', label: 'Send a gust' }];
 const ASSETS = `${import.meta.env.BASE_URL}assets/meadow/`;
 const smooth = (a, b, v) => { const t = clamp((v - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const CLEAR = 64;   // px the steel capitals keep below the top of a short frame: a phone page's menu button and some air
 const num = (v, d) => (Number.isFinite(+v) ? +v : d);
 const tidy = (c) => ({
   wind: clamp(num(c.wind, 1), 0, 3), reach: clamp(num(c.reach, 150), 60, 280), density: clamp(num(c.density, 1), 0.5, 1.5),
@@ -66,10 +67,13 @@ export default function mount(root, options = {}) {
     const r = root.getBoundingClientRect(); const W = Math.round(r.width); const H = Math.round(r.height);
     if (!W || !H) return false;
     const aspect = W / H;
-    let tanH = box.width / (aspect < 0.8 ? 0.86 : SHARE) / 2 / D; let tanV = tanH / aspect;
-    if (CAP / D / (2 * tanV) > 0.38) { tanV = CAP / D / 0.76; tanH = tanV * aspect; }   // a very wide, short frame: the word stops growing
     // eye level as a share of the height, from the top: higher in a tall frame, lower in a wide one
     const hz = lerp(0.47, 0.53, smooth(0.6, 1.3, aspect)) + 0.03 * smooth(1.9, 2.4, aspect);
+    // A very wide, short frame: the word stops growing at 38 % of the height, and in a frame as short as a phone on
+    // its side, where the page's menu button sits in the top left corner, its capitals stop CLEAR px below the top.
+    const capShare = clamp(hz - CLEAR / H, 0.12, 0.38);   // the most of the height the capitals may take
+    let tanH = box.width / (aspect < 0.8 ? 0.86 : SHARE) / 2 / D; let tanV = tanH / aspect;
+    if (CAP / D / (2 * tanV) > capShare) { tanV = CAP / D / (2 * capShare); tanH = tanV * aspect; }
     Object.assign(view, { W, H, tanH, tanV, tanTop: 2 * tanV * hz, tanBot: 2 * tanV * (1 - hz), hz, foot: (H + 24) / H });
     const fs = EM * W / (2 * tanH * D); const base = (hz - (box.baseY + SINK - eyeY) / D / (2 * tanV)) * H;
     root.style.setProperty('--title-size', `${fs.toFixed(1)}px`); root.style.setProperty('--title-top', `${(base + 0.0375 * fs - 0.8 * fs).toFixed(1)}px`);
@@ -126,7 +130,11 @@ export default function mount(root, options = {}) {
   const depthY = (p) => (view.hz + (view.foot - view.hz) * p ** CURVE) * view.H;   // the original's depth → screen y
   const depthOf = (y) => clamp((y / view.H - view.hz) / (view.foot - view.hz), 0, 1) ** (1 / CURVE);
 
-  const say = () => { status.textContent = `${flowers.filter((f) => !f.gone).length} flowers in the field.`; };
+  // What a screen reader hears. Each sowing and each gust says so in words of its own, with its number: text the
+  // same as before is not read out again, so at the cap a plain count would go silent.
+  let sown = 0; let gusts = 0;
+  const count = () => flowers.filter((f) => !f.gone).length;
+  const say = () => { status.textContent = `${count()} flowers in the field.`; };
   const sync = () => { parts?.flowers.sync(flowers); settled = false; };
   const species = (n) => { const set = PETALS[cfg.petals] || PETALS.mixed; return set[n % set.length]; };
   // Past the cap the oldest goes: it wilts over FADE in the loop, or is simply gone when nothing moves.
@@ -145,18 +153,19 @@ export default function mount(root, options = {}) {
     const n = planted++;
     const f = { n, u, p, ph: rnd(n * 7 + 1), species: species(n), size: 0.95 + 0.3 * rnd(n * 7 + 2), seed: rnd(n * 7 + 3), born, gone: 0 };
     stand(f); flowers.push(f);
-    trim(); if (!quiet) { say(); snd.play('sow', u); } sync();
+    trim(); if (!quiet) { status.textContent = `Flower ${++sown} sown; ${count()} in the field.`; snd.play('sow', u); } sync();
     if (still) redraw();
   };
   const plantAt = (px, py) => { if (parts) plant(px / view.W, depthOf(py), still ? -1e3 : now); };
   const plantSeeded = () => { if (parts) plant(0.05 + 0.9 * rnd(planted * 13 + 5), 0.14 + 0.78 * rnd(planted * 13 + 6), still ? -1e3 : now); };
   const gust = () => {
-    if (still || burst || !parts) return;
+    if (burst || !parts) return;
+    if (still) { status.textContent = 'The field stays still while motion is reduced.'; return; }
     // The front starts just off the field's upwind corner (the near left one; the far left one in a very wide frame),
     // so the grass answers at once, and leaves by the downwind corner.
     const upwind = Math.min(0, 34 * (-WIND.dir[1] - view.tanH * WIND.dir[0]));
     burst = { x: upwind - WIND.burst.width * 1.3, end: view.tanH * 34 * WIND.dir[0] - 34 * WIND.dir[1] + WIND.burst.width * 1.5 };
-    settled = false;
+    settled = false; status.textContent = `Gust ${++gusts} crosses the field.`;
   };
 
   const layout = () => {
@@ -218,7 +227,7 @@ export default function mount(root, options = {}) {
     if (burst) { burst.x += dt * WIND.burst.speed; if (burst.x > burst.end) burst = null; }
     const flying = parts.seeds.step(dt, wt, cfg.wind, burst, view);
     ptr.v *= 0.9 ** f;
-    const sprung = parts.field.step(f, ptr, cfg.reach);
+    const sprung = parts.field.step(f, ptr, cfg.reach * clamp(view.W / 900, 0.6, 1));   // a phone's push stays phone-sized
     snd.play('air', cfg.wind, burst ? 1 : 0, ptr.x === null ? 0 : Math.abs(ptr.v));
     let growing = false;
     for (let i = flowers.length; i--;) {
@@ -238,7 +247,7 @@ export default function mount(root, options = {}) {
   // there; a small frame (a phone) may have 2. The floor keeps a narrow frame from being drawn too coarse to read.
   const dpr = devicePixelRatio || 1; const r0 = root.getBoundingClientRect();
   const most = Math.min(dpr, r0.width * r0.height * Math.min(dpr, 2) ** 2 < 1.4e6 ? 2 : 1.5);
-  const gov = governor({ min: Math.min(most, clamp(900 / Math.max(1, r0.width), 0.75, 1.5)), max: most, onChange: (ratio) => { view.ratio = ratio; layout(); } });
+  const gov = governor({ min: Math.min(most, clamp(900 / Math.max(1, r0.width), 0.75, 1.5)), max: most, start: opening(r0.width, r0.height, most), onChange: (ratio) => { view.ratio = ratio; layout(); } });
 
   const tex = (file, { srgb = false, repeat = false, aniso = 1 } = {}) => new THREE.TextureLoader().loadAsync(ASSETS + file).then((t) => {
     t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = aniso;
@@ -320,13 +329,28 @@ export default function mount(root, options = {}) {
     const p = at(e); plantAt(p.x, p.y);
   });
   on(root.querySelector('[data-sow]'), 'click', plantSeeded);
+  // A finger drawn sideways through the field (a phone has no hover): the grass parts round it as it goes, and it
+  // sows a row as a mouse drag does. Upright, it is the page's scroll.
+  const fingers = new AbortController(); off.push(() => fingers.abort());
+  let row = null;   // where the stroke last sowed
+  stroke(root, {
+    move(x, y, t, first) {
+      if (first) ptr.x = null;   // a finger's speed is its own, never measured from where a mouse was
+      if (!still) {
+        if (ptr.x !== null && t > ptr.t) ptr.v = 0.7 * ptr.v + 0.3 * clamp((x - ptr.x) / (t - ptr.t), -3, 3);
+        ptr.x = x; ptr.y = y; ptr.t = t;
+      }
+      if (!row) row = { x, y }; else if (Math.hypot(x - row.x, y - row.y) >= SOW) { plantAt(x, y); row = { x, y }; }
+    },
+    end() { ptr.x = null; row = null; },
+  }, fingers.signal);
 
   return {
     update(next = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
       if (cfg.petals !== before.petals) for (const f of flowers) f.species = species(f.n);
       snd.set(cfg.sound); if (still) snd.play('air', cfg.wind, 0, 0);
-      trim(); say(); sync();
+      const had = count(); trim(); if (count() < had) say(); sync();   // heard only when lowering the cap wilts flowers
       if (cfg.text !== before.text) { word(); settled = false; if (!stop) redraw(); }
       if (cfg.density !== before.density) layout(); else if (still) redraw();
     },

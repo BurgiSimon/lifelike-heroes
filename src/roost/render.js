@@ -4,7 +4,7 @@
 import {
   WebGLRenderer, WebGLRenderTarget, UnsignedByteType, LinearFilter, ClampToEdgeWrapping, SRGBColorSpace, TextureLoader, RawShaderMaterial, GLSL3,
   BufferGeometry, BufferAttribute, InstancedBufferGeometry, InstancedBufferAttribute, InstancedInterleavedBuffer, InterleavedBufferAttribute,
-  DynamicDrawUsage, Mesh, Camera, CanvasTexture, NoBlending, NormalBlending, CustomBlending, MinEquation, OneFactor, DoubleSide, Vector2,
+  DynamicDrawUsage, Mesh, Group, Camera, CanvasTexture, NoBlending, NormalBlending, CustomBlending, MinEquation, OneFactor, DoubleSide, Vector2,
 } from 'three';
 import { fullscreenVert, skyFrag, birdVert, birdFrag, maskFrag, perchVert, perchFrag, filmFrag } from './shaders.js';
 
@@ -55,6 +55,12 @@ export async function createRenderer(canvas, flock) {
   perchGeo.setAttribute('position', new BufferAttribute(new Float32Array([-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, 1, 0]), 3)); perchGeo.setIndex([0, 1, 2, 0, 2, 3]);
   const aP = new InstancedBufferAttribute(flock.st.perch, 4); aP.setUsage(DynamicDrawUsage); perchGeo.setAttribute('aP', aP); perchGeo.instanceCount = 0;
   const perched = mesh(perchGeo, material(perchVert, perchFrag, { side: DoubleSide, transparent: true, blending: NormalBlending }));
+  // The four layers of the picture go into the multisampled target in one render, so it is resolved once a frame,
+  // not once a layer: on a phone's tiled GPU each resolve is a full read and write of the frame. The opaque sky is
+  // drawn first; the rest, all blended, go in this order.
+  const layers = new Group();
+  passes.sky.renderOrder = 0; birds.renderOrder = 1; passes.mask.renderOrder = 2; perched.renderOrder = 3;
+  layers.add(passes.sky, birds, passes.mask, perched);
 
   let frames = 0;
   return {
@@ -72,10 +78,8 @@ export async function createRenderer(canvas, flock) {
       u.uTime.value = st.t; u.uLag.value = st.lag;
       inst.needsUpdate = true; birdGeo.instanceCount = st.count;
       aP.needsUpdate = true; perchGeo.instanceCount = st.perched;
-      run(passes.sky, scene);
-      if (st.count) run(birds, scene);
-      run(passes.mask, scene);
-      if (st.perched) run(perched, scene);
+      birds.visible = st.count > 0; perched.visible = st.perched > 0;
+      run(layers, scene);
       // The grain moves with the frames that are drawn; a still (frame 0, every time) keeps its grain where it is.
       u.uFrame.value = view.still ? 0 : frames++ % 240;
       run(passes.film, null);

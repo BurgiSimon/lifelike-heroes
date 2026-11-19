@@ -15,7 +15,9 @@ import { SUN, KX, KY, BOUGHS, CRYSTALS } from './room.js';
 export const BARS = 8;   // glazing bars the light map takes
 
 const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
-const head = /* glsl */`precision highp float;
+// highp int as well as float: three adds no precision to a raw shader, and a mediump uint hash is 16 bits on many
+// phone GPUs (Mali; Adreno under Mesa), where it returns 0.
+const head = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 uniform vec2 uRes;    // hero box, CSS px
 uniform float uPpm;   // CSS px per metre
@@ -89,7 +91,7 @@ void main() {
   gl_Position = toClip(uTree + m * uPpm, uTreeBox);
 }
 `;
-export const leafFrag = /* glsl */`precision highp float;
+export const leafFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vQ; in float vFar; out vec4 o;
 void main() {
   float s = vQ.x * 0.5 + 0.5;
@@ -114,7 +116,7 @@ void main() {
   gl_Position = toClip(uTree + m * uPpm, uTreeBox);
 }
 `;
-export const woodFrag = /* glsl */`precision highp float;
+export const woodFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vQ; in float vFar; out vec4 o;
 void main() { float a = smoothstep(1.0, 1.0 - fwidth(vQ.y) * 1.5 - 0.05, abs(vQ.y)); o = vec4(a * (1.0 - vFar), a * vFar, 0.0, a); }
 `;
@@ -136,7 +138,7 @@ void main() {
   gl_Position = toClip(uCurt.xy + position.xy * uCurt.zw - SLIP * position.z * uPpm, uCurtBox);
 }
 `;
-export const clothFrag = /* glsl */`precision highp float;
+export const clothFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vFlat; in vec3 vFace; out vec4 o;
 uniform vec2 uCloth;   // the cloth laid flat: width, height (m)
 const vec3 RAY = vec3(${f(-SUN[0])}, ${f(-SUN[1])}, ${f(SUN[2])});   // the way the light travels, in the cloth's own axes (z into the room)
@@ -234,7 +236,7 @@ void main() {
 }
 `;
 const TAPS = 14;
-export const beamFrag = /* glsl */`precision highp float;
+export const beamFrag = /* glsl */`precision highp float; precision highp int;
 in vec2 vQ; in vec2 vK; out vec4 o;
 // The eye's three responses to a wavelength (nm), as Wyman, Sloan and Shirley fitted them, in linear sRGB.
 vec3 hue(float l) {
@@ -373,7 +375,7 @@ void main() {
 `;
 
 // Bright-pass and blur for a restrained bloom: only light that really is brighter than paper white glows.
-export const brightFrag = /* glsl */`precision highp float;
+export const brightFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uTexel;
@@ -383,7 +385,7 @@ void main() {
   o = vec4(min(c, vec3(40.0)) * smoothstep(2.3, 4.6, l), 1.0);
 }
 `;
-export const blurFrag = /* glsl */`precision highp float;
+export const blurFrag = /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uTex; uniform vec2 uStep;
@@ -397,7 +399,7 @@ void main() {
 
 // The lens and the film, in the order a camera does them: glow round what burns out, falloff toward the corners,
 // the tone curve that folds scene light into the display's range, a grade, the display's own encoding, grain.
-export const filmFrag = (toneChunk) => /* glsl */`precision highp float;
+export const filmFrag = (toneChunk) => /* glsl */`precision highp float; precision highp int;
 precision highp sampler2D;
 in vec2 vUv; out vec4 o;
 uniform sampler2D uScene; uniform sampler2D uBloom;

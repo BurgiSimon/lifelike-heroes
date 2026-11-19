@@ -47,7 +47,7 @@
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
 
-On a phone you can tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Most of the effects that follow the pointer need a mouse or trackpad, so a laptop or desktop shows the scenes at their best.
+On a phone, tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Draw a finger sideways across a scene and it answers as it would to a hand: the grass parts, the koi come over, the sky turns, the mist wipes away, the curtain lifts, a falcon gives chase. Hold the phone either way up; the scene fills the screen.
 
 ### 1 &nbsp;·&nbsp; Meadow
 
@@ -56,6 +56,7 @@ This is the picture at the top of this page: a magazine cover for a "Weather" is
 - **Move the mouse through the grass** and it parts around your pointer.
 - **Click** to plant a flower. **Hold and drag** to sow a whole row.
 - **Wait a moment** and a gust crosses the field, lifting seeds into the light.
+- **On a phone,** tap to plant a flower, or draw a finger sideways through the grass to part it and sow a row.
 
 **[Open the meadow →](https://burgisimon.github.io/lifelike-heroes/meadow.html)**
 
@@ -74,6 +75,7 @@ You are looking straight down into a clear, shallow pond. Sunlight ripples acros
 - **Click the water** to drop some food. Rings spread out and the koi race for it.
 - **Move the mouse slowly** and the koi nearby swim over to look. **Move it fast** and they dart away.
 - **Watch the lily pads** drift when a fish or a ripple nudges them.
+- **On a phone,** tap to feed them, and trail a finger sideways through the water: slowly and the koi come to it, quickly and they scatter.
 
 **[Open the koi pond →](https://burgisimon.github.io/lifelike-heroes/koi.html)**
 
@@ -92,6 +94,7 @@ A map of the real northern sky, with the northern lights over a snowy forest. Ev
 - **Move the mouse across the stars** and a faint pencil line links the brightest ones nearby.
 - **Click** to ink it in as your own constellation. It gets a name, and a shooting star marks the moment.
 - **Drag** to turn the whole sky. It keeps gliding after you let go.
+- **On a phone,** tap to draw a constellation and swipe sideways to turn the sky.
 
 **[Open the star chart →](https://burgisimon.github.io/lifelike-heroes/stars.html)**
 
@@ -110,6 +113,7 @@ A hotel room window on a wet night. The camera is focused on the glass, so the r
 - **Move the mouse over the glass** and it wipes the mist away, like a hand. The city shows through clear until the mist creeps back.
 - **Click** and a drop gathers there and runs down the pane, in fits and starts, leaving a clear track behind it.
 - **Wait a moment** and the rain does it by itself: drops land, grow heavy and let go.
+- **On a phone,** draw a finger sideways across the glass to wipe it, and tap to let a drop run.
 
 **[Open the misted window →](https://burgisimon.github.io/lifelike-heroes/mist.html)**
 
@@ -128,6 +132,7 @@ A tea room at four o'clock on an October afternoon. The low sun comes through th
 - **Move the mouse over the wall** and a breeze follows it. Touch the shadow of the leaves and they rustle; pass the curtain and it lifts.
 - **Click** to hang a cut-glass crystal in the window. It spins, settles, and scatters small rainbows over the wall in the shade.
 - **Wait a moment** and a gust comes by itself: the curtain billows across the lettering and the rainbows glide.
+- **On a phone,** tap to hang a crystal, and draw a finger sideways across the wall to be the breeze.
 
 **[Open the window light →](https://burgisimon.github.io/lifelike-heroes/light.html)**
 
@@ -146,6 +151,7 @@ A rooftop in Rome, twenty minutes after sunset. The starlings come to this part 
 - **Move the mouse across the sky** and a falcon follows it. The flock folds away from wherever it goes, and a dark wave runs through the birds.
 - **Click** to clap your hands. Every bird on the sign goes up and joins the flock. Over the next minute they come back, one at a time.
 - **Wait a moment** and birds leave the sign and return on their own, and now and then a falcon comes through by itself.
+- **On a phone,** tap to clap, and draw a finger sideways across the sky: the falcon follows it. Sweep it along the sign and the birds go up.
 
 **[Open the roost →](https://burgisimon.github.io/lifelike-heroes/roost.html)**
 
@@ -160,6 +166,7 @@ A rooftop in Rome, twenty minutes after sunset. The starlings come to this part 
 ## Good to know
 
 - **Any modern browser.** Current versions of Chrome, Edge, Firefox and Safari should all work. Testing so far has been in Chrome and Edge.
+- **Phones welcome.** Upright or on its side, each scene fills the screen, its buttons are big enough for a thumb, and nothing hides under a notch. A phone starts a scene a little lighter on its graphics and sharpens it when there is room.
 - **Keyboard friendly.** Each scene has a button for its main action, and it works from the keyboard too.
 - **Motion is optional.** If your device is set to reduce motion, you get a calm still picture instead.
 - **Slower devices.** The scenes lower their own detail to stay smooth.
@@ -296,11 +303,12 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 - Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal, clap) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky. The misted window cannot be wiped on a phone: a tap lets a drop run instead. The window light's breeze needs a pointer too: a tap hangs a crystal. So does the roost's falcon: without a pointer one still comes through by itself, and a tap is a clap.
+- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond, wipes the misted window, is the breeze in the window light and the falcon over the roost; on the star chart a sideways drag of its own turns the sky. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
+- Phones in both orientations: the pages are `viewport-fit=cover`, so the picture runs under a notch while the type, the buttons and the page chrome keep clear of it (`--safe-*` and `--edge-*` in `src/shared/base.css`). On a phone held sideways the hero takes the screen's height and the chrome folds into one menu button. Buttons are 44 px tall on a touch screen.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
 - Sound is off until a visitor switches it on, and it pauses with the tab.
-- The scenes are built for integrated laptop graphics and were developed on one (Intel Iris Xe). In automatic mode a governor lowers the render resolution when frames run late and raises it again when there is room.
+- The scenes are built for integrated laptop graphics and were developed on one (Intel Iris Xe). In automatic mode a governor lowers the render resolution when frames run late and raises it again when there is room. A phone or tablet opens at about one megapixel of render resolution, however dense its screen (`opening()` in `kit.js`), and the governor climbs from there. On a tall phone the koi pond's caustics are focused through a sheet of square cells, as on a laptop.
 
 ### Credits
 
