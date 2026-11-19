@@ -3,7 +3,7 @@
 // the pointer (or the one with the keyboard's focus) is lit and gets a trace in its scene's own manner: grass that
 // parts, ripples, a pencilled line between stars, drops that run down the glass, a crystal's spectra on the wall,
 // starlings put up from where they sat. A chosen card opens into its scene. On a phone the cards are a strip that a
-// swipe moves from one to the next. Without this script the page is still six links.
+// swipe moves from one to the next. Without this script the page is still seven links.
 import '../shared/base.css';
 import './style.css';
 import { soundPref } from '../shared/sound.js';
@@ -11,7 +11,7 @@ import { reducedMotion, finePointer, rnd } from '../shared/kit.js';
 
 const list = document.querySelector('.list');
 const rows = [...list.querySelectorAll('a')];            // one card per scene, as the page has them
-const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, mist, light, roost: the traces at the foot go by this order
+const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, mist, light, roost, movement: the traces at the foot go by this order
 const cards = [...rows];                                 // every card in the line; the endless line adds copies
 const phone = matchMedia('(max-width: 640px)');          // the phone layout: a strip that scrolls and snaps by itself
 const calm = reducedMotion();
@@ -37,6 +37,7 @@ const runs = []; let ranAt = null; let ran = 0;          // drops on the misted 
 const flecks = []; let fleckAt = null; let flecked = 0;  // spectra on the window light's card: where each fell (u, v), which way it glides (s), when it was thrown
 const SPECTRUM = ['226 72 72', '240 150 50', '236 212 80', '86 196 110', '70 150 240', '138 104 232'];   // red to violet, as glass spreads them
 const risen = []; let rosenAt = null; let rose = 0;      // starlings on the roost's card: where each went up from (u, v), which way it flies (s), when
+const gear = { x: 0, y: 0, on: false };                  // the wheels on the movement's card: where the larger one's arbor is (px of the card)
 
 // ---- the lit card: the one under the pointer or the one with the keyboard's focus, whichever spoke last. On a
 // phone it is the card in the middle.
@@ -196,7 +197,7 @@ function draw(dt) {
   inked = false;
   if (calm || !finePointer()) return false;
   const k = lit ? ids.indexOf(lit.dataset.id) : -1;
-  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) runs.length = 0; if (k === 4) flecks.length = 0; if (k === 5) risen.length = 0; }   // on another card of its scene it starts over
+  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) runs.length = 0; if (k === 4) flecks.length = 0; if (k === 5) risen.length = 0; if (k === 6) gear.on = false; }   // on another card of its scene it starts over
   out.forEach((o, i) => { out[i] = o + ((k === i ? 1 : 0) - o) * (1 - Math.exp(-dt * 5)); });
   const box = spot.map((a) => a?.getBoundingClientRect());
   const within = (r) => { g.save(); g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, 14); g.clip(); };
@@ -334,6 +335,25 @@ function draw(dt) {
       faint = Math.max(faint, 1 - age);
     }
     g.strokeStyle = `rgb(${INK} / ${0.75 * faint})`; g.stroke(); g.lineWidth = 1; g.restore();
+  }
+
+  // Movement: two wheels in mesh under the pointer, turning a step at a time, six steps a second, as a watch's
+  // train does; lit with no pointer on it, they tick at the card's foot.
+  if (out[6] > 0.01) {
+    const r = box[6]; const want = inside(r, ptr) ? { x: ptr.x - r.left, y: ptr.y - r.top } : { x: r.width * 0.3, y: r.height * 0.72 };
+    if (!gear.on) { gear.x = want.x; gear.y = want.y; gear.on = true; }
+    gear.x += (want.x - gear.x) * (1 - Math.exp(-dt * 7)); gear.y += (want.y - gear.y) * (1 - Math.exp(-dt * 7));
+    const beat = clock * 6; const e = Math.min(1, (beat % 1) / 0.25); const step = Math.floor(beat) + e * e * (3 - 2 * e);
+    within(r); g.beginPath();
+    // [radius, teeth, which way it turns, how far off the pointer]: the two pitch circles touch
+    for (const [R, n, dir, dx, dy] of [[30, 30, 1, 0, 0], [16, 16, -1, 46 * Math.cos(-0.5), 46 * Math.sin(-0.5)]]) {
+      const x = r.left + gear.x + dx; const y = r.top + gear.y + dy; const a0 = dir * step * Math.PI / n + (dir < 0 ? Math.PI / n - 0.5 : 0);
+      for (let i = 0; i < n; i++) { const a = a0 + i * 2 * Math.PI / n; g.moveTo(x + (R - 3) * Math.cos(a), y + (R - 3) * Math.sin(a)); g.lineTo(x + (R + 3) * Math.cos(a), y + (R + 3) * Math.sin(a)); }
+      g.moveTo(x + R - 4, y); g.arc(x, y, R - 4, 0, 2 * Math.PI);
+      for (let i = 0; i < 4; i++) { const a = a0 + i * Math.PI / 2; g.moveTo(x + 4 * Math.cos(a), y + 4 * Math.sin(a)); g.lineTo(x + (R - 4) * Math.cos(a), y + (R - 4) * Math.sin(a)); }
+      g.moveTo(x + 4, y); g.arc(x, y, 4, 0, 2 * Math.PI);
+    }
+    g.strokeStyle = `rgb(${INK} / ${0.6 * out[6]})`; g.stroke(); g.restore();
   }
 
   inked = k >= 0 || ripples.length > 0 || lines.size > 0 || runs.length > 0 || flecks.length > 0 || risen.length > 0 || out.some((o) => o > 0.01);

@@ -1,0 +1,111 @@
+/* Movement hero — Thorne & Daughter. The canvas is the photograph. The headline is engraved in the movement's bridge
+   (index.js tells the scene where its letters lie); it, the cue and the plate line are DOM, low and centred, where
+   the works leave the bridge plain. */
+.movement {
+  --movement-ground: #a5a39d;   /* rhodium in a soft light: the ground before the scene arrives, and under the fallback */
+  --movement-ink: #f4f2ec;      /* the cue's and the plate line's type, on their own dark glass */
+  --movement-cut: #1a2030;      /* the lacquer the words are filled with */
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  gap: 22px;
+  text-align: center;
+  padding: clamp(48px, 9vh, 88px) var(--edge-r) calc(clamp(60px, 11vh, 104px) + var(--edge-b)) var(--edge-l);   /* clear of a notch */
+  background: var(--movement-ground);
+  color: var(--movement-ink);
+  touch-action: pan-y pinch-zoom;   /* a scroll that starts on the scene stays a scroll; a sideways finger is the scene's */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+/* The scene fades in once it is drawn: first paint is the dark ground and the headline. */
+.movement__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.movement.is-ready .movement__canvas { opacity: 1; }
+.movement.is-still .movement__canvas { transition: none; }
+
+/* The headline is real text and lets the pointer through, so the scene under it still answers. Spaced capitals of
+   a Bodoni, as a maker signs a bridge. Once the scene is drawn the letters are the engraving and these go clear. */
+.movement__title {
+  position: relative;
+  color: var(--movement-cut);
+  font-family: var(--font-serif);
+  font-size: clamp(1.75rem, 5.1vw, 5.6rem);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  margin-right: -0.15em;   /* the last letter's spacing is not part of the word: keep it centred */
+  text-transform: uppercase;
+  text-wrap: balance;
+  pointer-events: none;
+  transition: opacity 1.2s var(--ease-out);
+}
+/* Upright (a phone), the words take two lines and stand higher, over the cue: the winding wheels come in under them.
+   Wide and low (a phone on its side, a very wide screen), they stand to the left of the works. caliber.js lays the
+   movement out for the same three shapes. */
+@media (max-aspect-ratio: 1/1) {
+  .movement { padding-bottom: calc(20svh + var(--edge-b)); }
+  .movement__title { font-size: clamp(1.9rem, 11.4vw, 5rem); line-height: 1.14; }
+}
+@media (min-aspect-ratio: 19/10) {
+  .movement { justify-items: start; text-align: left; gap: 14px; padding-bottom: calc(clamp(44px, 16svh, 96px) + var(--edge-b)); }
+  .movement__title { font-size: clamp(1.6rem, 9.4svh, 5.2rem); }
+}
+.movement.is-ready .movement__title { opacity: 0; }
+.movement.is-static .movement__title { opacity: 1; }
+.movement.is-still .movement__title { transition: none; }
+
+/* The invitation and the keyboard path: a small pane of smoked glass, so nothing in the scene shows through its label. */
+.movement__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgb(244 242 236 / 0.26);
+  border-radius: 999px;
+  background: rgb(14 12 9 / 0.5);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: rgb(244 242 236 / 0.88);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+.movement__cue::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+@media (hover: hover) { .movement__cue:hover { color: var(--movement-ink); border-color: rgb(244 242 236 / 0.6); background: rgb(14 12 9 / 0.62); } }
+@media (pointer: coarse) { .movement__cue { min-height: 44px; padding: 0 18px 0 16px; } }   /* a finger's target */
+
+/* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
+   strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
+.movement__note {
+  position: absolute;
+  left: var(--edge-l);
+  right: var(--edge-r);
+  bottom: calc(clamp(14px, 3vh, 24px) + var(--edge-b));
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(244 242 236 / 0.92);
+  pointer-events: none;
+}
+.movement__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(14 12 9 / 0.72); }
+
+/* The text can be switched off (the text option): the scene alone. Hidden, not removed, so the layout holds. */
+.movement.is-bare .movement__title, .movement.is-bare .movement__cue, .movement.is-bare .movement__note { visibility: hidden; }
+
+/* No WebGL2, or the context is gone: the bridge alone, striped as the real one is, with the words on it in the
+   lacquer's colour. Nothing to act on, so no cue. */
+.movement.is-static {
+  background:
+    radial-gradient(120% 90% at 30% 20%, rgb(255 255 255 / 0.22) 0%, rgb(255 255 255 / 0) 55%, rgb(20 20 24 / 0.18) 100%),
+    repeating-linear-gradient(-28.6deg, #bab8b2 0, #bab8b2 2px, #8f8d88 3px, #b3b1ab 46px, #bab8b2 92px),
+    var(--movement-ground);
+}
+.movement.is-static > canvas, .movement.is-static .movement__cue { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .movement__canvas, .movement__cue { transition: none; } }

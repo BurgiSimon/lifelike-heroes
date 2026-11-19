@@ -1,14 +1,14 @@
 <h1 align="center">Lifelike Heroes</h1>
 
 <p align="center">
-  <b>Six living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
+  <b>Seven living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
 </p>
 
 <p align="center">
   These are not videos. Each scene is drawn live in your browser, dozens of times a second,
   so the grass leans in the wind, the fish come when you feed them, the sky turns when you drag it,
   the mist on the window gives way under your hand, the afternoon sun throws a crystal's colours across the wall,
-  and a clap sends a hundred starlings up off a rooftop sign.
+  a clap sends a hundred starlings up off a rooftop sign, and a turn of the crown winds a watch that is keeping your own time.
 </p>
 
 <h3 align="center">
@@ -43,11 +43,11 @@
 
 <br>
 
-## Six scenes to play with
+## Seven scenes to play with
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
 
-On a phone, tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Draw a finger sideways across a scene and it answers as it would to a hand: the grass parts, the koi come over, the sky turns, the mist wipes away, the curtain lifts, a falcon gives chase. Hold the phone either way up; the scene fills the screen.
+On a phone, tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window, clap the starlings off their sign or wind the watch. Draw a finger sideways across a scene and it answers as it would to a hand: the grass parts, the koi come over, the sky turns, the mist wipes away, the curtain lifts, a falcon gives chase, the watch tilts under the light. Hold the phone either way up; the scene fills the screen.
 
 ### 1 &nbsp;·&nbsp; Meadow
 
@@ -157,11 +157,30 @@ A rooftop in Rome, twenty minutes after sunset. The starlings come to this part 
 
 <br>
 
+### 7 &nbsp;·&nbsp; Movement
+
+<p>
+  <a href="https://burgisimon.github.io/lifelike-heroes/movement.html">
+    <img src="docs/readme/movement.jpg" width="100%" alt="The back of a hand-wound watch in close-up: silver bridges with diagonal stripes, the words Wound by Hand engraved across one and filled with dark lacquer, a gold wheel and the steel escape wheel in a window beneath them, ruby jewels, blued screws, two toothed winding wheels at the left, and at the right a gold balance wheel caught in mid-swing over its blue hairspring">
+  </a>
+</p>
+
+The back of a hand-wound watch on a watchmaker's bench, under a macro lens. It is running: the balance swings to and fro, the escape wheel lets one tooth past six times a second, and the gold wheels behind it are keeping your own time. The one in the open goes round once a minute.
+
+- **Move the mouse** and the movement tilts in the hand. The light slides across the stripes and the screws, and the lens focuses on whatever the pointer is over.
+- **Click** to give the crown a turn. The big toothed wheel turns under its click and the balance swings wider. Wound to the top, the crown will go no further; left alone, the watch runs down again over a few minutes.
+- **Wait a moment** and it simply keeps time. Switch the sound on to hear it tick.
+- **On a phone,** tap to wind it, and draw a finger sideways to tilt it under the light.
+
+**[Open the movement →](https://burgisimon.github.io/lifelike-heroes/movement.html)**
+
+<br>
+
 ## Why it looks real
 
-- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way. The city behind the rainy window is a photographed city, put out of focus the way a lens does it. The tea room's wall is a scan of real plaster, and its floor of real boards. The sky behind the starlings is a photographed sunset.
-- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright. Raindrops join, grow heavy, run and leave trails, and each one bends the city behind it like the small lens it is. On the tea room's wall every shadow is exactly as soft as the sun is wide, so the letters on the glass are soft and the leaves across the street softer; and a crystal's rainbows land where sunlight would really go through its facets. Each starling watches its seven nearest neighbours and nothing else, which is what was measured on the real flocks over Rome; the wheeling, and the dark wave when a falcon comes, are not animated. They come out of that rule.
-- **A real camera's habits.** Soft focus on the grass closest to the lens, a glow around the sun, a little film grain. A lens does these things, so the scenes do too.
+- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way. The city behind the rainy window is a photographed city, put out of focus the way a lens does it. The tea room's wall is a scan of real plaster, and its floor of real boards. The sky behind the starlings is a photographed sunset. The watch is lit by one photographed studio, mirrored in every bevel and screw.
+- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright. Raindrops join, grow heavy, run and leave trails, and each one bends the city behind it like the small lens it is. On the tea room's wall every shadow is exactly as soft as the sun is wide, so the letters on the glass are soft and the leaves across the street softer; and a crystal's rainbows land where sunlight would really go through its facets. Each starling watches its seven nearest neighbours and nothing else, which is what was measured on the real flocks over Rome; the wheeling, and the dark wave when a falcon comes, are not animated. They come out of that rule. The watch's wheels have a real watch's tooth counts, so six steps a second at the escape wheel do add up to a minute at the next wheel and an hour at the one after.
+- **A real camera's habits.** Soft focus on the grass closest to the lens, a glow around the sun, a little film grain, a macro lens's thin slice of focus on the watch. A lens does these things, so the scenes do too.
 
 ## Good to know
 
@@ -232,6 +251,14 @@ The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi p
 - It is a picture of silhouettes and is drawn as one: birds are blended by keeping the darker of what is there and the bird, so thousands of overlapping birds are right in any order, and one behind the sign's letters is not seen.
 - The sky is one photographed panorama, cut to this lens's view by a build script (`src/roost/tools/build-assets.mjs`). The sign's letters are the DOM's own `<h1>`, painted with the roofline into a canvas; the birds' perches are found from that picture, along the tops of the letters, the aerials and the wires.
 
+**Movement** (`src/movement`)
+- The movement is a stack of flat parts, as a real one is, drawn from the mainplate up: one quad per part, whose fragment shader works out the part's outline as a signed distance (clean edges at any size, and a polished chamfer along every one of them), its finish and what it mirrors. The plates' outlines are baked once per layout into a field of distances, which is also what shades everything beneath them.
+- Nothing has a lamp of its own. Metal shows one photographed studio and nothing else: `tools/build-assets.mjs` flattens the half of it the plates can mirror, at seven widths of blur. A polished bevel reads the sharp copy. A grained face reads a whole line of the studio across its scratches, which is why Geneva stripes band, and why the sunburst on the ratchet stands as two fans that turn as it does.
+- `caliber.js` is the rules and draws nothing (`scripts/train-check.mjs` runs it in Node): the tooth counts and reaches of a real train (80/10, 75/10, 84/7 and a 15-tooth escape wheel, which is 21,600 beats an hour), where every arbor stands in a wide, an upright and a low frame, and how wound the spring is. The wheels' angles are taken from the visitor's clock, beat by beat, so a stalled tab comes back to the right time.
+- The balance never stops, so the shutter sees it over a sweep: its arm and screws are averaged along their arcs in the shader, while the rim, a circle wherever it stands, stays sharp. The hairspring is one equation, a spiral whose inner end turns with the balance.
+- The headline is the DOM's own `<h1>`, turned into a field of distances from its outlines (`engrave.js`) and cut into the bridge: an engraving filled with lacquer. The works are laid out to leave the bridge plain under it.
+- The lens is the last step before the film: every pixel carries its height, and is blurred by how far that is from the plane of focus, which follows the pointer.
+
 ### Run it locally
 
 You need [Node.js](https://nodejs.org) 20.19+ or 22.12+.
@@ -278,19 +305,20 @@ hero.destroy();                // remove it and release its GPU resources
 | Misted window | `reach`, `rain`, `mist`, `text`, `sound` | `drip` |
 | Window light | `breeze`, `reach`, `crystals`, `leaves`, `text`, `sound` | `hang`, `gust` |
 | Roost | `birds`, `reach`, `text`, `sound` | `clap`, `falcon` |
+| Movement | `tilt`, `stop`, `text`, `sound` | `wind` |
 
 `text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same, and the **Options** tab beside it slides out a panel with a control for every other option and a button for every action.
 
-`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart, rain on the pane and the small wet sounds of a drop letting go at the window, leaves outside the glass and the ring of each crystal as it is hung in the tea room, the chatter of starlings on their sign and the rush of their wings when a clap puts them up. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all six; the choice is remembered from page to page.
+`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart, rain on the pane and the small wet sounds of a drop letting go at the window, leaves outside the glass and the ring of each crystal as it is hung in the tea room, the chatter of starlings on their sign and the rush of their wings when a clap puts them up, the tick of the watch and the click of its ratchet under the crown. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all six; the choice is remembered from page to page.
 
 ### Project layout
 
 ```
 index.html                    gallery: an endless line of cards (wheel, drag or arrow keys), a click opens a card into its scene
-meadow.html, koi.html, stars.html, mist.html, light.html, roost.html
+meadow.html, koi.html, stars.html, mist.html, light.html, roost.html, movement.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
-  meadow/  koi/  stars/  mist/  light/  roost/   one folder per scene
+  meadow/  koi/  stars/  mist/  light/  roost/  movement/   one folder per scene
   gallery/                    the gallery page
 public/assets/<scene>/        textures and data, each with a CREDITS.md
 public/video/                 the 22-second showcase video, served by the live site (its README loop is in docs/readme/)
@@ -301,9 +329,9 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 ### Accessibility and performance
 
-- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal, clap) with a status message for screen readers. The canvas itself is hidden from assistive technology.
+- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal, clap, wind) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond, wipes the misted window, is the breeze in the window light and the falcon over the roost; on the star chart a sideways drag of its own turns the sky. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
+- Hover effects are for mouse and pen only. A finger gets the tap and a sideways stroke (`stroke()` in `src/shared/kit.js`): it sows a row and parts the grass in the meadow, trails through the koi pond, wipes the misted window, is the breeze in the window light, the falcon over the roost and the hand that tilts the movement; on the star chart a sideways drag of its own turns the sky. A stroke that starts upright is always the page's scroll, and pinch-zoom stays the reader's (`touch-action: pan-y pinch-zoom`).
 - Phones in both orientations: the pages are `viewport-fit=cover`, so the picture runs under a notch while the type, the buttons and the page chrome keep clear of it (`--safe-*` and `--edge-*` in `src/shared/base.css`). On a phone held sideways the hero takes the screen's height and the chrome folds into one menu button. Buttons are 44 px tall on a touch screen.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
@@ -326,9 +354,11 @@ All third-party material is public domain or under an open licence (CC0, SIL OFL
 | Window light | Plaster wall and floorboard scans | [Poly Haven](https://polyhaven.com) (CC0) |
 | Roost | The sky: an HDR panorama, *Belfast Sunset (Pure Sky)*, by Greg Zaal, Dimitrios Savva and Jarod Guest | [Poly Haven](https://polyhaven.com/a/belfast_sunset_puresky) (CC0) |
 | Roost | The flocking rule | M. Ballerini et al., [*Interaction ruling animal collective behavior depends on topological rather than metric distance*](https://doi.org/10.1073/pnas.0711437105), PNAS 2008 |
+| Movement | The studio: an HDR panorama, *Studio Small 09*, by Sergej Majboroda | [Poly Haven](https://polyhaven.com/a/studio_small_09) (CC0) |
+| Movement | Engraved letterforms | [Bodoni Moda](https://fontsource.org/fonts/bodoni-moda) by Owen Earl (SIL OFL 1.1) |
 | All scenes | Interface typefaces | [Mona Sans](https://github.com/github/mona-sans) by GitHub and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) by JetBrains (SIL OFL 1.1) |
 | All scenes | Rendering library | [three.js](https://threejs.org) (MIT) |
 
-See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md), [`public/assets/mist/CREDITS.md`](public/assets/mist/CREDITS.md) [`public/assets/light/CREDITS.md`](public/assets/light/CREDITS.md) and [`public/assets/roost/CREDITS.md`](public/assets/roost/CREDITS.md).
+See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md), [`public/assets/mist/CREDITS.md`](public/assets/mist/CREDITS.md) [`public/assets/light/CREDITS.md`](public/assets/light/CREDITS.md), [`public/assets/roost/CREDITS.md`](public/assets/roost/CREDITS.md) and [`public/assets/movement/CREDITS.md`](public/assets/movement/CREDITS.md).
 
 This repository does not include a licence for its own code yet. Please open an issue if you would like to reuse it.
