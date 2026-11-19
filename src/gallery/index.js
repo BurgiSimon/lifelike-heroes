@@ -97,7 +97,8 @@ list.addEventListener('wheel', (e) => {
 
 // A drag moves it and lets it run on. (No pointer capture: the click that follows has to reach the card, where a
 // click that ends a drag is dropped.)
-list.addEventListener('pointerdown', (e) => { if (phone.matches || e.button) return; down = { id: e.pointerId, x: e.clientX, t: e.timeStamp }; dragged = false; v = 0; want = x; });
+// (A second finger is a pinch, not the drag: the line keeps pinch-zoom for a reader.)
+list.addEventListener('pointerdown', (e) => { if (phone.matches || e.button || !e.isPrimary) return; down = { id: e.pointerId, x: e.clientX, t: e.timeStamp }; dragged = false; v = 0; want = x; });
 list.addEventListener('dragstart', (e) => e.preventDefault());
 const drop = (e) => { if (down?.id !== e.pointerId) return; if (e.timeStamp - down.t > 90) v = 0; down = null; list.classList.remove('is-dragging'); kick(); };
 addEventListener('pointermove', (e) => {
@@ -174,6 +175,9 @@ addEventListener('pageshow', () => {
   wake(); kick();
 });
 addEventListener('resize', fit);
+// A phone turned from upright to sideways (or back) changes the line's whole manner: what was lit and the idle
+// timer belong to the old one, so both start again.
+phone.addEventListener('change', () => { set(null); wake(); });
 fit();
 
 // ---- traces: what the pointer leaves on the lit card, drawn on one canvas over the line (in the colour of the

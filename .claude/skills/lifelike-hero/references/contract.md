@@ -77,8 +77,9 @@ scenes' `is-live` and `koi--ready` are also recognised; see the `ponytail:` note
 - **A finger gets the tap, the button and a stroke.** `stroke(root, { move, end }, signal)` from the kit is a
   finger drawn sideways across the scene. Give it what a hand on this subject would really do (the grass parts
   and a row is sown, a finger trails in the pond, the misted glass is wiped), not a copy of the hover for its own
-  sake. It starts after a few pixels, a stroke that starts upright is the page's scroll, and the click it might
-  end with is swallowed. Say in the README what a phone can do.
+  sake. It starts after a few pixels, a stroke that starts upright (or that the page scrolls under) is the page's
+  scroll, the click it might end with is swallowed, and the next tap always gets through. Its first `move()` says
+  `first`: forget wherever a mouse last was. Say in the README what a phone can do.
 - **Act on `click`, not `pointerdown`,** and give the root `touch-action: pan-y pinch-zoom`: a scroll that starts
   on the scene stays a scroll, and a reader can still zoom. A drag that the scene uses (sowing a row, turning the
   sky) starts only after a few pixels of travel, and the click that ends it is swallowed.

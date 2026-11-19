@@ -1,3 +1,7 @@
+/* A demo page is one screen: a finger drawn down a scene must not pull the page to refresh and take the koi fed, the
+   flowers sown and the mist wiped with it. (Here and not in base.css, so a scene on a host page leaves its pull be.) */
+html { overscroll-behavior-y: none; }
+
 /* Page chrome of the demo pages: three tabs on the right edge and the options panel the last one pulls out. It sits outside
    the hero, so a scene stays a clean module. Closed, the panel waits just past the edge (and is inert). */
 .chrome {
@@ -47,6 +51,7 @@
   .chrome__row input[type='range'] { min-height: 44px; }
   .chrome__row select, .chrome__actions button { min-height: 44px; }
   .chrome__actions button { padding: 0 16px; }
+  .chrome__row select { font-size: 16px; }   /* under 16 px, iOS zooms the page in to a select it opens, and leaves it so */
 }
 
 /* A phone has no room for edge tabs, upright or on its side: one menu button in the top left corner, the panel comes

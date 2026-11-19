@@ -61,6 +61,9 @@ export function stroke(el, { move, end }, signal) {
   };
   el.addEventListener('pointerup', lift, { signal });
   el.addEventListener('pointercancel', lift, { signal });
+  // The page scrolled under the finger, so it was the page's after all: Firefox on Android pans a pan-y stroke as
+  // shallow as 30° and sends no pointercancel for it. (Capture: the scroller may be any box the scene sits in.)
+  document.addEventListener('scroll', () => { if (f?.on) { end(); f = null; } }, { signal, capture: true, passive: true });
   el.addEventListener('click', (e) => { if (e.timeStamp < skip) { skip = -1; e.stopImmediatePropagation(); } }, { signal, capture: true });
 }
 

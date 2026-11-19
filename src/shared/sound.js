@@ -69,11 +69,14 @@ export const soundPref = {
   set(on) { try { localStorage.setItem('lifelike-heroes:sound', on ? 'on' : 'off'); } catch { /* storage is blocked: the choice lasts for this page */ } },
 };
 
+const KICK = ['pointerdown', 'pointerup', 'click', 'keydown'];   // the events a browser lets sound start from
 export function createSound(voices, { room } = {}) {
   let ctx = null; let kit = null; let v = null; let on = false; let nap = 0;
   const wake = () => { if (on && ctx?.state === 'suspended' && !document.hidden) ctx.resume(); };
   const hide = () => { if (document.hidden) ctx?.suspend(); else wake(); };
-  addEventListener('pointerdown', wake); addEventListener('keydown', wake); // switched on by code, not by a click: the next one starts it
+  // Switched on by code, not by a click: the next press starts it. iOS lets sound start only from the end of a touch
+  // (pointerup, click), not its start; capture, so it is awake before a scene's own click plays its first voice.
+  for (const t of KICK) addEventListener(t, wake, true);
   document.addEventListener('visibilitychange', hide);
   return {
     set(want) {
@@ -87,7 +90,7 @@ export function createSound(voices, { room } = {}) {
     },
     play(name, ...args) { if (on && v) v[name]?.(...args); },
     destroy() {
-      removeEventListener('pointerdown', wake); removeEventListener('keydown', wake); document.removeEventListener('visibilitychange', hide);
+      for (const t of KICK) removeEventListener(t, wake, true); document.removeEventListener('visibilitychange', hide);
       clearTimeout(nap); on = false; v = null; ctx?.close(); ctx = null;
     },
   };
