@@ -1,10 +1,10 @@
 // The gallery's stills (and each scene page's opening picture): every scene without its text, as one settled frame,
 // wide (1600x1000) and tall (900x1600), written to public/assets/gallery/.
-//   node scripts/stills.mjs [meadow koi stars mist]      needs the dev server, as shot.mjs does; software rendering, so slow
+//   node scripts/stills.mjs [meadow koi stars mist light roost]      needs the dev server, as shot.mjs does; software rendering, so slow
 import { chromium } from 'playwright';
 
 const base = process.env.BASE || 'http://localhost:5173';
-const ids = process.argv.slice(2).length ? process.argv.slice(2) : ['meadow', 'koi', 'stars', 'mist'];
+const ids = process.argv.slice(2).length ? process.argv.slice(2) : ['meadow', 'koi', 'stars', 'mist', 'light', 'roost'];
 const SIZES = { wide: { viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1 }, tall: { viewport: { width: 450, height: 800 }, deviceScaleFactor: 2 } };
 
 const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });

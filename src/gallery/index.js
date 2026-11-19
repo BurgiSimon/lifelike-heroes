@@ -1,9 +1,9 @@
 // The gallery: a line of cards, one per scene, each with its scene's still. Where there is room the line is endless:
 // it drifts by itself when the page is left alone, and the wheel, a drag or the arrow keys move it. The card under
 // the pointer (or the one with the keyboard's focus) is lit and gets a trace in its scene's own manner: grass that
-// parts, ripples, a pencilled line between stars, drops that run down the glass. A chosen card opens into its scene.
-// On a phone the cards are a strip that a swipe moves from one to the next. Without this script the page is still
-// four links.
+// parts, ripples, a pencilled line between stars, drops that run down the glass, a crystal's spectra on the wall,
+// starlings put up from where they sat. A chosen card opens into its scene. On a phone the cards are a strip that a
+// swipe moves from one to the next. Without this script the page is still six links.
 import '../shared/base.css';
 import './style.css';
 import { soundPref } from '../shared/sound.js';
@@ -11,7 +11,7 @@ import { reducedMotion, finePointer, rnd } from '../shared/kit.js';
 
 const list = document.querySelector('.list');
 const rows = [...list.querySelectorAll('a')];            // one card per scene, as the page has them
-const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, mist: the traces at the foot go by this order
+const ids = rows.map((a) => a.dataset.id);               // meadow, koi, stars, mist, light, roost: the traces at the foot go by this order
 const cards = [...rows];                                 // every card in the line; the endless line adds copies
 const phone = matchMedia('(max-width: 640px)');          // the phone layout: a strip that scrolls and snaps by itself
 const calm = reducedMotion();
@@ -34,6 +34,9 @@ let blades = []; const ripples = []; let rippled = null; let dripped = 0;
 const sky = Array.from({ length: 34 }, (_, i) => ({ u: rnd(i * 3 + 1), v: rnd(i * 3 + 2), m: rnd(i * 3 + 3) }));
 const lines = new Map();                                 // star a * 64 + star b → how far the line is drawn
 const runs = []; let ranAt = null; let ran = 0;          // drops on the misted window's card: where each started (u, v0), how far down it is (v), when it let go
+const flecks = []; let fleckAt = null; let flecked = 0;  // spectra on the window light's card: where each fell (u, v), which way it glides (s), when it was thrown
+const SPECTRUM = ['226 72 72', '240 150 50', '236 212 80', '86 196 110', '70 150 240', '138 104 232'];   // red to violet, as glass spreads them
+const risen = []; let rosenAt = null; let rose = 0;      // starlings on the roost's card: where each went up from (u, v), which way it flies (s), when
 
 // ---- the lit card: the one under the pointer or the one with the keyboard's focus, whichever spoke last. On a
 // phone it is the card in the middle.
@@ -193,7 +196,7 @@ function draw(dt) {
   inked = false;
   if (calm || !finePointer()) return false;
   const k = lit ? ids.indexOf(lit.dataset.id) : -1;
-  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) runs.length = 0; }   // on another card of its scene it starts over
+  if (k >= 0 && spot[k] !== lit) { spot[k] = lit; out[k] = 0; if (k === 1) ripples.length = 0; if (k === 2) lines.clear(); if (k === 3) runs.length = 0; if (k === 4) flecks.length = 0; if (k === 5) risen.length = 0; }   // on another card of its scene it starts over
   out.forEach((o, i) => { out[i] = o + ((k === i ? 1 : 0) - o) * (1 - Math.exp(-dt * 5)); });
   const box = spot.map((a) => a?.getBoundingClientRect());
   const within = (r) => { g.save(); g.beginPath(); g.roundRect(r.left, r.top, r.width, r.height, 14); g.clip(); };
@@ -285,6 +288,54 @@ function draw(dt) {
     g.restore();
   }
 
-  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || runs.length > 0 || out.some((o) => o > 0.01);
+  // Window light: a crystal turning in the window throws a small spectrum wherever the pointer has been on the card,
+  // and each glides sideways as the crystal turns, and fades; lit with no pointer on it, one is thrown now and then.
+  const wall = box[4];
+  if (wall && k === 4) {
+    if (inside(wall, ptr)) {
+      const at = { u: ptr.x - wall.left, v: ptr.y - wall.top };
+      if (!fleckAt || Math.hypot(at.u - fleckAt.u, at.v - fleckAt.v) > 38) { fleckAt = at; flecks.push({ ...at, t: clock, s: Math.random() }); }
+    } else if (clock - flecked > 0.7) { flecked = clock; flecks.push({ u: wall.width * Math.random(), v: wall.height * (0.1 + 0.7 * Math.random()), t: clock, s: Math.random() }); }
+  }
+  if (flecks.length) {
+    within(wall); g.lineWidth = 5;
+    for (let i = flecks.length; i--;) {
+      const f = flecks[i]; const age = (clock - f.t) / 2.6;
+      if (age >= 1) { flecks.splice(i, 1); continue; }
+      const fade = Math.min(1, age * 8) * (1 - age) ** 1.5; const tilt = (f.s - 0.5) * 0.9;
+      const x = wall.left + f.u + (f.s - 0.5) * 90 * age; const y = wall.top + f.v;   // as the crystal turns, its spectra slide along the wall
+      SPECTRUM.forEach((c, j) => {
+        const d = (j - 2.5) * 3.6;
+        g.beginPath(); g.moveTo(x + d * Math.cos(tilt) - 3 * Math.sin(tilt), y + d * Math.sin(tilt) + 3 * Math.cos(tilt)); g.lineTo(x + d * Math.cos(tilt) + 3 * Math.sin(tilt), y + d * Math.sin(tilt) - 3 * Math.cos(tilt));
+        g.strokeStyle = `rgb(${c} / ${0.7 * fade})`; g.stroke();
+      });
+    }
+    g.lineWidth = 1; g.restore();
+  }
+
+  // Roost: wherever the pointer has been on the card, a starling goes up: two wings that beat as it climbs away
+  // and grows small; lit with no pointer on it, one goes up by itself now and then.
+  const sky_ = box[5];
+  if (sky_ && k === 5) {
+    if (inside(sky_, ptr)) {
+      const at = { u: ptr.x - sky_.left, v: ptr.y - sky_.top };
+      if (!rosenAt || Math.hypot(at.u - rosenAt.u, at.v - rosenAt.v) > 26) { rosenAt = at; risen.push({ ...at, t: clock, s: Math.random() }); }
+    } else if (clock - rose > 0.6) { rose = clock; risen.push({ u: sky_.width * Math.random(), v: sky_.height * (0.3 + 0.6 * Math.random()), t: clock, s: Math.random() }); }
+  }
+  if (risen.length) {
+    within(sky_); g.lineWidth = 1.4; g.beginPath();
+    let faint = 0;
+    for (let i = risen.length; i--;) {
+      const b = risen[i]; const age = (clock - b.t) / 2.2;
+      if (age >= 1) { risen.splice(i, 1); continue; }
+      const size = 7 * (1 - 0.6 * age); const flap = 0.5 * Math.sin((clock - b.t) * 30 + b.s * 6.28);   // its wings beat about its body
+      const x = sky_.left + b.u + (b.s - 0.5) * 150 * age; const y = sky_.top + b.v - 110 * age * (2 - age) * 0.5;
+      g.moveTo(x - size * Math.cos(flap), y - size * Math.sin(flap)); g.lineTo(x, y + size * 0.2); g.lineTo(x + size * Math.cos(flap), y - size * Math.sin(flap));
+      faint = Math.max(faint, 1 - age);
+    }
+    g.strokeStyle = `rgb(${INK} / ${0.75 * faint})`; g.stroke(); g.lineWidth = 1; g.restore();
+  }
+
+  inked = k >= 0 || ripples.length > 0 || lines.size > 0 || runs.length > 0 || flecks.length > 0 || risen.length > 0 || out.some((o) => o > 0.01);
   return inked;
 }

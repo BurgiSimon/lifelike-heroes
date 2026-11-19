@@ -2,7 +2,7 @@
 //   node scripts/shot.mjs <page> [--out file.png] [--size 1440x900] [--wait 3000] [--dpr 1] [--reduced] [--mobile]
 //                         [--q high|low|auto] [--query "a=1&b=2"] [--soft]
 //                         [--steps "move:0.5,0.6;wait:400;click:0.3,0.7;drag:0.2,0.5>0.6,0.5;key:Tab;eval:hero.action('gust');fps:3000;shot:mid.png"]
-// <page> is meadow | koi | stars | mist | index. Step coordinates are shares of the viewport. fps:<ms> prints the frame
+// <page> is meadow | koi | stars | mist | light | roost | index. Step coordinates are shares of the viewport. fps:<ms> prints the frame
 // times measured over that long. q=high is passed unless --q says otherwise, so the governor holds full resolution.
 // Renders on this machine's real GPU (Intel Iris Xe through WSL's D3D12); --soft falls back to SwiftShader.
 // Needs the dev server (BASE, default http://localhost:5173).

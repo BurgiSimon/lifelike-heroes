@@ -1,0 +1,101 @@
+/* Roost hero — Evensong. The canvas is the photograph. The headline is the sign on the roof: the scene paints its
+   letters as silhouettes exactly where this <h1> lies, low and centred, with the open sky above it for the flock.
+   The cue and the plate line are DOM on the dark of the roof's wall. */
+.roost {
+  --roost-ground: #37324a;   /* the quiet ground before the scene arrives, and under the fallback: the cloud at dusk */
+  --roost-ink: #f4efe6;
+  display: grid;
+  justify-items: center;
+  align-content: end;
+  /* this padding is the composition (flock.js lays the lens out round the headline): how much roof lies under the sign */
+  padding: 0 var(--gutter) clamp(60px, 8.6svh, 92px);
+  background: var(--roost-ground);
+  color: var(--roost-ink);
+  touch-action: pan-y;   /* a scroll that starts on the sky stays a scroll */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+/* The scene fades in once it is drawn: first paint is the quiet ground and the headline. */
+.roost__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.roost.is-ready .roost__canvas { opacity: 1; }
+.roost.is-still .roost__canvas { transition: none; }
+
+/* The headline is real text, laid exactly where the scene paints the sign's letters (skyline.js reads this layout).
+   Once the scene is drawn the DOM letters go transparent, not hidden: assistive tech still reads them, and they
+   are what shows before the scene arrives and when it never does. Capitals, spaced as letters bolted to a frame
+   are; the trailing space of the last letter is taken back so the word stays centred. */
+.roost__title {
+  position: relative;
+  margin-right: -0.11em;
+  font-size: clamp(2.4rem, 9.1vw, 9.6rem);
+  font-weight: 800;
+  font-stretch: 108%;
+  line-height: 1;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition: opacity 1.2s var(--ease-out);
+  pointer-events: none;
+}
+.roost.is-ready .roost__title { opacity: 0; }
+.roost.is-still .roost__title { transition: none; }
+
+/* The invitation and the keyboard path: a small pane of smoked glass on the roof's wall, under the sign. */
+.roost__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  margin-top: clamp(20px, 2.1vw, 34px);
+  padding: 0 14px 0 12px;
+  border: 1px solid rgb(244 239 230 / 0.28);
+  border-radius: 999px;
+  background: rgb(30 27 38 / 0.6);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: rgb(244 239 230 / 0.9);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+/* two hands: a pair of small bars that meet */
+.roost__cue::before { content: ''; width: 7px; height: 7px; border-left: 2px solid currentColor; border-right: 2px solid currentColor; transform: skewX(-14deg); }
+.roost__cue:hover { color: var(--roost-ink); border-color: rgb(244 239 230 / 0.6); background: rgb(30 27 38 / 0.74); }
+
+/* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
+   strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
+.roost__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(244 239 230 / 0.92);
+  pointer-events: none;
+}
+.roost__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(22 20 28 / 0.76); }
+
+/* The text can be switched off (the text option): the sky and the roofs alone. Hidden, not removed, so the layout
+   holds, and with it the picture that is laid out round the headline. */
+.roost.is-bare .roost__title, .roost.is-bare .roost__cue, .roost.is-bare .roost__note { visibility: hidden; }
+
+/* No WebGL2, or the context is gone: a still, legible ground in the picture's own colours (gold on the horizon
+   under lilac cloud, the roof dark at the foot). Nothing to act on, so no cue; the headline is plain type again,
+   dark against the gold as the sign is. */
+.roost.is-static { background: linear-gradient(to top, #1c1a24 0%, #1c1a24 15.2%, #f3d488 15.4%, #efc98c 27%, #c9a0a2 38%, #8d7f9c 56%, #5c5878 78%, #45425f 100%); }
+.roost.is-static > canvas { display: none; }
+.roost.is-static .roost__cue { visibility: hidden; }   /* hidden, not removed: the headline stays where the sign stood, above the roof */
+.roost.is-static .roost__title { opacity: 1; color: #1b1822; }
+
+/* A narrow screen: eight letters have to fit across it. */
+@media (max-width: 640px) { .roost__title { font-size: 11.6vw; } }
+
+@media (prefers-reduced-motion: reduce) { .roost__canvas, .roost__title, .roost__cue { transition: none; } }
