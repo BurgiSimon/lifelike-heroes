@@ -2,8 +2,8 @@
    the hero, so a scene stays a clean module. Closed, the panel waits just past the edge (and is inert). */
 .chrome {
   --panel: min(280px, 100vw - 56px);
-  position: fixed; z-index: 10; top: 0; right: 0; height: 100%; display: flex; align-items: center;
-  transform: translateX(var(--panel)); transition: transform 0.45s var(--ease-out);
+  position: fixed; z-index: 10; top: 0; right: var(--safe-r); height: 100%; display: flex; align-items: center;
+  transform: translateX(calc(var(--panel) + var(--safe-r))); transition: transform 0.45s var(--ease-out);
   pointer-events: none; color-scheme: dark; color: #f4f2ec;
   font: 500 0.6875rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase;
 }
@@ -22,7 +22,7 @@
   font: inherit; letter-spacing: inherit; text-transform: inherit; color: rgb(244 242 236 / 0.86);
   transition: background-color 0.2s var(--ease-out), color 0.2s var(--ease-out);
 }
-.chrome__tab:hover { background: rgb(9 11 10 / 0.86); color: #f4f2ec; }
+@media (hover: hover) { .chrome__tab:hover { background: rgb(9 11 10 / 0.86); color: #f4f2ec; } }
 .chrome__tab[aria-expanded='true'] { background: #f4f2ec; color: #0b0d0c; }
 .chrome__tab:focus-visible { outline-offset: -4px; } /* the tab touches the edge of the screen */
 
@@ -41,17 +41,23 @@
 .chrome__row select { min-height: 36px; padding: 0 8px; border-radius: 6px; }
 .chrome__actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 4px; }
 .chrome__actions button { min-height: 36px; padding: 0 12px; border-radius: 999px; transition: border-color 0.2s var(--ease-out); }
-.chrome__actions button:hover { border-color: rgb(244 242 236 / 0.6); }
+@media (hover: hover) { .chrome__actions button:hover { border-color: rgb(244 242 236 / 0.6); } }
+/* A finger needs more to aim at than a cursor: every control is a full 44 px tall. */
+@media (pointer: coarse) {
+  .chrome__row input[type='range'] { min-height: 44px; }
+  .chrome__row select, .chrome__actions button { min-height: 44px; }
+  .chrome__actions button { padding: 0 16px; }
+}
 
-/* A phone has no room for edge tabs: one menu button in the top left corner, the panel comes in under it from the
-   left, and the Hide text and Sound switches move into the panel. */
+/* A phone has no room for edge tabs, upright or on its side: one menu button in the top left corner, the panel comes
+   in under it from the left, and the Hide text and Sound switches move into the panel. Both keep clear of a notch. */
 .chrome__tab svg, .chrome__small { display: none; }
 .chrome__tab svg { fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; }
 .chrome__tab[aria-expanded='false'] .chrome__cross, .chrome__tab[aria-expanded='true'] .chrome__burger { display: none; }
 
-@media (max-width: 640px) {
-  .chrome { --panel: min(280px, 100vw - 24px); right: auto; left: 0; display: block; transform: none; }
-  .chrome__tabs { position: absolute; top: 12px; left: 12px; }
+@media (max-width: 640px), (orientation: landscape) and (max-height: 500px) {
+  .chrome { --panel: min(280px, 100vw - 24px - var(--safe-l) - var(--safe-r)); --at-t: max(12px, var(--safe-t)); --at-l: max(12px, var(--safe-l)); right: auto; left: 0; display: block; transform: none; }
+  .chrome__tabs { position: absolute; top: var(--at-t); left: var(--at-l); }
   .chrome__tab:not([data-open]) { display: none; }
   .chrome__tab[data-open] { writing-mode: horizontal-tb; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border-radius: 10px; }
   .chrome__tab[data-open] svg { display: block; }
@@ -59,8 +65,8 @@
   .chrome__tab:focus-visible { outline-offset: 2px; }
   .chrome__small { display: flex; }
   .chrome__panel {
-    position: absolute; top: 68px; left: 12px; max-height: calc(100% - 80px); gap: 14px; padding: 16px; border-radius: 10px;
-    transform: translateX(calc(-100% - 12px)); transition: transform 0.45s var(--ease-out);
+    position: absolute; top: calc(var(--at-t) + 56px); left: var(--at-l); max-height: calc(100% - var(--at-t) - 68px - var(--safe-b)); gap: 14px; padding: 16px; border-radius: 10px;
+    transform: translateX(calc(-100% - var(--at-l))); transition: transform 0.45s var(--ease-out); overscroll-behavior: contain;
   }
   .chrome.is-open .chrome__panel { transform: none; }
 }

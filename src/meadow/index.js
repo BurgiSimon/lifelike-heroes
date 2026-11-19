@@ -4,7 +4,7 @@
 // it lands and a drag sows a row. mount(root, options) returns { update(options), action(id), destroy() }.
 import './style.css';
 import * as THREE from 'three';
-import { loop, governor, reducedMotion, finePointer, quality, rnd, clamp, lerp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, rnd, clamp, lerp } from '../shared/kit.js';
 import { D, CAP, EYE, SHARE, FAR_EDGE, NEAR_PLANT, WIND, CLOUDS, SUN_SEEN, START, CURVE, PETALS, SOW, FADE, GROW } from './config.js';
 import { ground } from './terrain.js';
 import { createShared, sward, cloudSun } from './glsl.js';
@@ -218,7 +218,7 @@ export default function mount(root, options = {}) {
     if (burst) { burst.x += dt * WIND.burst.speed; if (burst.x > burst.end) burst = null; }
     const flying = parts.seeds.step(dt, wt, cfg.wind, burst, view);
     ptr.v *= 0.9 ** f;
-    const sprung = parts.field.step(f, ptr, cfg.reach);
+    const sprung = parts.field.step(f, ptr, cfg.reach * clamp(view.W / 900, 0.6, 1));   // a phone's push stays phone-sized
     snd.play('air', cfg.wind, burst ? 1 : 0, ptr.x === null ? 0 : Math.abs(ptr.v));
     let growing = false;
     for (let i = flowers.length; i--;) {
@@ -238,7 +238,7 @@ export default function mount(root, options = {}) {
   // there; a small frame (a phone) may have 2. The floor keeps a narrow frame from being drawn too coarse to read.
   const dpr = devicePixelRatio || 1; const r0 = root.getBoundingClientRect();
   const most = Math.min(dpr, r0.width * r0.height * Math.min(dpr, 2) ** 2 < 1.4e6 ? 2 : 1.5);
-  const gov = governor({ min: Math.min(most, clamp(900 / Math.max(1, r0.width), 0.75, 1.5)), max: most, onChange: (ratio) => { view.ratio = ratio; layout(); } });
+  const gov = governor({ min: Math.min(most, clamp(900 / Math.max(1, r0.width), 0.75, 1.5)), max: most, start: opening(r0.width, r0.height, most), onChange: (ratio) => { view.ratio = ratio; layout(); } });
 
   const tex = (file, { srgb = false, repeat = false, aniso = 1 } = {}) => new THREE.TextureLoader().loadAsync(ASSETS + file).then((t) => {
     t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace; t.anisotropy = aniso;
@@ -320,6 +320,20 @@ export default function mount(root, options = {}) {
     const p = at(e); plantAt(p.x, p.y);
   });
   on(root.querySelector('[data-sow]'), 'click', plantSeeded);
+  // A finger drawn sideways through the field (a phone has no hover): the grass parts round it as it goes, and it
+  // sows a row as a mouse drag does. Upright, it is the page's scroll.
+  const fingers = new AbortController(); off.push(() => fingers.abort());
+  let row = null;   // where the stroke last sowed
+  stroke(root, {
+    move(x, y, t) {
+      if (!still) {
+        if (ptr.x !== null && t > ptr.t) ptr.v = 0.7 * ptr.v + 0.3 * clamp((x - ptr.x) / (t - ptr.t), -3, 3);
+        ptr.x = x; ptr.y = y; ptr.t = t;
+      }
+      if (!row) row = { x, y }; else if (Math.hypot(x - row.x, y - row.y) >= SOW) { plantAt(x, y); row = { x, y }; }
+    },
+    end() { ptr.x = null; row = null; },
+  }, fingers.signal);
 
   return {
     update(next = {}) {

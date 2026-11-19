@@ -5,7 +5,7 @@
 // and skims the surface, and a click (or the Feed button) drops a pellet whose rings are real ripples in the
 // water. This file is the DOM, the input and the loop; pond.js holds the rules, renderer.js the image.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
+import { loop, governor, opening, stroke, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
 import { createPond } from './pond.js';
 import { createRenderer } from './renderer.js';
 import { drawTextMask } from './textmask.js';
@@ -107,7 +107,7 @@ export default function mount(root, options = {}) {
       R.stock(st.fish); R.setRipple(cfg.ripple);
       const top = Math.min(window.devicePixelRatio || 1, 2);
       // on a 2x screen the governor may fall to 1x: soft, but it holds its frame rate
-      if (gov) R.setRatio(gov.ratio); else gov = governor({ min: clamp(top * 0.5, 0.7, 1), max: top, onChange: (ratio) => R?.setRatio(ratio) });
+      if (gov) R.setRatio(gov.ratio); else gov = governor({ min: clamp(top * 0.5, 0.7, 1), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (ratio) => R?.setRatio(ratio) });
       document.fonts?.ready.then(() => { if (!dead && !lost && R === r) fit(); }); // the stone letters need the real face
       run();
     }).catch((err) => {
@@ -130,6 +130,9 @@ export default function mount(root, options = {}) {
     });
     for (const type of ['pointerleave', 'pointercancel']) on(root, type, () => pond.leave());
   }
+  // A finger trailed sideways through the water is the phone's way of being there: drawn slowly the koi come to
+  // it, drawn fast they bolt and it skims the surface. They lose interest when it lifts.
+  if (live) stroke(root, { move: (x, y, t) => pond.pointer(x, y, t), end: () => pond.leave() }, ac.signal);
   // click, not pointerdown: a touch scroll that starts on the water must not feed.
   on(root, 'click', (e) => {
     if (e.target.closest('button')) return;

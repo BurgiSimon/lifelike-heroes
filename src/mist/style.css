@@ -7,10 +7,10 @@
   justify-items: start;
   align-content: end;
   gap: 26px;
-  padding: clamp(48px, 9vh, 88px) var(--gutter) clamp(64px, 12vh, 112px);
+  padding: clamp(48px, 9vh, 88px) var(--edge-r) calc(clamp(64px, 12vh, 112px) + var(--edge-b)) var(--edge-l);
   background: var(--mist-ground);
   color: var(--mist-ink);
-  touch-action: pan-y;   /* a scroll that starts on the glass stays a scroll */
+  touch-action: pan-y pinch-zoom;   /* a scroll that starts on the glass stays a scroll; a sideways finger wipes it */
   -webkit-tap-highlight-color: transparent;
   cursor: default;
 }
@@ -55,15 +55,16 @@
   transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
 }
 .mist__cue::before { content: ''; width: 5px; height: 7px; border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%; background: currentColor; }
-.mist__cue:hover { color: var(--mist-ink); border-color: rgb(241 240 246 / 0.6); background: rgb(10 9 16 / 0.68); }
+@media (hover: hover) { .mist__cue:hover { color: var(--mist-ink); border-color: rgb(241 240 246 / 0.6); background: rgb(10 9 16 / 0.68); } }
+@media (pointer: coarse) { .mist__cue { min-height: 44px; padding: 0 18px 0 16px; } }   /* a finger's target */
 
 /* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
    strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
 .mist__note {
   position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: clamp(14px, 3vh, 24px);
+  left: var(--edge-l);
+  right: var(--edge-r);
+  bottom: calc(clamp(14px, 3vh, 24px) + var(--edge-b));
   display: flex;
   justify-content: space-between;
   gap: 16px;

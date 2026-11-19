@@ -95,11 +95,20 @@ export async function createRenderer(canvas, { low = false } = {}) {
   const mSurf = mat(fullscreenVert, surfaceFrag, { uSim: { value: null }, uWind: { value: rt.wind.texture }, uSimTexel: mSim.uniforms.uTexel, uDomain: mSim.uniforms.uDomain, uMargin: mSim.uniforms.uMargin, uWindAmp: { value: 25 }, uPad: { value: floaters.pads }, uPads: { value: 0 } });
 
   // ---- caustics
-  // The sheet is built once, in uv; only the size of its cells follows the box.
-  const SHEET = low ? [200, 125] : [440, 275];
+  // The sheet is built in uv, with a fixed number of cells kept square whatever the box's shape: a phone's pond is
+  // tall, and a sheet laid out for a wide one would focus its light in cells three times taller than wide. It is
+  // rebuilt only when the shape has moved more than a few per cent, so a window being dragged keeps its sheet.
+  const CELLS = low ? 200 * 125 : 440 * 275;
   const mCaust = mat(causticVert, causticFrag, { uSurf: { value: rt.surf.texture }, uFocus: { value: 1.55 }, uOver: { value: 36 }, uCell: { value: new THREE.Vector2(4, 4) } }, ADD);
-  const caust = sceneOf(new THREE.PlaneGeometry(2, 2, SHEET[0], SHEET[1]), mCaust);
-  caust.mesh.geometry.deleteAttribute('normal');
+  const caust = sceneOf(new THREE.PlaneGeometry(2, 2, 1, 1), mCaust);
+  let sheet = [0, 0];
+  const lay = (aw, ah) => {
+    const cols = Math.max(16, Math.round(Math.sqrt(CELLS * aw / ah)));
+    if (sheet[0] && Math.abs(cols - sheet[0]) <= 0.04 * sheet[0]) return;
+    sheet = [cols, Math.max(16, Math.round(CELLS / cols))];
+    caust.mesh.geometry.dispose();
+    caust.mesh.geometry = new THREE.PlaneGeometry(2, 2, sheet[0], sheet[1]); caust.mesh.geometry.deleteAttribute('normal');
+  };
 
   // ---- koi
   const fish = createFish();
@@ -145,8 +154,8 @@ export async function createRenderer(canvas, { low = false } = {}) {
     if (sw !== simW || sh !== simH) { simW = sw; simH = sh; rt.simA.setSize(sw, sh); rt.simB.setSize(sw, sh); clearSim(); }
     mSim.uniforms.uTexel.value.set(1 / sw, 1 / sh); mSim.uniforms.uDomain.value.set(W + 2 * MARGIN, H + 2 * MARGIN);
     mSim.uniforms.uStiff.value = (WAVE * STEP / cell) ** 2;
-    const over = mCaust.uniforms.uOver.value;
-    mCaust.uniforms.uCell.value.set((W + 2 * over) / SHEET[0], (H + 2 * over) / SHEET[1]);
+    const over = mCaust.uniforms.uOver.value; const aw = W + 2 * over; const ah = H + 2 * over;
+    lay(aw, ah); mCaust.uniforms.uCell.value.set(aw / sheet[0], ah / sheet[1]);
   };
 
   // One fixed step of the water. Splashes are short trains of pushes; a koi pushes a low bow wave ahead of

@@ -1,5 +1,6 @@
 // Page chrome of the demo pages: a Hide text tab, a Sound tab and an Options panel that slides in from the right edge;
-// on a phone one menu button in the top left corner opens the panel, and the two switches sit inside it. It lives outside the hero
+// on a phone (upright or on its side) one menu button in the top left corner opens the panel, and the two switches
+// sit inside it. It lives outside the hero
 // and only talks to it through update() and action(). controls and actions come from the scene.
 import './chrome.css';
 import { soundPref } from './sound.js';

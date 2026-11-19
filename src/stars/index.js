@@ -3,7 +3,7 @@
 // a fine pointer pencils a constellation through the brightest stars in reach, a click inks and names it.
 // Reduced motion: no drift, no loop; a still chart redrawn on input, pins appear complete, a drag turns it 1:1.
 import './style.css';
-import { loop, governor, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
+import { loop, governor, opening, reducedMotion, finePointer, quality, clamp } from '../shared/kit.js';
 import { loadCatalog } from './catalog.js';
 import { createRenderer } from './render.js';
 import { createChart, INK } from './chart.js';
@@ -131,7 +131,7 @@ export default function mount(root, options = {}) {
   // are the ones a governor cannot save.
   const dpr = Math.min(devicePixelRatio || 1, 2);
   const top = Math.min(dpr, Math.max(1, Math.sqrt(2.2e6 / Math.max(1, root.clientWidth * root.clientHeight))));
-  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, onChange: (r) => { ratio = r; if (gl && view.W) gl.resize(view.W, view.H, ratio); } });
+  const gov = governor({ min: Math.min(top, Math.max(0.6, 0.5 * dpr)), max: top, start: opening(root.clientWidth, root.clientHeight, top), onChange: (r) => { ratio = r; if (gl && view.W) gl.resize(view.W, view.H, ratio); } });
 
   const turn = (dt, t) => {
     gov.tick(dt);

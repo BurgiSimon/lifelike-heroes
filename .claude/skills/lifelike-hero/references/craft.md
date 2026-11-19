@@ -189,7 +189,10 @@ megapixels. The software renderer in a sandbox cannot tell you whether you made 
   main thread (`createImageBitmap`, `stars/render.js`), or the page freezes as it opens.
 - **A low tier** (`?q=low`, and touch devices by default in the meadow): fewer instances, no bloom, smaller
   targets, coarser sums. Then the governor (`kit.js`) trades render resolution for frame time by itself.
-- The first frames cannot be saved by a governor: open at a sensible pixel budget (`index.js`, `top`).
+- The first frames cannot be saved by a governor: open at a sensible pixel budget (`index.js`, `top`), and on a
+  phone at about a megapixel (`opening()` in `kit.js`, the governor's `start`).
+- **A grid laid over the frame takes the frame's shape.** A phone is tall: a sheet of cells laid out for a wide
+  frame has cells three times taller than wide there (`koi/renderer.js`, `lay`, keeps the caustics' cells square).
 
 ## The tells
 
