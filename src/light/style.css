@@ -1,0 +1,97 @@
+/* Window light hero — Linden Tea Rooms. The canvas is the photograph. The headline is the lettering on the window,
+   and what the wall shows is its shadow, in the sun's patch left of centre; the cue and the plate line are DOM on it. */
+.light {
+  --light-ground: #a79e8f;   /* the quiet ground before the scene arrives, and under the fallback: limewash in shade */
+  --light-ink: #1f1c18;
+  --light-paper: #f4f1ea;
+  display: grid;
+  justify-items: start;
+  align-content: center;
+  gap: 24px;
+  /* the picture is laid out round the headline (room.js), so this padding is the composition: where the sun falls */
+  padding: 19.5svh var(--gutter) 0 33.5%;
+  background: var(--light-ground);
+  color: var(--light-ink);
+  touch-action: pan-y;   /* a scroll that starts on the wall stays a scroll */
+  -webkit-tap-highlight-color: transparent;
+  cursor: default;
+}
+
+/* The scene fades in once it is drawn: first paint is the quiet ground and the headline. */
+.light__canvas { opacity: 0; transition: opacity 1.2s var(--ease-out); }
+.light.is-ready .light__canvas { opacity: 1; }
+.light.is-still .light__canvas { transition: none; }
+
+/* The headline is real text, laid exactly where the scene lets the shadow of the window's lettering fall
+   (letters.js reads this layout). Once the scene is drawn the DOM letters go transparent, not hidden: assistive tech
+   still reads them, and they are what shows before the scene arrives and when it never does. A word to a line, and
+   strokes heavy enough to survive the sun's own blur. */
+.light__title {
+  position: relative;
+  width: min-content;
+  font-size: clamp(3.4rem, 1rem + 6.1vw, 7rem);
+  font-weight: 800;
+  font-stretch: 112%;
+  line-height: 0.98;
+  letter-spacing: 0.005em;
+  transition: opacity 1.2s var(--ease-out);
+  pointer-events: none;
+}
+.light.is-ready .light__title { opacity: 0; }
+.light.is-still .light__title { transition: none; }
+
+/* The invitation and the keyboard path: a small pane of smoked glass, so nothing in the scene shows through its label. */
+.light__cue {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px 0 12px;
+  border: 1px solid rgb(244 241 234 / 0.3);
+  border-radius: 999px;
+  background: rgb(24 21 17 / 0.62);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  color: rgb(244 241 234 / 0.92);
+  font-size: 0.875rem;
+  transition: color 0.2s var(--ease-out), border-color 0.2s var(--ease-out), background-color 0.2s var(--ease-out);
+}
+/* a cut crystal, as a mark: a small diamond */
+.light__cue::before { content: ''; width: 6px; height: 6px; transform: rotate(45deg) scaleY(1.25); background: currentColor; }
+.light__cue:hover { color: var(--light-paper); border-color: rgb(244 241 234 / 0.62); background: rgb(24 21 17 / 0.74); }
+
+/* The plate line, pinned to the foot. Small type cannot depend on what lies beneath it: each half sits on its own
+   strip of dark tape, which keeps 4.5:1 on the brightest part of the picture. */
+.light__note {
+  position: absolute;
+  left: var(--gutter);
+  right: var(--gutter);
+  bottom: clamp(14px, 3vh, 24px);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgb(244 241 234 / 0.92);
+  pointer-events: none;
+}
+.light__note span { margin: -4px -8px; padding: 4px 8px; border-radius: 3px; background: rgb(24 21 17 / 0.76); }
+
+/* The text can be switched off (the text option): the wall alone. Hidden, not removed, so the layout holds, and
+   with it the picture that is laid out round the headline. */
+.light.is-bare .light__title, .light.is-bare .light__cue, .light.is-bare .light__note { visibility: hidden; }
+
+/* No WebGL2, or the context is gone: a still, legible ground in the picture's own colours (a patch of sun on
+   limewash). Nothing to act on, so no cue; the headline is plain type again. */
+.light.is-static { background: radial-gradient(70% 62% at 46% 52%, #ecdcbd 0%, #e2d2b4 42%, #a79e8f 78%, #8d877d 100%); }
+.light.is-static > canvas, .light.is-static .light__cue { display: none; }
+.light.is-static .light__title { opacity: 1; }
+
+/* A narrow screen: the headline moves left, and the curtain makes do with less room. */
+@media (max-width: 640px) { .light { padding-left: 27%; } }
+
+@media (prefers-reduced-motion: reduce) { .light__canvas, .light__title, .light__cue { transition: none; } }

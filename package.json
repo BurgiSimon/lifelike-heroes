@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "Three heroes from AwardComponents (meadow, koi pond, star chart) rebuilt photoreal in WebGL, and a fourth made for this project: a misted window on a rainy night.",
+  "description": "Three heroes from AwardComponents (meadow, koi pond, star chart) rebuilt photoreal in WebGL, and two made for this project: a misted window on a rainy night, and the afternoon sun through a tea room's window.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

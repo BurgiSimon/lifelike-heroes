@@ -13,6 +13,7 @@ const SCENES = {
   koi: { room: 1.2, voices: { pellet: (v) => v.pellet(0), gulp: (v) => v.gulp(0.4), skim: (v) => v.skim(-0.4), drip: (v) => v.drip(0) }, actions: ['feed'] },
   stars: { room: 3.2, voices: { pin: (v) => v.pin(7, 1, 0.2, 0.09), tick: (v) => v.tick(3, 0), clear: (v) => v.clear(), twinkle: (v) => v.twinkle() }, actions: ['pin', 'clear'] },
   mist: { room: 0.9, voices: { tick: (v) => v.tick(0.2, 6), slip: (v) => v.slip(-0.3), drip: (v) => v.drip(0), run: (v) => v.run(0.1), wipe: (v) => v.wipe(-0.2, 500) }, actions: ['drip'] },
+  light: { room: 1.4, voices: { hang: (v) => v.hang(0.2, 1), tap: (v) => v.tap(-0.3, 0.3), rush: (v) => v.rush(0.4), rustle: (v) => v.rustle(0.1, 500) }, actions: ['hang', 'gust'] },
 };
 const dB = (x) => (20 * Math.log10(Math.max(x, 1e-9))).toFixed(1);
 const problems = []; const check = (ok, what) => { if (!ok) { problems.push(what); console.log(`  NOT OK: ${what}`); } };   // every level is printed before anything fails
