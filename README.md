@@ -1,13 +1,14 @@
 <h1 align="center">Lifelike Heroes</h1>
 
 <p align="center">
-  <b>Five living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
+  <b>Six living scenes for the top of a website.<br>They look like photographs, and they react when you touch them.</b>
 </p>
 
 <p align="center">
   These are not videos. Each scene is drawn live in your browser, dozens of times a second,
   so the grass leans in the wind, the fish come when you feed them, the sky turns when you drag it,
-  the mist on the window gives way under your hand, and the afternoon sun throws a crystal's colours across the wall.
+  the mist on the window gives way under your hand, the afternoon sun throws a crystal's colours across the wall,
+  and a clap sends a hundred starlings up off a rooftop sign.
 </p>
 
 <h3 align="center">
@@ -42,11 +43,11 @@
 
 <br>
 
-## Five scenes to play with
+## Six scenes to play with
 
 Free, nothing to install, no sign-up. Open a scene, then move your mouse over it and click.
 
-On a phone you can tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass or hang a crystal in the window. Most of the effects that follow the pointer need a mouse or trackpad, so a laptop or desktop shows the scenes at their best.
+On a phone you can tap to plant a flower, feed the koi, draw a constellation, send a raindrop down the glass, hang a crystal in the window or clap the starlings off their sign. Most of the effects that follow the pointer need a mouse or trackpad, so a laptop or desktop shows the scenes at their best.
 
 ### 1 &nbsp;·&nbsp; Meadow
 
@@ -132,10 +133,28 @@ A tea room at four o'clock on an October afternoon. The low sun comes through th
 
 <br>
 
+### 6 &nbsp;·&nbsp; Roost
+
+<p>
+  <a href="https://burgisimon.github.io/lifelike-heroes/roost.html">
+    <img src="docs/readme/roost.jpg" width="100%" alt="A rooftop sign reading Evensong in black silhouette against a gold and lilac sunset, with a dome and television aerials beside it; a line of starlings has just lifted off the letters, and above them a flock of thousands turns in one long curve across the sky">
+  </a>
+</p>
+
+A rooftop in Rome, twenty minutes after sunset. The starlings come to this part of the city every winter evening. Some are already on the old sign across the street; the rest are still up, a few thousand of them, turning over the roofs as one.
+
+- **Move the mouse across the sky** and a falcon follows it. The flock folds away from wherever it goes, and a dark wave runs through the birds.
+- **Click** to clap your hands. Every bird on the sign goes up and joins the flock. Over the next minute they come back, one at a time.
+- **Wait a moment** and birds leave the sign and return on their own, and now and then a falcon comes through by itself.
+
+**[Open the roost →](https://burgisimon.github.io/lifelike-heroes/roost.html)**
+
+<br>
+
 ## Why it looks real
 
-- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way. The city behind the rainy window is a photographed city, put out of focus the way a lens does it. The tea room's wall is a scan of real plaster, and its floor of real boards.
-- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright. Raindrops join, grow heavy, run and leave trails, and each one bends the city behind it like the small lens it is. On the tea room's wall every shadow is exactly as soft as the sun is wide, so the letters on the glass are soft and the leaves across the street softer; and a crystal's rainbows land where sunlight would really go through its facets.
+- **Real ingredients.** The sky over the meadow is a photographed sky. The pond floor is a 3D scan of river pebbles. The star chart draws about 27,000 real stars, each at its true position, brightness and colour, over NASA's map of the Milky Way. The city behind the rainy window is a photographed city, put out of focus the way a lens does it. The tea room's wall is a scan of real plaster, and its floor of real boards. The sky behind the starlings is a photographed sunset.
+- **Real behaviour.** The ripples are worked out the way real water moves, and light bends through them onto the pebbles. Every grass blade leans with the wind on its own. The koi steer, come closer and take fright. Raindrops join, grow heavy, run and leave trails, and each one bends the city behind it like the small lens it is. On the tea room's wall every shadow is exactly as soft as the sun is wide, so the letters on the glass are soft and the leaves across the street softer; and a crystal's rainbows land where sunlight would really go through its facets. Each starling watches its seven nearest neighbours and nothing else, which is what was measured on the real flocks over Rome; the wheeling, and the dark wave when a falcon comes, are not animated. They come out of that rule.
 - **A real camera's habits.** Soft focus on the grass closest to the lens, a glow around the sun, a little film grain. A lens does these things, so the scenes do too.
 
 ## Good to know
@@ -155,7 +174,7 @@ A tea room at four o'clock on an October afternoon. The low sun comes through th
 
 Everything from here on is for developers.
 
-The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi pond* and *Star chart* from [AwardComponents](https://github.com/BurgiSimon/AwardComponents), rebuilt in WebGL with one goal: photographs you can touch. Behaviour, options and accessibility of the originals are kept. *Misted window* and *Window light* were made for this project, to the same contract.
+The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi pond* and *Star chart* from [AwardComponents](https://github.com/BurgiSimon/AwardComponents), rebuilt in WebGL with one goal: photographs you can touch. Behaviour, options and accessibility of the originals are kept. *Misted window*, *Window light* and *Roost* were made for this project, to the same contract.
 
 ### Built with
 
@@ -198,6 +217,13 @@ The first three scenes are re-creations of the 2D-canvas heroes *Meadow*, *Koi p
 - The lime tree is about a thousand instanced leaves on nine boughs. Each bough is a spring the breeze leans on; each leaf rocks on its stalk and turns its face to and from the sun, which is the flicker in a tree's shade.
 - A crystal is 26 facets. Every pair of facets that makes a prism is followed with Snell's law, once for red and once for violet (lead crystal: 1.588 and 1.630), in through one facet and out through the other, to where each lands on the wall or the floor. Each spectrum is the sun's own disc, drawn once per colour from the red end to the violet.
 - The headline is the DOM's own `<h1>`, painted into a mask from its layout as the lettering on the glass, and the picture is laid out round it: the window is placed so that the letters' shadow falls where the page put the headline.
+
+**Roost** (`src/roost`)
+- The flock is 3,000 birds stepped on the CPU thirty times a second (`flock.js`: rules that draw nothing, which `scripts/flock-check.mjs` steps in Node). Each minds its seven nearest neighbours, whatever their distance, as the STARFLAG project measured on starlings over Rome: it keeps clear of them, takes up their heading and stays with them. The flock keeps to a cone of sky from the lens, so it stays in the frame whether it wheels near or far.
+- A frightened bird rolls away, and a bird rolls when two of its neighbours have, a thirtieth of a second after them. That is the wave: it runs through the flock at about 25 m/s, twice as fast as any bird in it flies.
+- Each bird is a body and two wings, built in the vertex shader from its velocity and its lift (which leans into every turn). A bird that banks toward the lens shows the whole of its wings, so a turning flock darkens by itself.
+- It is a picture of silhouettes and is drawn as one: birds are blended by keeping the darker of what is there and the bird, so thousands of overlapping birds are right in any order, and one behind the sign's letters is not seen.
+- The sky is one photographed panorama, cut to this lens's view by a build script (`src/roost/tools/build-assets.mjs`). The sign's letters are the DOM's own `<h1>`, painted with the roofline into a canvas; the birds' perches are found from that picture, along the tops of the letters, the aerials and the wires.
 
 ### Run it locally
 
@@ -244,19 +270,20 @@ hero.destroy();                // remove it and release its GPU resources
 | Star chart | `drift`, `cell`, `reach`, `join`, `tone`, `text`, `sound` | `pin`, `clear` |
 | Misted window | `reach`, `rain`, `mist`, `text`, `sound` | `drip` |
 | Window light | `breeze`, `reach`, `crystals`, `leaves`, `text`, `sound` | `hang`, `gust` |
+| Roost | `birds`, `reach`, `text`, `sound` | `clap`, `falcon` |
 
 `text: false` shows a scene on its own, without its headline, button and captions. On the demo pages the **Hide text** tab on the right edge does the same, and the **Options** tab beside it slides out a panel with a control for every other option and a button for every action.
 
-`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart, rain on the pane and the small wet sounds of a drop letting go at the window, leaves outside the glass and the ring of each crystal as it is hung in the tea room. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all five; the choice is remembered from page to page.
+`sound: true` switches on a scene's sound: wind and the rustle of every flower coming up in the meadow, water and the plop of a pellet in the pond, a low chord and a bell for every star of a pinned constellation on the chart, rain on the pane and the small wet sounds of a drop letting go at the window, leaves outside the glass and the ring of each crystal as it is hung in the tea room, the chatter of starlings on their sign and the rush of their wings when a clap puts them up. It is synthesised in the browser with Web Audio, so there are no audio files. It is off by default, and a browser only lets sound start from a click or a key press, so switch it on from one (otherwise it starts at the visitor's next click). On the demo pages that is the **Sound** tab, and the gallery has one switch for all six; the choice is remembered from page to page.
 
 ### Project layout
 
 ```
 index.html                    gallery: an endless line of cards (wheel, drag or arrow keys), a click opens a card into its scene
-meadow.html, koi.html, stars.html, mist.html, light.html
+meadow.html, koi.html, stars.html, mist.html, light.html, roost.html
 src/
   shared/                     base styles, frame loop, quality governor, sound kit
-  meadow/  koi/  stars/  mist/  light/   one folder per scene
+  meadow/  koi/  stars/  mist/  light/  roost/   one folder per scene
   gallery/                    the gallery page
 public/assets/<scene>/        textures and data, each with a CREDITS.md
 public/video/                 the 22-second showcase video, served by the live site (its README loop is in docs/readme/)
@@ -267,9 +294,9 @@ scripts/                      screenshot and frame-rate tools and self-checks us
 
 ### Accessibility and performance
 
-- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal) with a status message for screen readers. The canvas itself is hidden from assistive technology.
+- Headlines are real text, and each scene has a real button for its main action (sow, feed, pin, let a drop run, hang a crystal, clap) with a status message for screen readers. The canvas itself is hidden from assistive technology.
 - With `prefers-reduced-motion`, a scene renders one still frame and redraws only when you interact.
-- Hover effects are for mouse and pen only. Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky. The misted window cannot be wiped on a phone: a tap lets a drop run instead. The window light's breeze needs a pointer too: a tap hangs a crystal.
+- Hover effects are for mouse and pen only. Vertical touch scrolling is never blocked; on the star chart a sideways swipe turns the sky. The misted window cannot be wiped on a phone: a tap lets a drop run instead. The window light's breeze needs a pointer too: a tap hangs a crystal. So does the roost's falcon: without a pointer one still comes through by itself, and a tap is a clap.
 - Without WebGL 2, or if the graphics context is lost, the headline remains on a static backdrop.
 - Rendering pauses when a scene is off screen or its tab is hidden.
 - Sound is off until a visitor switches it on, and it pauses with the tab.
@@ -289,9 +316,11 @@ All third-party material is public domain or under an open licence (CC0, SIL OFL
 | Star chart | Horizon photograph | [Poly Haven](https://polyhaven.com/a/stierberg_sunrise) (CC0) |
 | Misted window | The city: an HDR panorama of the Shanghai Bund by Greg Zaal | [Poly Haven](https://polyhaven.com/a/shanghai_bund) (CC0) |
 | Window light | Plaster wall and floorboard scans | [Poly Haven](https://polyhaven.com) (CC0) |
+| Roost | The sky: an HDR panorama, *Belfast Sunset (Pure Sky)*, by Greg Zaal, Dimitrios Savva and Jarod Guest | [Poly Haven](https://polyhaven.com/a/belfast_sunset_puresky) (CC0) |
+| Roost | The flocking rule | M. Ballerini et al., [*Interaction ruling animal collective behavior depends on topological rather than metric distance*](https://doi.org/10.1073/pnas.0711437105), PNAS 2008 |
 | All scenes | Interface typefaces | [Mona Sans](https://github.com/github/mona-sans) by GitHub and [JetBrains Mono](https://github.com/JetBrains/JetBrainsMono) by JetBrains (SIL OFL 1.1) |
 | All scenes | Rendering library | [three.js](https://threejs.org) (MIT) |
 
-See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md), [`public/assets/mist/CREDITS.md`](public/assets/mist/CREDITS.md) and [`public/assets/light/CREDITS.md`](public/assets/light/CREDITS.md).
+See [`public/assets/meadow/CREDITS.md`](public/assets/meadow/CREDITS.md), [`public/assets/koi/CREDITS.md`](public/assets/koi/CREDITS.md), [`public/assets/stars/CREDITS.md`](public/assets/stars/CREDITS.md), [`public/assets/mist/CREDITS.md`](public/assets/mist/CREDITS.md) [`public/assets/light/CREDITS.md`](public/assets/light/CREDITS.md) and [`public/assets/roost/CREDITS.md`](public/assets/roost/CREDITS.md).
 
 This repository does not include a licence for its own code yet. Please open an issue if you would like to reuse it.
