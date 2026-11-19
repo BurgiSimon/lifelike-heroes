@@ -23,9 +23,11 @@ import { voices } from './sound.js';
 
 const DEFAULTS = { birds: 3000, reach: 180, text: true, sound: false };
 const FEWER = 1400;          // the flock on a phone, and in the low tier: its sky is narrower, and so is its processor
+// The flock this device opens with: the panel shows it, and its Reset gives it back (not a desktop's 3000).
+const opens = () => (quality() === 'low' || !finePointer() ? FEWER : DEFAULTS.birds);
 // What a page may offer for tweaking (the ranges tidy() holds the options to), and the actions it may trigger.
 export const controls = [
-  { id: 'birds', label: 'Starlings in the flock', min: 400, max: MAXF, step: 100, value: 3000 },
+  { id: 'birds', label: 'Starlings in the flock', min: 400, max: MAXF, step: 100, value: opens() },
   { id: 'reach', label: 'Pointer reach', min: 60, max: 360, step: 10, value: 180, unit: 'px' },
 ];
 export const actions = [{ id: 'clap', label: 'Clap your hands' }, { id: 'falcon', label: 'Send a falcon through' }];
@@ -39,8 +41,8 @@ const tidy = (o) => ({
 });
 
 export default function mount(root, options = {}) {
-  const still = reducedMotion(); const fine = finePointer(); const low = quality() === 'low';
-  let cfg = tidy({ ...DEFAULTS, ...((low || !fine) && { birds: FEWER }), ...options });
+  const still = reducedMotion(); const fine = finePointer();
+  let cfg = tidy({ ...DEFAULTS, birds: opens(), ...options });
   const ac = new AbortController(); const { signal } = ac;
 
   root.classList.add('roost'); root.classList.toggle('is-still', still); root.classList.toggle('is-bare', !cfg.text);
@@ -91,7 +93,7 @@ export default function mount(root, options = {}) {
     if (!R || lost || !view.W) return;   // nothing on screen to act on: still loading, or the static fallback
     const n = flock.clap(x, y, still);   // no loop: the sign is shown as it is a moment later, bare, its birds gone to the flock
     claps++;
-    status.textContent = n ? `Clap ${claps}: ${n} ${n === 1 ? 'starling goes' : 'starlings go'} up off the sign and ${n === 1 ? 'joins' : 'join'} the flock. They will be back.` : `Clap ${claps}: the sign is bare already; its birds are still up with the flock.`;
+    status.textContent = n ? `Clap ${claps}: ${n} ${n === 1 ? 'starling goes' : 'starlings go'} up off the sign and ${n === 1 ? 'joins' : 'join'} the flock.${still ? ' While motion is reduced, the flock keeps them.' : ' They will be back.'}` : `Clap ${claps}: the sign is bare already; its birds are still up with the flock.`;
     if (still) st.events.length = 0; else heard();
     once();
   };

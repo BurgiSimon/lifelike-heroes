@@ -171,7 +171,7 @@ export default function mount(root, options = {}) {
   return {
     update(next = {}) {
       const before = cfg; cfg = tidy({ ...cfg, ...next });
-      snd.set(cfg.sound); room.setOptions(cfg);
+      snd.set(cfg.sound); room.setOptions(cfg, still);
       if (cfg.text !== before.text) { root.classList.toggle('is-bare', !cfg.text); lay(); }
       if (still) room.pose(STILL_T);   // no loop: the still is drawn again with the new breeze and the crystals that are left
       once();
