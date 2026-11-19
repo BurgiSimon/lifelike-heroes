@@ -35,7 +35,7 @@ export const actions = [{ id: 'clap', label: 'Clap your hands' }, { id: 'falcon'
 const num = (v, d) => (v === null || v === '' || !Number.isFinite(+v) ? d : +v);
 // Options as the scene takes them: inside the ranges it was built for, whatever a page passes.
 const tidy = (o) => ({
-  birds: Math.round(clamp(num(o.birds, DEFAULTS.birds), 400, MAXF)), reach: clamp(num(o.reach, DEFAULTS.reach), 60, 360),
+  birds: Math.round(clamp(num(o.birds, opens()), 400, MAXF)),   // missing or rubbish: the flock this device opens with reach: clamp(num(o.reach, DEFAULTS.reach), 60, 360),
   text: o.text !== false,    // false: the sky and the roofs alone: the frame stands empty of its letters, and there is no button or plate line
   sound: o.sound === true,   // off until a page asks
 });

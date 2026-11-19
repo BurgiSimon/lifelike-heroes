@@ -320,9 +320,10 @@ export function createFlock(options) {
     // just under the letters' feet, and the flock's sky is the open sky above them. Returns true when the box is new.
     fit(W, H, title) {
       const fresh = W !== g.W || H !== g.H; const was = { ...g.home };
-      // The lens is never so short that the frame's top looks past the top of the sky photograph (an upright tablet,
-      // a tall window): there the photograph's last row would be smeared down the frame.
-      g.W = W; g.H = H; g.hy = title.b + 0.1 * title.em; g.ppm = Math.max(clamp(0.72 * title.em / CAP, 40, 120), g.hy / (SKY.top * DS)); g.F = g.ppm * DS; g.cx = W / 2;
+      // The lens is never so short that the frame looks past the sky photograph: past its top (an upright tablet, a
+      // tall window) or its sides (an ultrawide monitor), where its last row or column would be smeared across.
+      g.W = W; g.H = H; g.hy = title.b + 0.1 * title.em;
+      g.ppm = Math.max(clamp(0.72 * title.em / CAP, 40, 120), g.hy / (SKY.top * DS), W / 2 / (SKY.half * DS)); g.F = g.ppm * DS; g.cx = W / 2;
       // The flock's sky: the open sky over the sign. On a narrow frame it is further off, so that a flock which
       // cannot turn in much less than ten metres still turns inside the picture.
       const h = g.home; h.rxp = 0.27 * W; h.ryp = 0.3 * title.t; h.syc = g.hy - 0.45 * title.t; h.z = clamp(10 * g.F / h.rxp, Z0, 150); h.rz = RZ;
