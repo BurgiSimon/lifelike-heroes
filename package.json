@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "Three heroes from AwardComponents (meadow, koi pond, star chart) rebuilt photoreal in WebGL, and three made for this project: a misted window on a rainy night, the afternoon sun through a tea room's window, and starlings coming in to roost over Rome.",
+  "description": "Three heroes from AwardComponents (meadow, koi pond, star chart) rebuilt photoreal in WebGL, and four made for this project: a misted window on a rainy night, the afternoon sun through a tea room's window, starlings coming in to roost over Rome, and the back of a hand-wound watch, running.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
